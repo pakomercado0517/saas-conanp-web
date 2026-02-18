@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { User, Mail, Lock, UserPlus } from "lucide-react";
 
 export function RegisterForm() {
