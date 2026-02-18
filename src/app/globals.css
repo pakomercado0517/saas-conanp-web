@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+:root {
+  --navy-deep: #0a192f;
+  --navy-light: #112240;
+  --cyan-accent: #64ffda;
+  --cyan-hover: #45d9b8;
+  --light-grey: #f8fafc;
+  --slate-text: #8892b0;
+}
+
+@layer base {
+  * {
+    border-color: rgba(100, 255, 218, 0.1);
+  }
+
+  body {
+    background-color: var(--light-grey);
+    color: var(--navy-deep);
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading), "Roboto Slab", serif;
+  }
+}

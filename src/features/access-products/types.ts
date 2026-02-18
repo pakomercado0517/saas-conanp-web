@@ -1,0 +1,1 @@
+export type AccessProductsFeatureReady = true;
