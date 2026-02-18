@@ -29,7 +29,7 @@ export function ForgotPasswordForm() {
         </div>
         <Link
           href="/login"
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--navy-deep)] py-3 font-bold text-white shadow-md transition-colors hover:bg-[var(--navy-light)]"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-(--navy-deep) py-3 font-bold text-white shadow-md transition-colors hover:bg-(--navy-light)"
         >
           Volver a Iniciar sesión
         </Link>
@@ -46,9 +46,9 @@ export function ForgotPasswordForm() {
       <div>
         <label
           htmlFor="email"
-          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--navy-deep)]"
+          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-(--navy-deep)"
         >
-          Email
+          Correo electrónico
         </label>
         <div className="relative">
           <Mail
@@ -64,13 +64,13 @@ export function ForgotPasswordForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@conanp.gob.mx"
-            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-[var(--navy-deep)] placeholder:text-slate-400 focus:border-[var(--cyan-accent)]/50 focus:outline-none focus:ring-1 focus:ring-[var(--cyan-accent)]/50"
+            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-(--navy-deep) placeholder:text-slate-400 focus:border-(--cyan-accent)/50 focus:outline-none focus:ring-1 focus:ring-(--cyan-accent)/50"
           />
         </div>
       </div>
       <button
         type="submit"
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--navy-deep)] py-3 font-bold text-white shadow-md transition-colors hover:bg-[var(--navy-light)]"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-(--navy-deep) py-3 font-bold text-white shadow-md transition-colors hover:bg-(--navy-light)"
       >
         Enviar enlace de recuperación
         <ArrowRight className="h-5 w-5" aria-hidden />

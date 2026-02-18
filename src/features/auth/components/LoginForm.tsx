@@ -20,9 +20,9 @@ export function LoginForm() {
       <div>
         <label
           htmlFor="email"
-          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--navy-deep)]"
+          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-(--navy-deep)"
         >
-          Email Address
+          Correo electrónico
         </label>
         <div className="relative">
           <Mail
@@ -38,7 +38,7 @@ export function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@conanp.gob.mx"
-            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-[var(--navy-deep)] placeholder:text-slate-400 focus:border-[var(--cyan-accent)]/50 focus:outline-none focus:ring-1 focus:ring-[var(--cyan-accent)]/50"
+            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-(--navy-deep) placeholder:text-slate-400 focus:border-(--cyan-accent)/50 focus:outline-none focus:ring-1 focus:ring-(--cyan-accent)/50"
           />
         </div>
       </div>
@@ -46,9 +46,9 @@ export function LoginForm() {
       <div>
         <label
           htmlFor="password"
-          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--navy-deep)]"
+          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-(--navy-deep)"
         >
-          Password
+          Contraseña
         </label>
         <div className="relative">
           <Lock
@@ -64,7 +64,7 @@ export function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-[var(--navy-deep)] placeholder:text-slate-400 focus:border-[var(--cyan-accent)]/50 focus:outline-none focus:ring-1 focus:ring-[var(--cyan-accent)]/50"
+            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-(--navy-deep) placeholder:text-slate-400 focus:border-(--cyan-accent)/50 focus:outline-none focus:ring-1 focus:ring-(--cyan-accent)/50"
           />
         </div>
       </div>
@@ -75,24 +75,24 @@ export function LoginForm() {
             type="checkbox"
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-[var(--navy-deep)] focus:ring-[var(--cyan-accent)]/50"
+            className="h-4 w-4 rounded border-slate-300 text-(--navy-deep) focus:ring-(--cyan-accent)/50"
           />
-          <span className="text-sm text-slate-600">Remember me</span>
+          <span className="text-sm text-slate-600">Recordarme</span>
         </label>
         <Link
           href="/forgot-password"
-          className="text-sm font-medium text-[var(--cyan-accent)] hover:text-[var(--cyan-hover)]"
+          className="text-sm font-medium text-(--cyan-accent) hover:text-(--cyan-hover)"
         >
-          Forgot password?
+          ¿Olvidaste tu contraseña?
         </Link>
       </div>
 
       <button
         type="submit"
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--navy-deep)] py-3 font-bold text-white shadow-md transition-colors hover:bg-[var(--navy-light)]"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-(--navy-deep) py-3 font-bold text-white shadow-md transition-colors hover:bg-(--navy-light)"
       >
         <LogIn className="h-5 w-5" aria-hidden />
-        Sign In
+        Iniciar sesión
       </button>
     </form>
   );

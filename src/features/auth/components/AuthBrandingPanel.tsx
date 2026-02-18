@@ -7,7 +7,7 @@ const DASHBOARD_IMAGE =
 
 export function AuthBrandingPanel() {
   return (
-    <div className="relative flex flex-1 flex-col justify-between overflow-hidden bg-[var(--navy-deep)] p-8 lg:p-12">
+    <div className="relative flex min-h-full w-full flex-1 flex-col justify-between overflow-hidden bg-(--navy-deep) p-8 lg:p-12">
       {/* Grid pattern */}
       <div
         className="pointer-events-none absolute top-4 right-4 h-16 w-16 opacity-20"
@@ -15,10 +15,7 @@ export function AuthBrandingPanel() {
       >
         <div className="grid h-full w-full grid-cols-2 gap-1">
           {[...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              className="rounded-sm bg-white/30"
-            />
+            <div key={i} className="rounded-sm bg-white/30" />
           ))}
         </div>
       </div>
@@ -34,31 +31,24 @@ export function AuthBrandingPanel() {
             className="h-auto w-full object-cover opacity-90"
             unoptimized
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[var(--navy-deep)]/40 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-(--navy-deep)/40 to-transparent" />
         </div>
       </div>
 
       {/* Copy */}
       <div className="relative z-10 mt-8 lg:mt-12">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-white"
-        >
-          <Waves
-            className="h-8 w-8 text-[var(--cyan-accent)]"
-            strokeWidth={1.5}
-          />
+        <Link href="/" className="inline-flex items-center gap-2 text-white">
+          <Waves className="h-8 w-8 text-(--cyan-accent)" strokeWidth={1.5} />
           <span className="text-xl font-bold tracking-tight">
-            CONANP <span className="text-[var(--cyan-accent)]">ERP</span>
+            CONANP <span className="text-(--cyan-accent)">ERP</span>
           </span>
         </Link>
         <h2 className="mt-6 text-3xl font-bold leading-tight text-white lg:text-4xl">
           Protegiendo el{" "}
-          <span className="text-[var(--cyan-accent)]">Capital Natural</span> a
-          través de la <span className="text-[var(--cyan-accent)]">Innovación</span>
-          .
+          <span className="text-(--cyan-accent)">Capital Natural</span> a través
+          de la <span className="text-(--cyan-accent)">Innovación</span>.
         </h2>
-        <p className="mt-4 text-[var(--slate-text)]">
+        <p className="mt-4 text-(--slate-text)">
           Sistema centralizado para la gestión de turismo sustentable y áreas
           protegidas.
         </p>
@@ -66,7 +56,7 @@ export function AuthBrandingPanel() {
 
       {/* Leaf decoration */}
       <div
-        className="pointer-events-none absolute bottom-0 left-0 text-[var(--cyan-accent)]/10"
+        className="pointer-events-none absolute bottom-0 left-0 text-(--cyan-accent)/10"
         aria-hidden
       >
         <Leaf className="h-32 w-32 lg:h-40 lg:w-40" strokeWidth={0.5} />

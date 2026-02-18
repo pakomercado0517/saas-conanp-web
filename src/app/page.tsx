@@ -19,39 +19,36 @@ export default function HomePage() {
   return (
     <main className="min-h-screen">
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--cyan-accent)]/10 bg-[var(--navy-deep)]/90 backdrop-blur-md">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-(--cyan-accent)/10 bg-(--navy-deep)/90 backdrop-blur-md">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2">
-            <Waves
-              className="h-8 w-8 text-[var(--cyan-accent)]"
-              strokeWidth={1.5}
-            />
+            <Waves className="h-8 w-8 text-(--cyan-accent)" strokeWidth={1.5} />
             <span className="text-xl font-bold tracking-tight text-white">
-              CONANP <span className="text-[var(--cyan-accent)]">ERP</span>
+              CONANP <span className="text-(--cyan-accent)">ERP</span>
             </span>
           </Link>
           <div className="hidden items-center gap-8 md:flex">
             <a
               href="#features"
-              className="text-sm font-medium text-white/80 transition-colors hover:text-[var(--cyan-accent)]"
+              className="text-sm font-medium text-white/80 transition-colors hover:text-(--cyan-accent)"
             >
               Características
             </a>
             <a
               href="#dashboard"
-              className="text-sm font-medium text-white/80 transition-colors hover:text-[var(--cyan-accent)]"
+              className="text-sm font-medium text-white/80 transition-colors hover:text-(--cyan-accent)"
             >
               Plataforma
             </a>
             <a
               href="#pricing"
-              className="text-sm font-medium text-white/80 transition-colors hover:text-[var(--cyan-accent)]"
+              className="text-sm font-medium text-white/80 transition-colors hover:text-(--cyan-accent)"
             >
               Planes
             </a>
             <Link
               href="/login"
-              className="rounded bg-[var(--cyan-accent)] px-5 py-2.5 font-bold text-[var(--navy-deep)] transition-colors hover:bg-[var(--cyan-hover)]"
+              className="rounded bg-(--cyan-accent) px-5 py-2.5 font-bold text-(--navy-deep) transition-colors hover:bg-(--cyan-hover)"
             >
               Iniciar Sesión
             </Link>
@@ -60,28 +57,26 @@ export default function HomePage() {
       </nav>
 
       {/* Hero */}
-      <header className="overflow-hidden bg-gradient-to-br from-[var(--navy-deep)] via-[var(--navy-deep)] to-[#020c1b] pt-32 pb-20 lg:pt-48 lg:pb-32">
+      <header className="overflow-hidden bg-linear-to-br from-(--navy-deep) via-(--navy-deep) to-[#020c1b] pt-32 pb-20 lg:pt-48 lg:pb-32">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-12">
             <div className="space-y-8 text-left">
-              <div className="inline-flex items-center rounded-full border border-[var(--cyan-accent)]/30 bg-[var(--cyan-accent)]/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[var(--cyan-accent)]">
+              <div className="inline-flex items-center rounded-full border border-(--cyan-accent)/30 bg-(--cyan-accent)/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-(--cyan-accent)">
                 Solución Enterprise v2.0
               </div>
               <h1 className="text-5xl font-bold leading-tight text-white lg:text-6xl">
                 Gestión Tecnológica para{" "}
-                <span className="text-[var(--cyan-accent)]">
-                  Áreas Naturales.
-                </span>
+                <span className="text-(--cyan-accent)">Áreas Naturales.</span>
               </h1>
-              <p className="max-w-xl text-xl leading-relaxed text-[var(--slate-text)]">
+              <p className="max-w-xl text-xl leading-relaxed text-(--slate-text)">
                 Optimice la operación turística regulada con una infraestructura
-                robusta, segura y escalable. Control total de permisos, activos y
-                capacidad de carga.
+                robusta, segura y escalable. Control total de permisos, activos
+                y capacidad de carga.
               </p>
               <div className="flex flex-col gap-4 sm:flex-row">
                 <Link
                   href="/register"
-                  className="inline-flex items-center justify-center rounded bg-[var(--cyan-accent)] px-8 py-4 font-bold text-[var(--navy-deep)] shadow-lg shadow-[var(--cyan-accent)]/10 transition-all hover:-translate-y-0.5"
+                  className="inline-flex items-center justify-center rounded bg-(--cyan-accent) px-8 py-4 font-bold text-(--navy-deep) shadow-lg shadow-(--cyan-accent)/10 transition-all hover:-translate-y-0.5"
                 >
                   Solicitar Acceso
                 </Link>
@@ -95,7 +90,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="relative lg:ml-10">
-              <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-[var(--cyan-accent)] opacity-5 blur-[100px]" />
+              <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-(--cyan-accent) opacity-5 blur-[100px]" />
               <div className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur">
                 <Image
                   src={DASHBOARD_IMAGE}
@@ -105,7 +100,7 @@ export default function HomePage() {
                   className="h-auto w-full object-cover opacity-90"
                   unoptimized
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[var(--navy-deep)]/40 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-(--navy-deep)/40 to-transparent" />
               </div>
             </div>
           </div>
@@ -116,10 +111,10 @@ export default function HomePage() {
       <section className="bg-white py-24" id="features">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-20 text-center">
-            <h2 className="mb-4 text-4xl font-bold text-[var(--navy-deep)]">
+            <h2 className="mb-4 text-4xl font-bold text-(--navy-deep)">
               Ecosistema Digital de Gestión
             </h2>
-            <div className="mx-auto h-1 w-20 rounded-full bg-[var(--cyan-accent)]" />
+            <div className="mx-auto h-1 w-20 rounded-full bg-(--cyan-accent)" />
           </div>
           <div className="grid gap-8 md:grid-cols-3">
             <FeatureCard
@@ -145,43 +140,40 @@ export default function HomePage() {
       <PricingSection />
 
       {/* Infrastructure */}
-      <section
-        className="overflow-hidden bg-white py-24"
-        id="dashboard"
-      >
+      <section className="overflow-hidden bg-white py-24" id="dashboard">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center gap-16 lg:flex-row">
             <div className="lg:w-1/2">
-              <h2 className="mb-6 text-4xl font-bold text-[var(--navy-deep)]">
+              <h2 className="mb-6 text-4xl font-bold text-(--navy-deep)">
                 Infraestructura Data-Driven
               </h2>
               <p className="mb-8 leading-relaxed text-slate-600">
                 Nuestra arquitectura multi-tenant permite a cada ANP operar de
-                manera independiente pero con estándares de seguridad unificados.
-                Monitoree brazaletes, pasaportes y capacidad de carga en tiempo
-                real.
+                manera independiente pero con estándares de seguridad
+                unificados. Monitoree brazaletes, pasaportes y capacidad de
+                carga en tiempo real.
               </p>
               <div className="grid grid-cols-2 gap-8">
                 <div>
-                  <div className="mb-1 text-4xl font-bold text-[var(--navy-deep)]">
+                  <div className="mb-1 text-4xl font-bold text-(--navy-deep)">
                     99.9%
                   </div>
-                  <div className="text-sm font-bold uppercase tracking-wider text-[var(--cyan-accent)]">
+                  <div className="text-sm font-bold uppercase tracking-wider text-(--cyan-accent)">
                     Uptime Garantizado
                   </div>
                 </div>
                 <div>
-                  <div className="mb-1 text-4xl font-bold text-[var(--navy-deep)]">
+                  <div className="mb-1 text-4xl font-bold text-(--navy-deep)">
                     256-bit
                   </div>
-                  <div className="text-sm font-bold uppercase tracking-wider text-[var(--cyan-accent)]">
+                  <div className="text-sm font-bold uppercase tracking-wider text-(--cyan-accent)">
                     Encryption SSL
                   </div>
                 </div>
               </div>
             </div>
             <div className="relative lg:w-1/2">
-              <div className="rounded-2xl bg-[var(--navy-deep)] p-2 shadow-2xl">
+              <div className="rounded-2xl bg-(--navy-deep) p-2 shadow-2xl">
                 <Image
                   src={DATA_IMAGE}
                   alt="Data View"
@@ -191,7 +183,7 @@ export default function HomePage() {
                   unoptimized
                 />
               </div>
-              <div className="absolute -bottom-6 -left-6 flex items-center gap-3 rounded-xl bg-[var(--cyan-accent)] p-6 shadow-xl text-[var(--navy-deep)]">
+              <div className="absolute -bottom-6 -left-6 flex items-center gap-3 rounded-xl bg-(--cyan-accent) p-6 shadow-xl text-(--navy-deep)">
                 <BarChart3 className="h-8 w-8 font-bold" strokeWidth={2} />
                 <div>
                   <p className="text-xs font-bold uppercase opacity-80">
@@ -209,34 +201,22 @@ export default function HomePage() {
       <EmailSignupSection />
 
       {/* Footer */}
-      <footer className="border-t border-white/5 bg-[var(--navy-deep)] py-12 text-white/50">
+      <footer className="border-t border-white/5 bg-(--navy-deep) py-12 text-white/50">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 px-4 sm:px-6 lg:px-8 md:flex-row">
           <Link href="/" className="flex items-center gap-2">
-            <Waves
-              className="h-6 w-6 text-[var(--cyan-accent)]"
-              strokeWidth={1.5}
-            />
+            <Waves className="h-6 w-6 text-(--cyan-accent)" strokeWidth={1.5} />
             <span className="font-bold tracking-tight text-white">
-              CONANP <span className="text-[var(--cyan-accent)]">ERP</span>
+              CONANP <span className="text-(--cyan-accent)">ERP</span>
             </span>
           </Link>
           <div className="flex gap-8 text-sm">
-            <a
-              href="#"
-              className="transition-colors hover:text-white"
-            >
+            <a href="#" className="transition-colors hover:text-white">
               Privacidad
             </a>
-            <a
-              href="#"
-              className="transition-colors hover:text-white"
-            >
+            <a href="#" className="transition-colors hover:text-white">
               Términos
             </a>
-            <a
-              href="#"
-              className="transition-colors hover:text-white"
-            >
+            <a href="#" className="transition-colors hover:text-white">
               Soporte
             </a>
           </div>
@@ -259,13 +239,11 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="group rounded-xl border border-transparent bg-[var(--light-grey)] p-8 transition-all hover:border-[var(--cyan-accent)]/30 hover:shadow-xl">
-      <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-lg bg-[var(--navy-deep)] transition-colors group-hover:bg-[var(--cyan-accent)]">
-        <Icon className="h-7 w-7 text-[var(--cyan-accent)] transition-colors group-hover:text-[var(--navy-deep)]" />
+    <div className="group rounded-xl border border-transparent bg-(--light-grey) p-8 transition-all hover:border-(--cyan-accent)/30 hover:shadow-xl">
+      <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-lg bg-(--navy-deep) transition-colors group-hover:bg-(--cyan-accent)">
+        <Icon className="h-7 w-7 text-(--cyan-accent) transition-colors group-hover:text-(--navy-deep)" />
       </div>
-      <h3 className="mb-3 text-xl font-bold text-[var(--navy-deep)]">
-        {title}
-      </h3>
+      <h3 className="mb-3 text-xl font-bold text-(--navy-deep)">{title}</h3>
       <p className="leading-relaxed text-slate-600">{description}</p>
     </div>
   );

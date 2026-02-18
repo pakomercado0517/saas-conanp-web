@@ -22,7 +22,7 @@ export function RegisterForm() {
       <div>
         <label
           htmlFor="name"
-          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--navy-deep)]"
+          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-(--navy-deep)"
         >
           Nombre completo
         </label>
@@ -40,7 +40,7 @@ export function RegisterForm() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Tu nombre"
-            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-[var(--navy-deep)] placeholder:text-slate-400 focus:border-[var(--cyan-accent)]/50 focus:outline-none focus:ring-1 focus:ring-[var(--cyan-accent)]/50"
+            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-(--navy-deep) placeholder:text-slate-400 focus:border-(--cyan-accent)/50 focus:outline-none focus:ring-1 focus:ring-(--cyan-accent)/50"
           />
         </div>
       </div>
@@ -48,9 +48,9 @@ export function RegisterForm() {
       <div>
         <label
           htmlFor="email"
-          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--navy-deep)]"
+          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-(--navy-deep)"
         >
-          Email
+          Correo electrónico
         </label>
         <div className="relative">
           <Mail
@@ -66,7 +66,7 @@ export function RegisterForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@conanp.gob.mx"
-            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-[var(--navy-deep)] placeholder:text-slate-400 focus:border-[var(--cyan-accent)]/50 focus:outline-none focus:ring-1 focus:ring-[var(--cyan-accent)]/50"
+            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-(--navy-deep) placeholder:text-slate-400 focus:border-(--cyan-accent)/50 focus:outline-none focus:ring-1 focus:ring-(--cyan-accent)/50"
           />
         </div>
       </div>
@@ -74,7 +74,7 @@ export function RegisterForm() {
       <div>
         <label
           htmlFor="password"
-          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--navy-deep)]"
+          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-(--navy-deep)"
         >
           Contraseña
         </label>
@@ -93,7 +93,7 @@ export function RegisterForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-[var(--navy-deep)] placeholder:text-slate-400 focus:border-[var(--cyan-accent)]/50 focus:outline-none focus:ring-1 focus:ring-[var(--cyan-accent)]/50"
+            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-(--navy-deep) placeholder:text-slate-400 focus:border-(--cyan-accent)/50 focus:outline-none focus:ring-1 focus:ring-(--cyan-accent)/50"
           />
         </div>
       </div>
@@ -101,7 +101,7 @@ export function RegisterForm() {
       <div>
         <label
           htmlFor="confirmPassword"
-          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--navy-deep)]"
+          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-(--navy-deep)"
         >
           Confirmar contraseña
         </label>
@@ -119,14 +119,14 @@ export function RegisterForm() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-[var(--navy-deep)] placeholder:text-slate-400 focus:border-[var(--cyan-accent)]/50 focus:outline-none focus:ring-1 focus:ring-[var(--cyan-accent)]/50"
+            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-(--navy-deep) placeholder:text-slate-400 focus:border-(--cyan-accent)/50 focus:outline-none focus:ring-1 focus:ring-(--cyan-accent)/50"
           />
         </div>
       </div>
 
       <button
         type="submit"
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--navy-deep)] py-3 font-bold text-white shadow-md transition-colors hover:bg-[var(--navy-light)]"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-(--navy-deep) py-3 font-bold text-white shadow-md transition-colors hover:bg-(--navy-light)"
       >
         <UserPlus className="h-5 w-5" aria-hidden />
         Crear cuenta

@@ -17,9 +17,9 @@ export function EmailSignupSection() {
   }
 
   return (
-    <section className="border-t border-slate-200 bg-[var(--light-grey)] py-20">
+    <section className="border-t border-slate-200 bg-(--light-grey) py-20">
       <div className="mx-auto max-w-4xl px-4 text-center">
-        <h2 className="mb-8 text-3xl font-bold text-[var(--navy-deep)]">
+        <h2 className="mb-8 text-3xl font-bold text-(--navy-deep)">
           ¿Listo para transformar la gestión de su ANP?
         </h2>
         <form
@@ -36,7 +36,7 @@ export function EmailSignupSection() {
           />
           <button
             type="submit"
-            className="rounded bg-[var(--navy-deep)] px-8 py-3 font-bold text-white transition-colors hover:bg-black"
+            className="rounded bg-(--navy-deep) px-8 py-3 font-bold text-white transition-colors hover:bg-black"
           >
             Empezar Ahora
           </button>

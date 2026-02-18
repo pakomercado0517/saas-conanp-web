@@ -7,8 +7,16 @@ import { cn } from "@/lib/utils";
 
 const PLANS = {
   monthly: {
-    basico: { price: 1200, period: "mes", original: undefined as number | undefined },
-    profesional: { price: 3500, period: "mes", original: undefined as number | undefined },
+    basico: {
+      price: 1200,
+      period: "mes",
+      original: undefined as number | undefined,
+    },
+    profesional: {
+      price: 3500,
+      period: "mes",
+      original: undefined as number | undefined,
+    },
   },
   annual: {
     basico: { price: 960, period: "mes", original: 1200 },
@@ -21,7 +29,7 @@ export function PricingSection() {
   const plans = isAnnual ? PLANS.annual : PLANS.monthly;
 
   return (
-    <section className="bg-[var(--navy-deep)] py-24 text-white" id="pricing">
+    <section className="bg-(--navy-deep) py-24 text-white" id="pricing">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-16 text-center">
           <h2 className="mb-6 text-4xl font-bold">Planes de Suscripción</h2>
@@ -39,11 +47,11 @@ export function PricingSection() {
               role="switch"
               aria-checked={isAnnual}
               onClick={() => setIsAnnual(!isAnnual)}
-              className="relative h-7 w-14 rounded-full bg-[var(--cyan-accent)]/20 p-1 transition-colors"
+              className="relative h-7 w-14 rounded-full bg-(--cyan-accent)/20 p-1 transition-colors"
             >
               <div
                 className={cn(
-                  "absolute top-1 h-5 w-5 rounded-full bg-[var(--cyan-accent)] transition-all",
+                  "absolute top-1 h-5 w-5 rounded-full bg-(--cyan-accent) transition-all",
                   isAnnual ? "right-1" : "left-1"
                 )}
               />
@@ -55,7 +63,7 @@ export function PricingSection() {
               )}
             >
               Anual{" "}
-              <span className="ml-1 rounded bg-[var(--cyan-accent)]/10 px-2 py-0.5 text-xs font-bold text-[var(--cyan-accent)]">
+              <span className="ml-1 rounded bg-(--cyan-accent)/10 px-2 py-0.5 text-xs font-bold text-(--cyan-accent)">
                 -20%
               </span>
             </span>
@@ -64,7 +72,7 @@ export function PricingSection() {
 
         <div className="grid gap-8 md:grid-cols-3">
           {/* Básico */}
-          <div className="rounded-2xl border border-white/5 bg-[var(--navy-light)] p-8 transition-all hover:border-[var(--cyan-accent)]/20">
+          <div className="rounded-2xl border border-white/5 bg-(--navy-light) p-8 transition-all hover:border-(--cyan-accent)/20">
             <h3 className="mb-2 text-xl font-bold">Básico</h3>
             <p className="mb-6 text-sm text-white/60">
               Para ANP con operaciones emergentes.
@@ -88,18 +96,18 @@ export function PricingSection() {
             </ul>
             <Link
               href="/register"
-              className="flex w-full items-center justify-center rounded border border-[var(--cyan-accent)]/30 py-3 font-semibold text-[var(--cyan-accent)] transition-colors hover:bg-[var(--cyan-accent)]/5"
+              className="flex w-full items-center justify-center rounded border border-(--cyan-accent)/30 py-3 font-semibold text-(--cyan-accent) transition-colors hover:bg-(--cyan-accent)/5"
             >
               Comenzar
             </Link>
           </div>
 
           {/* Profesional - Recomendado */}
-          <div className="relative scale-105 rounded-2xl border-2 border-[var(--cyan-accent)] bg-[var(--navy-light)] p-8 shadow-2xl">
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-[var(--cyan-accent)] px-4 py-1 text-xs font-bold uppercase tracking-widest text-[var(--navy-deep)]">
+          <div className="relative scale-105 rounded-2xl border-2 border-(--cyan-accent) bg-(--navy-light) p-8 shadow-2xl">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-(--cyan-accent) px-4 py-1 text-xs font-bold uppercase tracking-widest text-(--navy-deep)">
               Recomendado
             </div>
-            <h3 className="mb-2 text-xl font-bold text-[var(--cyan-accent)]">
+            <h3 className="mb-2 text-xl font-bold text-(--cyan-accent)">
               Profesional
             </h3>
             <p className="mb-6 text-sm text-white/60">
@@ -124,14 +132,14 @@ export function PricingSection() {
             </ul>
             <Link
               href="/register"
-              className="flex w-full items-center justify-center rounded bg-[var(--cyan-accent)] py-3 font-bold text-[var(--navy-deep)] transition-colors hover:bg-[var(--cyan-hover)]"
+              className="flex w-full items-center justify-center rounded bg-(--cyan-accent) py-3 font-bold text-(--navy-deep) transition-colors hover:bg-(--cyan-hover)"
             >
               Seleccionar Plan
             </Link>
           </div>
 
           {/* Empresarial */}
-          <div className="rounded-2xl border border-white/5 bg-[var(--navy-light)] p-8 transition-all hover:border-[var(--cyan-accent)]/20">
+          <div className="rounded-2xl border border-white/5 bg-(--navy-light) p-8 transition-all hover:border-(--cyan-accent)/20">
             <h3 className="mb-2 text-xl font-bold">Empresarial</h3>
             <p className="mb-6 text-sm text-white/60">
               Solución customizada multiorganización.
@@ -172,7 +180,7 @@ function PlanItem({
       <Icon
         className={cn(
           "h-5 w-5 shrink-0",
-          negative ? "text-white/30" : "text-[var(--cyan-accent)]"
+          negative ? "text-white/30" : "text-(--cyan-accent)"
         )}
         aria-hidden
       />

@@ -11,35 +11,35 @@ export const metadata = {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen">
+    <main className="flex min-h-screen items-stretch">
       {/* Left: Branding (hidden on mobile) */}
-      <div className="hidden min-h-screen lg:block lg:flex-1">
+      <div className="hidden lg:flex lg:min-h-screen lg:flex-1">
         <AuthBrandingPanel />
       </div>
 
       {/* Right: Form */}
-      <div className="flex min-h-screen w-full flex-col justify-between bg-white lg:w-1/2">
+      <div className="flex min-h-screen w-full flex-1 flex-col justify-between bg-white lg:w-1/2">
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 lg:px-12">
           <div className="w-full max-w-md">
             {/* Logo */}
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-[var(--navy-deep)]"
+              className="inline-flex items-center gap-2 text-(--navy-deep)"
             >
               <Waves
-                className="h-8 w-8 text-[var(--cyan-accent)]"
+                className="h-8 w-8 text-(--cyan-accent)"
                 strokeWidth={1.5}
               />
               <span className="text-xl font-bold tracking-tight">
-                CONANP <span className="text-[var(--cyan-accent)]">ERP</span>
+                CONANP <span className="text-(--cyan-accent)">ERP</span>
               </span>
             </Link>
 
-            <h1 className="mt-8 text-3xl font-bold text-[var(--navy-deep)]">
-              Welcome back
+            <h1 className="mt-8 text-3xl font-bold text-(--navy-deep)">
+              Bienvenido de nuevo
             </h1>
             <p className="mt-2 text-slate-500">
-              Please enter your credentials to access the ERP
+              Ingresa tus credenciales para acceder al sistema
             </p>
 
             <div className="mt-8 rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
@@ -47,10 +47,10 @@ export default function LoginPage() {
             </div>
 
             <p className="mt-8 text-center text-sm text-slate-500">
-              Don&apos;t have an account?{" "}
+              ¿No tienes cuenta?{" "}
               <Link
                 href="/register"
-                className="font-medium text-[var(--cyan-accent)] hover:text-[var(--cyan-hover)]"
+                className="font-medium text-(--cyan-accent) hover:text-(--cyan-hover)"
               >
                 Crear cuenta
               </Link>
@@ -62,15 +62,15 @@ export default function LoginPage() {
         <footer className="border-t border-slate-100 px-6 py-6 lg:px-12">
           <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400">
             <Link href="#" className="hover:text-slate-600">
-              PRIVACY
+              Privacidad
             </Link>
             <span aria-hidden>•</span>
             <Link href="#" className="hover:text-slate-600">
-              SECURITY
+              Seguridad
             </Link>
             <span aria-hidden>•</span>
             <Link href="#" className="hover:text-slate-600">
-              SUPPORT
+              Soporte
             </Link>
           </div>
         </footer>

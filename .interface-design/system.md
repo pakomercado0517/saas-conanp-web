@@ -6,16 +6,16 @@
 
 > **Usar SIEMPRE estos colores en futuras sesiones.** Definidos en `src/app/globals.css` como variables CSS.
 
-| Variable        | Hex       | Uso                                      |
-|-----------------|-----------|------------------------------------------|
-| `--navy-deep`   | `#0a192f` | Fondo oscuro (nav, hero, footer, pricing)|
-| `--navy-light`  | `#112240` | Cards sobre fondos navy                  |
-| `--cyan-accent` | `#64ffda` | Acento, botones primarios, highlights    |
-| `--cyan-hover`  | `#45d9b8` | Hover de botones cyan                    |
-| `--light-grey`  | `#f8fafc` | Secciones claras, fondos alternos        |
-| `--slate-text`  | `#8892b0` | Texto secundario sobre fondos oscuros    |
+| Variable        | Hex       | Uso                                       |
+| --------------- | --------- | ----------------------------------------- |
+| `--navy-deep`   | `#0a192f` | Fondo oscuro (nav, hero, footer, pricing) |
+| `--navy-light`  | `#112240` | Cards sobre fondos navy                   |
+| `--cyan-accent` | `#64ffda` | Acento, botones primarios, highlights     |
+| `--cyan-hover`  | `#45d9b8` | Hover de botones cyan                     |
+| `--light-grey`  | `#f8fafc` | Secciones claras, fondos alternos         |
+| `--slate-text`  | `#8892b0` | Texto secundario sobre fondos oscuros     |
 
-En Tailwind: `bg-[var(--navy-deep)]`, `text-[var(--cyan-accent)]`, etc.
+En Tailwind: `bg-[var(--navy-deep)]`, `text-(--cyan-accent)`, etc.
 
 ---
 
@@ -67,7 +67,7 @@ En Tailwind: `bg-[var(--navy-deep)]`, `text-[var(--cyan-accent)]`, etc.
 ### Botones outline (cyan)
 
 - `border border-[var(--cyan-accent)]/30`
-- `text-[var(--cyan-accent)]`
+- `text-(--cyan-accent)`
 - `hover:bg-[var(--cyan-accent)]/5`
 
 ### Iconos

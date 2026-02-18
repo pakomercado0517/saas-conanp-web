@@ -11,31 +11,31 @@ export const metadata = {
 
 export default function ForgotPasswordPage() {
   return (
-    <main className="flex min-h-screen">
+    <main className="flex min-h-screen items-stretch">
       {/* Left: Branding (hidden on mobile) */}
-      <div className="hidden min-h-screen lg:block lg:flex-1">
+      <div className="hidden lg:flex lg:min-h-screen lg:flex-1">
         <AuthBrandingPanel />
       </div>
 
       {/* Right: Form */}
-      <div className="flex min-h-screen w-full flex-col justify-between bg-white lg:w-1/2">
+      <div className="flex min-h-screen w-full flex-1 flex-col justify-between bg-white lg:w-1/2">
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 lg:px-12">
           <div className="w-full max-w-md">
             {/* Logo */}
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-[var(--navy-deep)]"
+              className="inline-flex items-center gap-2 text-(--navy-deep)"
             >
               <Waves
-                className="h-8 w-8 text-[var(--cyan-accent)]"
+                className="h-8 w-8 text-(--cyan-accent)"
                 strokeWidth={1.5}
               />
               <span className="text-xl font-bold tracking-tight">
-                CONANP <span className="text-[var(--cyan-accent)]">ERP</span>
+                CONANP <span className="text-(--cyan-accent)">ERP</span>
               </span>
             </Link>
 
-            <h1 className="mt-8 text-3xl font-bold text-[var(--navy-deep)]">
+            <h1 className="mt-8 text-3xl font-bold text-(--navy-deep)">
               Recuperar contraseña
             </h1>
             <p className="mt-2 text-slate-500">
@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
               ¿Recordaste tu contraseña?{" "}
               <Link
                 href="/login"
-                className="font-medium text-[var(--cyan-accent)] hover:text-[var(--cyan-hover)]"
+                className="font-medium text-(--cyan-accent) hover:text-(--cyan-hover)"
               >
                 Iniciar sesión
               </Link>
@@ -62,15 +62,15 @@ export default function ForgotPasswordPage() {
         <footer className="border-t border-slate-100 px-6 py-6 lg:px-12">
           <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400">
             <Link href="#" className="hover:text-slate-600">
-              PRIVACY
+              Privacidad
             </Link>
             <span aria-hidden>•</span>
             <Link href="#" className="hover:text-slate-600">
-              SECURITY
+              Seguridad
             </Link>
             <span aria-hidden>•</span>
             <Link href="#" className="hover:text-slate-600">
-              SUPPORT
+              Soporte
             </Link>
           </div>
         </footer>
