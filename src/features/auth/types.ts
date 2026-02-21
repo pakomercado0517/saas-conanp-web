@@ -1,1 +1,106 @@
-export type AuthFeatureReady = true;
+/**
+ * Contratos de API de autenticación (docs/api_routes/authentication.md).
+ */
+
+export const AUTH_FEATURE_KEY = "auth";
+
+/** Usuario mínimo para sesión (login/register). */
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+}
+
+/** Respuesta estándar exitosa del backend. */
+export interface ApiSuccessResponse<T> {
+  success: true;
+  data: T;
+  message?: string;
+  timestamp?: string;
+}
+
+// --- Payloads (request body) ---
+
+export interface RegisterPayload {
+  email: string;
+  password: string;
+  name: string;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ResetPasswordPayload {
+  token: string;
+  newPassword: string;
+}
+
+export interface ResendVerificationPayload {
+  email: string;
+}
+
+export interface RefreshPayload {
+  refreshToken: string;
+}
+
+export interface LogoutPayload {
+  refreshToken: string;
+}
+
+// --- Response data (campo `data` de la respuesta) ---
+
+export interface RegisterResponseData {
+  user: AuthUser;
+  message: string;
+}
+
+export interface AuthResponseData {
+  user: AuthUser;
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
+export interface VerifyEmailResponseData {
+  verified: boolean;
+}
+
+export interface ResendVerificationResponseData {
+  sent: boolean;
+}
+
+export interface ForgotPasswordResponseData {
+  sent: boolean;
+}
+
+export interface ResetPasswordResponseData {
+  reset: boolean;
+}
+
+export interface RefreshResponseData {
+  accessToken: string;
+  expiresIn: number;
+}
+
+/** GET /me devuelve userId y email (no name en la doc). */
+export interface MeResponseData {
+  userId: string;
+  email: string;
+}
+
+// --- Sesión en cliente ---
+
+export interface AuthSession {
+  user: AuthUser;
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  /** Timestamp (ms) en que expira el access token. */
+  expiresAt: number;
+}

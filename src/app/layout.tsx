@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Roboto_Slab } from "next/font/google";
 import "./globals.css";
+import { QueryProvider } from "./providers/QueryProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,7 +27,9 @@ type RootLayoutProps = Readonly<{
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="es" className={robotoSlab.variable}>
-      <body className={`${inter.className} antialiased`}>{children}</body>
+      <body className={`${inter.className} antialiased`}>
+        <QueryProvider>{children}</QueryProvider>
+      </body>
     </html>
   );
 }

@@ -4,40 +4,47 @@ import { useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mail, Lock, LogIn } from "lucide-react";
+import { Lock, KeyRound } from "lucide-react";
 import { ApiError, getApiErrorMessage } from "@/shared/types/api";
-import { useAuth } from "../hooks/useAuth";
-import { loginSchema, type LoginFormData } from "../schemas/auth.schema";
+import * as authApi from "../services/auth.api";
+import { resetPasswordSchema, type ResetPasswordFormData } from "../schemas/auth.schema";
 
-const defaultValues: LoginFormData = {
-  email: "",
-  password: "",
-};
+interface ResetPasswordFormProps {
+  token: string;
+}
 
-export function LoginForm() {
-  const [rememberMe, setRememberMe] = useState(false);
+export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
+  const [success, setSuccess] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const { login } = useAuth();
   const {
     register: registerField,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues,
+  } = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      token,
+      newPassword: "",
+      confirmPassword: "",
+    },
   });
 
-  async function onSubmit(data: LoginFormData) {
+  async function onSubmit(data: ResetPasswordFormData) {
     setServerError(null);
     try {
-      await login(data.email, data.password);
+      await authApi.resetPassword({
+        token: data.token,
+        newPassword: data.newPassword,
+      });
+      setSuccess(true);
     } catch (err) {
       const message = getApiErrorMessage(err);
       if (err instanceof ApiError && err.details.length > 0) {
         err.details.forEach(({ campo, mensaje }) => {
-          if (campo === "email" || campo === "password") {
-            setError(campo, { type: "server", message: mensaje });
+          const key = campo as keyof ResetPasswordFormData;
+          if (key === "newPassword" || key === "confirmPassword" || key === "token") {
+            setError(key, { type: "server", message: mensaje });
           }
         });
       } else {
@@ -46,8 +53,26 @@ export function LoginForm() {
     }
   }
 
+  if (success) {
+    return (
+      <div className="mt-6 space-y-5">
+        <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center">
+          <p className="text-sm text-green-800">Contraseña restablecida exitosamente</p>
+          <p className="mt-2 text-xs text-green-700">Ya puedes iniciar sesión con tu nueva contraseña.</p>
+        </div>
+        <Link
+          href="/login"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-(--navy-deep) py-3 font-bold text-white shadow-md transition-colors hover:bg-(--navy-light)"
+        >
+          Iniciar sesión
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5">
+      <input type="hidden" {...registerField("token")} value={token} />
       {serverError && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
           {serverError}
@@ -55,38 +80,10 @@ export function LoginForm() {
       )}
       <div>
         <label
-          htmlFor="email"
+          htmlFor="newPassword"
           className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-(--navy-deep)"
         >
-          Correo electrónico
-        </label>
-        <div className="relative">
-          <Mail
-            className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
-            aria-hidden
-          />
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="name@conanp.gob.mx"
-            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-(--navy-deep) placeholder:text-slate-400 focus:border-(--cyan-accent)/50 focus:outline-none focus:ring-1 focus:ring-(--cyan-accent)/50"
-            {...registerField("email")}
-          />
-        </div>
-        {errors.email && (
-          <p className="mt-1 text-sm text-red-600" role="alert">
-            {errors.email.message}
-          </p>
-        )}
-      </div>
-
-      <div>
-        <label
-          htmlFor="password"
-          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-(--navy-deep)"
-        >
-          Contraseña
+          Nueva contraseña
         </label>
         <div className="relative">
           <Lock
@@ -94,46 +91,54 @@ export function LoginForm() {
             aria-hidden
           />
           <input
-            id="password"
+            id="newPassword"
             type="password"
-            autoComplete="current-password"
+            autoComplete="new-password"
             placeholder="••••••••"
             className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-(--navy-deep) placeholder:text-slate-400 focus:border-(--cyan-accent)/50 focus:outline-none focus:ring-1 focus:ring-(--cyan-accent)/50"
-            {...registerField("password")}
+            {...registerField("newPassword")}
           />
         </div>
-        {errors.password && (
+        {errors.newPassword && (
           <p className="mt-1 text-sm text-red-600" role="alert">
-            {errors.password.message}
+            {errors.newPassword.message}
           </p>
         )}
       </div>
-
-      <div className="flex items-center justify-between">
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-(--navy-deep) focus:ring-(--cyan-accent)/50"
-          />
-          <span className="text-sm text-slate-600">Recordarme</span>
-        </label>
-        <Link
-          href="/forgot-password"
-          className="text-sm font-medium text-(--cyan-accent) hover:text-(--cyan-hover)"
+      <div>
+        <label
+          htmlFor="confirmPassword"
+          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-(--navy-deep)"
         >
-          ¿Olvidaste tu contraseña?
-        </Link>
+          Confirmar contraseña
+        </label>
+        <div className="relative">
+          <Lock
+            className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+            aria-hidden
+          />
+          <input
+            id="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            placeholder="••••••••"
+            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-(--navy-deep) placeholder:text-slate-400 focus:border-(--cyan-accent)/50 focus:outline-none focus:ring-1 focus:ring-(--cyan-accent)/50"
+            {...registerField("confirmPassword")}
+          />
+        </div>
+        {errors.confirmPassword && (
+          <p className="mt-1 text-sm text-red-600" role="alert">
+            {errors.confirmPassword.message}
+          </p>
+        )}
       </div>
-
       <button
         type="submit"
         disabled={isSubmitting}
         className="flex w-full items-center justify-center gap-2 rounded-lg bg-(--navy-deep) py-3 font-bold text-white shadow-md transition-colors hover:bg-(--navy-light) disabled:opacity-70"
       >
-        <LogIn className="h-5 w-5" aria-hidden />
-        {isSubmitting ? "Iniciando sesión…" : "Iniciar sesión"}
+        <KeyRound className="h-5 w-5" aria-hidden />
+        {isSubmitting ? "Restableciendo…" : "Restablecer contraseña"}
       </button>
     </form>
   );

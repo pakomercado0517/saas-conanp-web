@@ -11,6 +11,7 @@
     "verify:all": "pnpm lint && pnpm typecheck && pnpm build"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@stripe/stripe-js": "^8.7.0",
     "@tanstack/react-query": "^5.90.21",
     "clsx": "^2.1.1",

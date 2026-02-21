@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Waves } from "lucide-react";
 import { AuthBrandingPanel } from "@/features/auth/components/AuthBrandingPanel";
+import { GuestRedirect } from "@/features/auth/components/GuestRedirect";
 import { RegisterForm } from "@/features/auth/components/RegisterForm";
 
 export const metadata = {
@@ -11,6 +12,7 @@ export const metadata = {
 
 export default function RegisterPage() {
   return (
+    <GuestRedirect>
     <main className="flex min-h-screen items-stretch">
       {/* Left: Branding (hidden on mobile) */}
       <div className="hidden lg:flex lg:min-h-screen lg:flex-1">
@@ -76,5 +78,6 @@ export default function RegisterPage() {
         </footer>
       </div>
     </main>
+    </GuestRedirect>
   );
 }
