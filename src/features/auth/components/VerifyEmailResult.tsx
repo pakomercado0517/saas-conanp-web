@@ -11,36 +11,40 @@ interface VerifyEmailResultProps {
 
 type Status = "idle" | "loading" | "success" | "error";
 
+const INVALID_TOKEN_MESSAGE =
+  "Token de verificación inválido o expirado. Solicita uno nuevo.";
+
+function getInitialState(token: string | null): { status: Status; message: string } {
+  if (!token || token.length < 10) {
+    return { status: "error", message: INVALID_TOKEN_MESSAGE };
+  }
+  return { status: "loading", message: "" };
+}
+
 export function VerifyEmailResult({ token }: VerifyEmailResultProps) {
-  const [status, setStatus] = useState<Status>("idle");
-  const [message, setMessage] = useState<string>("");
+  const [state, setState] = useState(() => getInitialState(token));
 
   useEffect(() => {
-    if (!token || token.length < 10) {
-      setStatus("error");
-      setMessage("Token de verificación inválido o expirado. Solicita uno nuevo.");
-      return;
-    }
+    if (!token || token.length < 10) return;
     let cancelled = false;
-    setStatus("loading");
     authApi
       .verifyEmail(token)
       .then(() => {
         if (!cancelled) {
-          setStatus("success");
-          setMessage("Correo electrónico verificado exitosamente");
+          setState({ status: "success", message: "Correo electrónico verificado exitosamente" });
         }
       })
       .catch((err) => {
         if (!cancelled) {
-          setStatus("error");
-          setMessage(getApiErrorMessage(err));
+          setState({ status: "error", message: getApiErrorMessage(err) });
         }
       });
     return () => {
       cancelled = true;
     };
   }, [token]);
+
+  const { status, message } = state;
 
   if (status === "loading" || status === "idle") {
     return (

@@ -16,20 +16,20 @@ export function GuestRedirect({ children }: GuestRedirectProps) {
   const accessToken = useAuthStore((s) => s.accessToken);
   const refreshToken = useAuthStore((s) => s.refreshToken);
   const refreshAccessToken = useAuthStore((s) => s.refreshAccessToken);
-  const [ready, setReady] = useState(false);
+  /** null = pendiente, false = refresh terminó sin token (mostrar contenido) */
+  const [refreshDone, setRefreshDone] = useState<boolean | null>(null);
+
+  const ready = accessToken === null && (refreshToken === null || refreshDone === false);
 
   useEffect(() => {
-    if (accessToken) {
+    if (accessToken !== null) {
       router.replace("/select-organization");
       return;
     }
-    if (!refreshToken) {
-      setReady(true);
-      return;
-    }
+    if (refreshToken === null) return;
     refreshAccessToken().then((token) => {
       if (token) router.replace("/select-organization");
-      else setReady(true);
+      else setRefreshDone(false);
     });
   }, [accessToken, refreshToken, refreshAccessToken, router]);
 

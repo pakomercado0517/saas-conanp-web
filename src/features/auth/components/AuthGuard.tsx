@@ -17,28 +17,30 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const accessToken = useAuthStore((s) => s.accessToken);
   const refreshToken = useAuthStore((s) => s.refreshToken);
   const refreshAccessToken = useAuthStore((s) => s.refreshAccessToken);
-  const [ready, setReady] = useState(false);
-  const [checking, setChecking] = useState(true);
+  /** null = pendiente, true = refresh ok, false = refresh falló */
+  const [refreshDone, setRefreshDone] = useState<boolean | null>(null);
+
+  const ready = accessToken !== null || refreshDone === true;
+  const checking = accessToken === null && refreshToken !== null && refreshDone === null;
 
   useEffect(() => {
-    if (accessToken) {
-      setReady(true);
-      setChecking(false);
-      return;
-    }
-    if (!refreshToken) {
+    if (accessToken !== null) return;
+    if (refreshToken === null) {
       router.replace("/login");
       return;
     }
     refreshAccessToken()
       .then((token) => {
-        if (token) setReady(true);
-        else router.replace("/login");
+        setRefreshDone(!!token);
+        if (!token) router.replace("/login");
       })
-      .finally(() => setChecking(false));
+      .catch(() => {
+        setRefreshDone(false);
+        router.replace("/login");
+      });
   }, [accessToken, refreshToken, refreshAccessToken, router]);
 
-  if (checking && !ready) {
+  if (checking) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white">
         <p className="text-sm text-slate-500">Cargando…</p>
