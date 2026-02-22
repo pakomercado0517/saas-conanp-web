@@ -21,10 +21,16 @@ export interface ApiSuccessResponse<T> {
 
 // --- Payloads (request body) ---
 
+/** invitationId + token (enlace) O invitationId + invitationProof (código manual tras OTP); no ambos. */
 export interface RegisterPayload {
   email: string;
   password: string;
   name: string;
+  invitationId: string;
+  /** Token del enlace de invitación (flujo por enlace). */
+  token?: string;
+  /** Comprobante de verify-email/confirm (flujo por código manual). */
+  invitationProof?: string;
 }
 
 export interface LoginPayload {

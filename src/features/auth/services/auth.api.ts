@@ -31,9 +31,17 @@ async function request<T>(path: string, options: { method?: string; body?: unkno
   return (res as ApiSuccessResponse<T>).data;
 }
 
-/** POST /register */
+/** POST /register — invitación: invitationId + token (enlace) o invitationId + invitationProof (código manual). */
 export async function register(payload: RegisterPayload): Promise<RegisterResponseData> {
-  return request<RegisterResponseData>("register", { method: "POST", body: payload });
+  const body: Record<string, unknown> = {
+    email: payload.email,
+    password: payload.password,
+    name: payload.name,
+    invitationId: payload.invitationId,
+  };
+  if (payload.token) body.token = payload.token;
+  else if (payload.invitationProof) body.invitationProof = payload.invitationProof;
+  return request<RegisterResponseData>("register", { method: "POST", body });
 }
 
 /** POST /login */

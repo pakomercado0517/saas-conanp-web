@@ -3,22 +3,51 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { User, Mail, Lock, UserPlus } from "lucide-react";
 import { ApiError, getApiErrorMessage } from "@/shared/types/api";
 import * as authApi from "../services/auth.api";
 import { registerSchema, type RegisterFormData } from "../schemas/auth.schema";
 
-const defaultValues: RegisterFormData = {
+export interface RegisterFormProps {
+  invitationId: string;
+  defaultEmail: string;
+  /** Token del enlace (flujo por enlace); no enviar si se usa invitationProof. */
+  token?: string;
+  /** Comprobante de verify-email/confirm (flujo por código manual). */
+  invitationProof?: string;
+}
+
+const getDefaultValues = (
+  invitationId: string,
+  defaultEmail: string,
+  token?: string,
+  invitationProof?: string
+): RegisterFormData => ({
   name: "",
-  email: "",
+  email: defaultEmail,
   password: "",
   confirmPassword: "",
-};
+  invitationId,
+  token: token ?? "",
+  invitationProof: invitationProof ?? "",
+});
 
-export function RegisterForm() {
+/** True cuando el registro es con invitación (enlace o proof): no hay paso de verificar correo. */
+function needsEmailVerification(message: string): boolean {
+  return /verificar|correo|revisa tu correo/i.test(message) ?? false;
+}
+
+export function RegisterForm({
+  invitationId,
+  defaultEmail,
+  token,
+  invitationProof,
+}: RegisterFormProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const fromInvitation = Boolean(token || invitationProof);
   const {
     register: registerField,
     handleSubmit,
@@ -27,7 +56,7 @@ export function RegisterForm() {
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
-    defaultValues,
+    defaultValues: getDefaultValues(invitationId, defaultEmail, token, invitationProof),
   });
 
   async function onSubmit(data: RegisterFormData) {
@@ -37,14 +66,18 @@ export function RegisterForm() {
         name: data.name,
         email: data.email,
         password: data.password,
+        invitationId: data.invitationId,
+        ...(data.token ? { token: data.token } : { invitationProof: data.invitationProof }),
       });
-      setSuccessMessage(res.message ?? "Revisa tu correo electrónico para verificar tu cuenta.");
+      setSuccessMessage(
+        res.message ?? (fromInvitation ? "Cuenta creada. Ya puedes iniciar sesión." : "Revisa tu correo electrónico para verificar tu cuenta.")
+      );
     } catch (err) {
       const message = getApiErrorMessage(err);
       if (err instanceof ApiError && err.details.length > 0) {
         err.details.forEach(({ campo, mensaje }) => {
           const key = campo as keyof RegisterFormData;
-          if (key in defaultValues) {
+          if (key in getDefaultValues("", "", undefined, undefined)) {
             setError(key, { type: "server", message: mensaje });
           }
         });
@@ -72,21 +105,33 @@ export function RegisterForm() {
   }
 
   if (successMessage) {
+    const showResend = !fromInvitation && needsEmailVerification(successMessage);
     return (
       <div className="mt-8 space-y-5">
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center">
           <p className="text-sm text-slate-600">{successMessage}</p>
-          <p className="mt-2 text-xs text-slate-500">
-            Revisa tu bandeja de entrada y carpeta de spam.
-          </p>
-          <button
-            type="button"
-            onClick={handleResendVerification}
-            disabled={resendLoading}
-            className="mt-3 text-sm font-medium text-(--cyan-accent) hover:text-(--cyan-hover) disabled:opacity-70"
-          >
-            {resendLoading ? "Enviando…" : "Reenviar correo de verificación"}
-          </button>
+          {showResend ? (
+            <>
+              <p className="mt-2 text-xs text-slate-500">
+                Revisa tu bandeja de entrada y carpeta de spam.
+              </p>
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                disabled={resendLoading}
+                className="mt-3 text-sm font-medium text-(--cyan-accent) hover:text-(--cyan-hover) disabled:opacity-70"
+              >
+                {resendLoading ? "Enviando…" : "Reenviar correo de verificación"}
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="mt-4 inline-block rounded-lg bg-(--navy-deep) px-4 py-2 text-sm font-medium text-white hover:bg-(--navy-light)"
+            >
+              Ir a iniciar sesión
+            </Link>
+          )}
         </div>
       </div>
     );
@@ -95,10 +140,16 @@ export function RegisterForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
       {serverError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+        <div
+          className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+          role="alert"
+        >
           {serverError}
         </div>
       )}
+      <input type="hidden" {...registerField("invitationId")} />
+      <input type="hidden" {...registerField("token")} />
+      <input type="hidden" {...registerField("invitationProof")} />
       <div>
         <label
           htmlFor="name"
@@ -143,11 +194,14 @@ export function RegisterForm() {
             id="email"
             type="email"
             autoComplete="email"
-            placeholder="name@conanp.gob.mx"
-            className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-4 text-(--navy-deep) placeholder:text-slate-400 focus:border-(--cyan-accent)/50 focus:outline-none focus:ring-1 focus:ring-(--cyan-accent)/50"
+            readOnly
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-(--navy-deep)"
             {...registerField("email")}
           />
         </div>
+        <p className="mt-1 text-xs text-slate-500">
+          Debe coincidir con el email de la invitación.
+        </p>
         {errors.email && (
           <p className="mt-1 text-sm text-red-600" role="alert">
             {errors.email.message}
@@ -221,7 +275,9 @@ export function RegisterForm() {
       </button>
 
       <p className="text-center text-sm text-slate-500">
-        Al registrarte, recibirás un correo para verificar tu cuenta.
+        {fromInvitation
+          ? "Al registrarte podrás iniciar sesión de inmediato."
+          : "Al registrarte, recibirás un correo para verificar tu cuenta."}
       </p>
     </form>
   );

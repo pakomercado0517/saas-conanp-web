@@ -2,15 +2,23 @@ import Link from "next/link";
 import { Waves } from "lucide-react";
 import { AuthBrandingPanel } from "@/features/auth/components/AuthBrandingPanel";
 import { GuestRedirect } from "@/features/auth/components/GuestRedirect";
-import { RegisterForm } from "@/features/auth/components/RegisterForm";
+import { RegisterFlow } from "@/features/auth/components/RegisterFlow";
 
 export const metadata = {
   title: "Registro | CONANP ERP",
   description:
-    "Crea tu cuenta en la plataforma de gestión de Áreas Naturales Protegidas",
+    "Crea tu cuenta con tu invitación a la plataforma de gestión de Áreas Naturales Protegidas",
 };
 
-export default function RegisterPage() {
+type Props = {
+  searchParams: Promise<{ invitationId?: string; token?: string }>;
+};
+
+export default async function RegisterPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const invitationId = params.invitationId ?? null;
+  const token = params.token ?? null;
+
   return (
     <GuestRedirect>
     <main className="flex min-h-screen items-stretch">
@@ -41,11 +49,14 @@ export default function RegisterPage() {
               Crear cuenta
             </h1>
             <p className="mt-2 text-slate-500">
-              Completa tus datos para acceder a la plataforma
+              Necesitas una invitación para registrarte. Usa el enlace del correo o ingresa tu código.
             </p>
 
             <div className="mt-8 rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
-              <RegisterForm />
+              <RegisterFlow
+                invitationIdFromUrl={invitationId}
+                tokenFromUrl={token}
+              />
             </div>
 
             <p className="mt-8 text-center text-sm text-slate-500">
