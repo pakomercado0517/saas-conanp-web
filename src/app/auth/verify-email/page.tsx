@@ -49,7 +49,7 @@ export default async function VerifyEmailPage({ searchParams }: Props) {
         </div>
         <footer className="border-t border-slate-100 px-6 py-6 lg:px-12">
           <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400">
-            <Link href="/login" className="hover:text-slate-600">
+            <Link href="/auth/login" className="hover:text-slate-600">
               Iniciar sesión
             </Link>
           </div>

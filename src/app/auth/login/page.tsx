@@ -51,7 +51,7 @@ export default function LoginPage() {
             <p className="mt-8 text-center text-sm text-slate-500">
               ¿No tienes cuenta?{" "}
               <Link
-                href="/register"
+                href="/auth/register"
                 className="font-medium text-(--cyan-accent) hover:text-(--cyan-hover)"
               >
                 Crear cuenta

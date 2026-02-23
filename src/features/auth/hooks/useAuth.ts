@@ -39,7 +39,7 @@ export function useAuth() {
       }
     }
     clearSession();
-    router.push("/login");
+    router.push("/auth/login");
   }, [clearSession, router]);
 
   const refreshIfNeeded = useCallback(async (): Promise<string | null> => {
@@ -51,7 +51,7 @@ export function useAuth() {
       return data.accessToken;
     } catch {
       clearSession();
-      router.push("/login");
+      router.push("/auth/login");
       return null;
     }
   }, [clearSession, router]);

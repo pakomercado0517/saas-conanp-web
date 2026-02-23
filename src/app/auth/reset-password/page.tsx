@@ -54,13 +54,13 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
                     </p>
                   </div>
                   <Link
-                    href="/forgot-password"
+                    href="/auth/forgot-password"
                     className="flex w-full items-center justify-center gap-2 rounded-lg bg-(--navy-deep) py-3 font-bold text-white shadow-md transition-colors hover:bg-(--navy-light)"
                   >
                     Recuperar contraseña
                   </Link>
                   <Link
-                    href="/login"
+                    href="/auth/login"
                     className="mt-2 flex w-full justify-center text-sm text-(--cyan-accent) hover:text-(--cyan-hover)"
                   >
                     Iniciar sesión
@@ -71,7 +71,7 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
             <p className="mt-8 text-center text-sm text-slate-500">
               ¿Recordaste tu contraseña?{" "}
               <Link
-                href="/login"
+                href="/auth/login"
                 className="font-medium text-(--cyan-accent) hover:text-(--cyan-hover)"
               >
                 Iniciar sesión
@@ -81,7 +81,7 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
         </div>
         <footer className="border-t border-slate-100 px-6 py-6 lg:px-12">
           <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400">
-            <Link href="/login" className="hover:text-slate-600">
+            <Link href="/auth/login" className="hover:text-slate-600">
               Iniciar sesión
             </Link>
           </div>

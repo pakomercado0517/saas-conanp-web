@@ -10,9 +10,9 @@ export function EmailSignupSection() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (email.trim()) {
-      router.push(`/register?email=${encodeURIComponent(email.trim())}`);
+      router.push(`/auth/register?email=${encodeURIComponent(email.trim())}`);
     } else {
-      router.push("/register");
+      router.push("/auth/register");
     }
   }
 

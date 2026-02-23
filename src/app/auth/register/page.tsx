@@ -62,7 +62,7 @@ export default async function RegisterPage({ searchParams }: Props) {
             <p className="mt-8 text-center text-sm text-slate-500">
               ¿Ya tienes cuenta?{" "}
               <Link
-                href="/login"
+                href="/auth/login"
                 className="font-medium text-(--cyan-accent) hover:text-(--cyan-hover)"
               >
                 Iniciar sesión

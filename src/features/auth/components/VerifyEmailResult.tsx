@@ -62,7 +62,7 @@ export function VerifyEmailResult({ token }: VerifyEmailResultProps) {
           <p className="mt-2 text-xs text-green-700">Ya puedes iniciar sesión con tu cuenta.</p>
         </div>
         <Link
-          href="/login"
+          href="/auth/login"
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-(--navy-deep) py-3 font-bold text-white shadow-md transition-colors hover:bg-(--navy-light)"
         >
           Iniciar sesión
@@ -82,7 +82,7 @@ export function VerifyEmailResult({ token }: VerifyEmailResultProps) {
         </p>
       </div>
       <Link
-        href="/login"
+        href="/auth/login"
         className="flex w-full items-center justify-center gap-2 rounded-lg bg-(--navy-deep) py-3 font-bold text-white shadow-md transition-colors hover:bg-(--navy-light)"
       >
         Ir a Iniciar sesión

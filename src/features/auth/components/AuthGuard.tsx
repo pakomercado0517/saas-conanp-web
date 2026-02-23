@@ -10,7 +10,7 @@ interface AuthGuardProps {
 
 /**
  * Envuelve rutas que requieren sesión. Intenta refresh si hay refreshToken pero no accessToken;
- * si no hay sesión válida, redirige a /login.
+ * si no hay sesión válida, redirige a /auth/login.
  */
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
@@ -26,17 +26,17 @@ export function AuthGuard({ children }: AuthGuardProps) {
   useEffect(() => {
     if (accessToken !== null) return;
     if (refreshToken === null) {
-      router.replace("/login");
+      router.replace("/auth/login");
       return;
     }
     refreshAccessToken()
       .then((token) => {
         setRefreshDone(!!token);
-        if (!token) router.replace("/login");
+        if (!token) router.replace("/auth/login");
       })
       .catch(() => {
         setRefreshDone(false);
-        router.replace("/login");
+        router.replace("/auth/login");
       });
   }, [accessToken, refreshToken, refreshAccessToken, router]);
 

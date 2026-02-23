@@ -120,7 +120,7 @@ export function LoginForm() {
           <span className="text-sm text-slate-600">Recordarme</span>
         </label>
         <Link
-          href="/forgot-password"
+          href="/auth/forgot-password"
           className="text-sm font-medium text-(--cyan-accent) hover:text-(--cyan-hover)"
         >
           ¿Olvidaste tu contraseña?

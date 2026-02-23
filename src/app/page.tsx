@@ -47,7 +47,7 @@ export default function HomePage() {
               Planes
             </a>
             <Link
-              href="/login"
+              href="/auth/login"
               className="rounded bg-(--cyan-accent) px-5 py-2.5 font-bold text-(--navy-deep) transition-colors hover:bg-(--cyan-hover)"
             >
               Iniciar Sesión
@@ -75,7 +75,7 @@ export default function HomePage() {
               </p>
               <div className="flex flex-col gap-4 sm:flex-row">
                 <Link
-                  href="/register"
+                  href="/auth/register"
                   className="inline-flex items-center justify-center rounded bg-(--cyan-accent) px-8 py-4 font-bold text-(--navy-deep) shadow-lg shadow-(--cyan-accent)/10 transition-all hover:-translate-y-0.5"
                 >
                   Solicitar Acceso
