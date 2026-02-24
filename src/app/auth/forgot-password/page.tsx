@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
             <p className="mt-8 text-center text-sm text-slate-500">
               ¿Recordaste tu contraseña?{" "}
               <Link
-                href="/login"
+                href="/auth/login"
                 className="font-medium text-(--cyan-accent) hover:text-(--cyan-hover)"
               >
                 Iniciar sesión

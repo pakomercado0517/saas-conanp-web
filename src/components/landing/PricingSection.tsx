@@ -95,7 +95,7 @@ export function PricingSection() {
               <PlanItem icon={XCircle} label="Stripe Integration" negative />
             </ul>
             <Link
-              href="/register"
+              href="/auth/register"
               className="flex w-full items-center justify-center rounded border border-(--cyan-accent)/30 py-3 font-semibold text-(--cyan-accent) transition-colors hover:bg-(--cyan-accent)/5"
             >
               Comenzar
@@ -131,7 +131,7 @@ export function PricingSection() {
               <PlanItem icon={CheckCircle2} label="Gestión de Brazaletes" />
             </ul>
             <Link
-              href="/register"
+              href="/auth/register"
               className="flex w-full items-center justify-center rounded bg-(--cyan-accent) py-3 font-bold text-(--navy-deep) transition-colors hover:bg-(--cyan-hover)"
             >
               Seleccionar Plan

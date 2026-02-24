@@ -51,7 +51,7 @@ export function ForgotPasswordForm() {
           </p>
         </div>
         <Link
-          href="/login"
+          href="/auth/login"
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-(--navy-deep) py-3 font-bold text-white shadow-md transition-colors hover:bg-(--navy-light)"
         >
           Volver a Iniciar sesión

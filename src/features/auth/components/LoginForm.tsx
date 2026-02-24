@@ -14,7 +14,12 @@ const defaultValues: LoginFormData = {
   password: "",
 };
 
-export function LoginForm() {
+interface LoginFormProps {
+  /** URL a la que redirigir tras login (ej. dashboard de organización). */
+  returnTo?: string | null;
+}
+
+export function LoginForm({ returnTo }: LoginFormProps) {
   const [rememberMe, setRememberMe] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const { login } = useAuth();
@@ -31,7 +36,7 @@ export function LoginForm() {
   async function onSubmit(data: LoginFormData) {
     setServerError(null);
     try {
-      await login(data.email, data.password);
+      await login(data.email, data.password, returnTo);
     } catch (err) {
       const message = getApiErrorMessage(err);
       if (err instanceof ApiError && err.details.length > 0) {
@@ -120,7 +125,7 @@ export function LoginForm() {
           <span className="text-sm text-slate-600">Recordarme</span>
         </label>
         <Link
-          href="/forgot-password"
+          href="/auth/forgot-password"
           className="text-sm font-medium text-(--cyan-accent) hover:text-(--cyan-hover)"
         >
           ¿Olvidaste tu contraseña?

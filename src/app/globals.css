@@ -7,6 +7,11 @@
   --cyan-hover: #45d9b8;
   --light-grey: #f8fafc;
   --slate-text: #8892b0;
+  /* Dashboard (sidebar y acentos) */
+  --primary: #1152d4;
+  --navy-sidebar: #0f172a;
+  --background-light: #f6f6f8;
+  --background-dark: #101622;
 }
 
 @layer base {
