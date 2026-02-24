@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "../store/auth.store";
 
@@ -24,11 +24,11 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const ready = accessToken !== null || refreshDone === true;
   const checking = accessToken === null && refreshToken !== null && refreshDone === null;
 
-  const redirectToLogin = () => {
+  const redirectToLogin = useCallback(() => {
     const returnTo = pathname ? encodeURIComponent(pathname) : "";
     const query = returnTo ? `?returnTo=${returnTo}` : "";
     router.replace(`/auth/login${query}`);
-  };
+  }, [router, pathname]);
 
   useEffect(() => {
     if (accessToken !== null) return;
@@ -45,7 +45,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
         setRefreshDone(false);
         redirectToLogin();
       });
-  }, [accessToken, refreshToken, refreshAccessToken, router, pathname]);
+  }, [accessToken, refreshToken, refreshAccessToken, redirectToLogin]);
 
   if (checking) {
     return (
