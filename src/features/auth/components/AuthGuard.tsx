@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "../store/auth.store";
 
 interface AuthGuardProps {
@@ -10,10 +10,11 @@ interface AuthGuardProps {
 
 /**
  * Envuelve rutas que requieren sesión. Intenta refresh si hay refreshToken pero no accessToken;
- * si no hay sesión válida, redirige a /auth/login.
+ * si no hay sesión válida, redirige a /auth/login preservando la URL actual en returnTo.
  */
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const accessToken = useAuthStore((s) => s.accessToken);
   const refreshToken = useAuthStore((s) => s.refreshToken);
   const refreshAccessToken = useAuthStore((s) => s.refreshAccessToken);
@@ -23,22 +24,28 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const ready = accessToken !== null || refreshDone === true;
   const checking = accessToken === null && refreshToken !== null && refreshDone === null;
 
+  const redirectToLogin = () => {
+    const returnTo = pathname ? encodeURIComponent(pathname) : "";
+    const query = returnTo ? `?returnTo=${returnTo}` : "";
+    router.replace(`/auth/login${query}`);
+  };
+
   useEffect(() => {
     if (accessToken !== null) return;
     if (refreshToken === null) {
-      router.replace("/auth/login");
+      redirectToLogin();
       return;
     }
     refreshAccessToken()
       .then((token) => {
         setRefreshDone(!!token);
-        if (!token) router.replace("/auth/login");
+        if (!token) redirectToLogin();
       })
       .catch(() => {
         setRefreshDone(false);
-        router.replace("/auth/login");
+        redirectToLogin();
       });
-  }, [accessToken, refreshToken, refreshAccessToken, router]);
+  }, [accessToken, refreshToken, refreshAccessToken, router, pathname]);
 
   if (checking) {
     return (

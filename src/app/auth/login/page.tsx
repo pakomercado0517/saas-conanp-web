@@ -10,9 +10,17 @@ export const metadata = {
     "Accede a la plataforma de gestión de Áreas Naturales Protegidas",
 };
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<{ returnTo?: string }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams;
+  const returnTo =
+    typeof params.returnTo === "string" ? params.returnTo : undefined;
+
   return (
-    <GuestRedirect>
+    <GuestRedirect returnTo={returnTo}>
     <main className="flex min-h-screen items-stretch">
       {/* Left: Branding (hidden on mobile) */}
       <div className="hidden lg:flex lg:min-h-screen lg:flex-1">
@@ -45,7 +53,7 @@ export default function LoginPage() {
             </p>
 
             <div className="mt-8 rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
-              <LoginForm />
+              <LoginForm returnTo={returnTo} />
             </div>
 
             <p className="mt-8 text-center text-sm text-slate-500">

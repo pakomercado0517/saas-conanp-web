@@ -28,6 +28,7 @@ export function useOrganizations(options: UseOrganizationsOptions = {}) {
     data: query.data?.data,
     pagination: query.data?.pagination,
     isLoading: query.isLoading,
+    isFetching: query.isFetching,
     isError: query.isError,
     error: query.error,
     refetch: query.refetch,

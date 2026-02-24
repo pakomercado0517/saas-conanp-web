@@ -16,7 +16,7 @@ export function useAuth() {
   const isAuthenticated = Boolean(accessToken && user);
 
   const login = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, returnTo?: string | null) => {
       const data = await authApi.login({ email, password });
       setSession({
         user: data.user,
@@ -24,7 +24,11 @@ export function useAuth() {
         refreshToken: data.refreshToken,
         expiresIn: data.expiresIn,
       });
-      router.push("/select-organization");
+      const target =
+        returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")
+          ? returnTo
+          : "/select-organization";
+      router.push(target);
     },
     [setSession, router]
   );
