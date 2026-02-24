@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Waves, LogOut, Loader2, RefreshCw } from "lucide-react";
+import { Waves, Loader2, RefreshCw } from "lucide-react";
 
 export interface AppNavbarUser {
   name: string;

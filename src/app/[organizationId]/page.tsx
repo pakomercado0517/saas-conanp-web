@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   Globe,
@@ -243,10 +244,12 @@ export default function DashboardPage() {
 
           <div className="relative h-48 overflow-hidden rounded-xl border border-slate-800 bg-slate-900 group">
             <div className="absolute inset-0 z-10 bg-linear-to-t from-slate-900 to-transparent" />
-            <img
+            <Image
               src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80"
               alt="Vista de área natural protegida"
-              className="h-full w-full object-cover opacity-60 transition-transform duration-500 group-hover:scale-105"
+              fill
+              sizes="(max-width: 768px) 100vw, 800px"
+              className="object-cover opacity-60 transition-transform duration-500 group-hover:scale-105"
             />
             <div className="absolute bottom-4 left-4 z-20">
               <p className="font-bold text-white">Ver Mapa de Calor</p>
