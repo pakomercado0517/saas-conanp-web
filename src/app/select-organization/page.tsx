@@ -1,11 +1,11 @@
-import { OrganizationSelector } from "@/features/organizations/components/OrganizationSelector";
+import { DependenciaSelector } from "@/features/dependencias/components/DependenciaSelector";
 
 export const metadata = {
-  title: "Seleccionar organización | CONANP ERP",
+  title: "Seleccionar dependencia | CONANP ERP",
   description:
-    "Elige un área natural protegida para comenzar la gestión administrativa",
+    "Elige una dependencia para gestionar sus áreas naturales protegidas",
 };
 
 export default function SelectOrganizationPage() {
-  return <OrganizationSelector />;
+  return <DependenciaSelector />;
 }

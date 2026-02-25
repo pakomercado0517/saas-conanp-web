@@ -7,7 +7,7 @@ import { DashboardNavLinks } from "./DashboardNavLinks";
 import { DashboardUserBlock } from "./DashboardUserBlock";
 
 interface DashboardMobileDrawerProps {
-  organizationId: string;
+  areaId: string;
   open: boolean;
   onClose: () => void;
 }
@@ -16,7 +16,7 @@ interface DashboardMobileDrawerProps {
  * Drawer de navegación móvil. Mismo menú dinámico que el sidebar (DashboardNavLinks).
  */
 export function DashboardMobileDrawer({
-  organizationId,
+  areaId,
   open,
   onClose,
 }: DashboardMobileDrawerProps) {
@@ -66,11 +66,11 @@ export function DashboardMobileDrawer({
         </div>
 
         <DashboardNavLinks
-          organizationId={organizationId}
+          areaId={areaId}
           pathname={pathname}
           onNavigate={onClose}
         />
-        <DashboardUserBlock organizationId={organizationId} />
+        <DashboardUserBlock areaId={areaId} />
       </aside>
     </>
   );

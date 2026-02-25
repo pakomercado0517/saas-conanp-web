@@ -5,7 +5,6 @@ import {
   ShieldCheck,
   CalendarDays,
   BarChart3,
-  PlayCircle,
 } from "lucide-react";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { EmailSignupSection } from "@/components/landing/EmailSignupSection";
@@ -75,19 +74,21 @@ export default function HomePage() {
               </p>
               <div className="flex flex-col gap-4 sm:flex-row">
                 <Link
-                  href="/auth/register"
+                  href="/auth/login"
                   className="inline-flex items-center justify-center rounded bg-(--cyan-accent) px-8 py-4 font-bold text-(--navy-deep) shadow-lg shadow-(--cyan-accent)/10 transition-all hover:-translate-y-0.5"
                 >
-                  Solicitar Acceso
+                  Iniciar sesión
                 </Link>
                 <Link
-                  href="#demo"
+                  href="/auth/register"
                   className="inline-flex items-center justify-center gap-2 rounded border border-white/20 px-8 py-4 font-semibold text-white transition-colors hover:bg-white/5"
                 >
-                  <PlayCircle className="h-5 w-5" />
-                  Watch Demo
+                  ¿Tienes una invitación? Regístrate
                 </Link>
               </div>
+              <p className="text-sm text-(--slate-text)/80">
+                El acceso a la plataforma es por invitación o por alta de un administrador.
+              </p>
             </div>
             <div className="relative lg:ml-10">
               <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-(--cyan-accent) opacity-5 blur-[100px]" />

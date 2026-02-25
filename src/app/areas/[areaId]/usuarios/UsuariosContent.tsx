@@ -1,0 +1,236 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { getApiErrorMessage } from "@/shared/types/api";
+import { getDashboardHref } from "@/shared/config/dashboardNav";
+import { useMemberships } from "@/features/memberships/hooks/useMemberships";
+import { useInvitations } from "@/features/invitations/hooks/useInvitations";
+import { useCreateInvitation } from "@/features/invitations/hooks/useCreateInvitation";
+import { updateMembership } from "@/features/memberships/services/memberships.api";
+import { useAuthStore } from "@/features/auth/store/auth.store";
+import { useQueryClient } from "@tanstack/react-query";
+import type { MembershipRole } from "@/features/memberships/types";
+import type { CreateInvitationPayload } from "@/features/invitations/types";
+
+const ROLES: { value: MembershipRole; label: string }[] = [
+  { value: "admin", label: "Administrador" },
+  { value: "gestor", label: "Gestor" },
+  { value: "prestador", label: "Prestador" },
+  { value: "observador", label: "Observador" },
+];
+
+interface UsuariosContentProps {
+  areaId: string;
+}
+
+export function UsuariosContent({ areaId }: UsuariosContentProps) {
+  const queryClient = useQueryClient();
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const { data: members, isLoading: loadingMembers, error: membersError, refetch: refetchMembers } = useMemberships(areaId);
+  const { data: invitations, isLoading: loadingInvitations, refetch: refetchInvitations } = useInvitations(areaId);
+  const { create: createInvitation, isPending: creatingInvitation, error: createError } = useCreateInvitation(areaId);
+
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<MembershipRole>("prestador");
+  const [showInviteForm, setShowInviteForm] = useState(false);
+  const [roleUpdatingId, setRoleUpdatingId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFeedback(null);
+    if (!inviteEmail.trim()) return;
+    try {
+      const payload: CreateInvitationPayload = { email: inviteEmail.trim(), role: inviteRole };
+      await createInvitation(payload);
+      setInviteEmail("");
+      setShowInviteForm(false);
+      setFeedback({ type: "success", message: "Invitación enviada correctamente." });
+      refetchInvitations();
+    } catch (err) {
+      setFeedback({ type: "error", message: getApiErrorMessage(err) });
+    }
+  };
+
+  const handleRoleChange = async (membershipId: string, role: MembershipRole) => {
+    setRoleUpdatingId(membershipId);
+    setFeedback(null);
+    try {
+      await updateMembership(areaId, membershipId, { role }, accessToken ?? undefined);
+      setFeedback({ type: "success", message: "Rol actualizado." });
+      queryClient.invalidateQueries({ queryKey: ["memberships", areaId] });
+      refetchMembers();
+    } catch (err) {
+      setFeedback({ type: "error", message: getApiErrorMessage(err) });
+    } finally {
+      setRoleUpdatingId(null);
+    }
+  };
+
+  const inicioHref = getDashboardHref(areaId, "");
+
+  return (
+    <div className="p-4 md:p-6 space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+          Usuarios
+        </h1>
+        <div className="flex items-center gap-2">
+          {!showInviteForm ? (
+            <button
+              type="button"
+              onClick={() => setShowInviteForm(true)}
+              className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-300"
+            >
+              Invitar usuario
+            </button>
+          ) : (
+            <form onSubmit={handleInvite} className="flex flex-wrap items-center gap-2">
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="Correo electrónico"
+                className="rounded border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                required
+              />
+              <select
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value as MembershipRole)}
+                className="rounded border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              >
+                {ROLES.map((r) => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                disabled={creatingInvitation}
+                className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50 dark:bg-slate-200 dark:text-slate-900"
+              >
+                {creatingInvitation ? "Enviando…" : "Enviar invitación"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowInviteForm(false); setInviteEmail(""); setFeedback(null); }}
+                className="rounded-md border border-slate-300 px-4 py-2 text-sm dark:border-slate-600"
+              >
+                Cancelar
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+
+      {feedback && (
+        <div
+          className={`rounded-md border p-3 text-sm ${
+            feedback.type === "success"
+              ? "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-200"
+              : "border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200"
+          }`}
+        >
+          {feedback.message}
+        </div>
+      )}
+
+      {createError && !feedback && (
+        <p className="text-sm text-red-600 dark:text-red-400">
+          {getApiErrorMessage(createError)}
+        </p>
+      )}
+
+      <section>
+        <h2 className="mb-2 text-sm font-medium text-slate-600 dark:text-slate-400">
+          Miembros
+        </h2>
+        {loadingMembers ? (
+          <p className="text-sm text-slate-500">Cargando miembros…</p>
+        ) : membersError ? (
+          <p className="text-sm text-red-600 dark:text-red-400">
+            {getApiErrorMessage(membersError)}
+          </p>
+        ) : members?.length ? (
+          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+              <thead className="bg-slate-50 dark:bg-slate-800/50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">Usuario</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">Rol</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">Estado</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900/30">
+                {members.map((m) => (
+                  <tr key={m.id}>
+                    <td className="px-4 py-2 text-sm">
+                      {m.User?.name ?? m.User?.email ?? m.userId}
+                    </td>
+                    <td className="px-4 py-2 text-sm">{m.role}</td>
+                    <td className="px-4 py-2 text-sm">{m.status}</td>
+                    <td className="px-4 py-2">
+                      <select
+                        value={m.role}
+                        onChange={(e) => handleRoleChange(m.id, e.target.value as MembershipRole)}
+                        disabled={roleUpdatingId === m.id}
+                        className="rounded border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                      >
+                        {ROLES.map((r) => (
+                          <option key={r.value} value={r.value}>{r.label}</option>
+                        ))}
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500">No hay miembros en esta área.</p>
+        )}
+      </section>
+
+      <section>
+        <h2 className="mb-2 text-sm font-medium text-slate-600 dark:text-slate-400">
+          Invitaciones pendientes
+        </h2>
+        {loadingInvitations ? (
+          <p className="text-sm text-slate-500">Cargando invitaciones…</p>
+        ) : invitations?.length ? (
+          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+              <thead className="bg-slate-50 dark:bg-slate-800/50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">Correo</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">Rol</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">Estado</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">Vence</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900/30">
+                {invitations.map((inv) => (
+                  <tr key={inv.id}>
+                    <td className="px-4 py-2 text-sm">{inv.email}</td>
+                    <td className="px-4 py-2 text-sm">{inv.role}</td>
+                    <td className="px-4 py-2 text-sm">{inv.status}</td>
+                    <td className="px-4 py-2 text-sm">{inv.expiresAt ? new Date(inv.expiresAt).toLocaleDateString() : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500">No hay invitaciones pendientes.</p>
+        )}
+      </section>
+
+      <p className="text-sm text-slate-500">
+        <Link href={inicioHref} className="underline hover:no-underline">
+          Volver al inicio del área
+        </Link>
+      </p>
+    </div>
+  );
+}

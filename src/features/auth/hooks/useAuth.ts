@@ -27,7 +27,7 @@ export function useAuth() {
       const target =
         returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")
           ? returnTo
-          : "/select-organization";
+          : "/redirect";
       router.push(target);
     },
     [setSession, router]

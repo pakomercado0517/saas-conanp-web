@@ -8,13 +8,13 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
 
 interface DashboardUserBlockProps {
-  organizationId: string;
+  areaId: string;
 }
 
 /**
  * Bloque de usuario en sidebar/drawer. Engrane abre dropup con Configuración y Cerrar sesión.
  */
-export function DashboardUserBlock({ organizationId }: DashboardUserBlockProps) {
+export function DashboardUserBlock({ areaId }: DashboardUserBlockProps) {
   const [open, setOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -55,7 +55,7 @@ export function DashboardUserBlock({ organizationId }: DashboardUserBlockProps) 
     }
   };
 
-  const configHref = getDashboardHref(organizationId, "/configuracion");
+  const configHref = getDashboardHref(areaId, "/configuracion");
 
   return (
     <div className="relative border-t border-slate-800 p-4" ref={containerRef}>

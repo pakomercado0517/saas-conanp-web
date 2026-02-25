@@ -10,12 +10,20 @@ export const metadata = {
 };
 
 type Props = {
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ token?: string; initial?: string }>;
 };
 
 export default async function ResetPasswordPage({ searchParams }: Props) {
   const params = await searchParams;
   const token = params.token ?? null;
+  const isInitialSetup = params.initial === "1" || params.initial === "true";
+
+  const title = isInitialSetup
+    ? "Crear tu contraseña"
+    : "Restablecer contraseña";
+  const description = isInitialSetup
+    ? "Tu cuenta fue creada por un administrador. Establece tu contraseña para activar tu acceso."
+    : "Ingresa tu nueva contraseña. El enlace es válido por tiempo limitado.";
 
   return (
     <main className="flex min-h-screen items-stretch">
@@ -38,14 +46,14 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
               </span>
             </Link>
             <h1 className="mt-8 text-3xl font-bold text-(--navy-deep)">
-              Restablecer contraseña
+              {title}
             </h1>
             <p className="mt-2 text-slate-500">
-              Ingresa tu nueva contraseña. El enlace es válido por tiempo limitado.
+              {description}
             </p>
             <div className="mt-8 rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
               {token && token.length >= 10 ? (
-                <ResetPasswordForm token={token} />
+                <ResetPasswordForm token={token} isInitialSetup={isInitialSetup} />
               ) : (
                 <div className="mt-6 space-y-5">
                   <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center">

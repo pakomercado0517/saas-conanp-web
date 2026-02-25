@@ -74,28 +74,66 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
 ];
 
 /**
+ * Prefijo de la ruta del dashboard. "areas" = /areas/:areaId/...
+ */
+const DASHBOARD_ROUTE_PREFIX = "areas";
+
+function getDashboardRoot(areaId: string): string {
+  return DASHBOARD_ROUTE_PREFIX
+    ? `/${DASHBOARD_ROUTE_PREFIX}/${areaId}`
+    : `/${areaId}`;
+}
+
+/**
  * Obtiene la ruta absoluta para un ítem del dashboard.
- * @param organizationId - ID de la organización (segmento de URL)
+ * @param areaId - ID del área (ANP)
  * @param itemPath - path relativo del ítem ("" para inicio)
  */
-export function getDashboardHref(
-  organizationId: string,
-  itemPath: string
-): string {
-  const base = `/${organizationId}`;
+export function getDashboardHref(areaId: string, itemPath: string): string {
+  const base = getDashboardRoot(areaId);
   return itemPath ? `${base}${itemPath}` : base;
+}
+
+/**
+ * Roles que pueden ver reportes y gestión de usuarios (solo admin).
+ */
+const ADMIN_ONLY_PATHS = ["/reportes", "/usuarios"];
+
+/**
+ * Path de productos de acceso (visible solo si config-acceso habilita brazaletes).
+ */
+const PRODUCTOS_ACCESO_PATH = "/productos-acceso";
+
+export type MembershipRole = "admin" | "gestor" | "prestador" | "observador";
+
+/**
+ * Devuelve los ítems de navegación filtrados por rol y configuración de acceso.
+ * - Reportes y Usuarios: solo admin.
+ * - Productos de acceso: solo si la ANP tiene brazaletes habilitados (configAcceso).
+ */
+export function getFilteredNavItems(
+  role: MembershipRole | null,
+  showProductosAcceso: boolean
+): DashboardNavItem[] {
+  const isAdmin = role === "admin";
+  return DASHBOARD_NAV_ITEMS.filter((item) => {
+    if (item.path === PRODUCTOS_ACCESO_PATH) return showProductosAcceso;
+    if (ADMIN_ONLY_PATHS.includes(item.path)) return isAdmin;
+    return true;
+  });
 }
 
 /**
  * Devuelve el ítem de navegación que coincide con la pathname actual,
  * para breadcrumb y estado activo del menú.
  * Subrutas (ej. /actividades/nueva) hacen activo al ítem padre (Actividades).
+ * Usa la lista completa para que el ítem activo se resuelva aunque el ítem esté filtrado en la lista visible.
  */
 export function getActiveNavItem(
   pathname: string,
-  organizationId: string
+  areaId: string
 ): DashboardNavItem | undefined {
-  const base = `/${organizationId}`;
+  const base = getDashboardRoot(areaId);
   const normalized = pathname.replace(/\/$/, "") || base;
   if (normalized === base) {
     return DASHBOARD_NAV_ITEMS[0];

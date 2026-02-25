@@ -11,9 +11,11 @@ import { resetPasswordSchema, type ResetPasswordFormData } from "../schemas/auth
 
 interface ResetPasswordFormProps {
   token: string;
+  /** Flujo de primera contraseña (cuenta creada por super admin). */
+  isInitialSetup?: boolean;
 }
 
-export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
+export function ResetPasswordForm({ token, isInitialSetup = false }: ResetPasswordFormProps) {
   const [success, setSuccess] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const {
@@ -138,7 +140,13 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         className="flex w-full items-center justify-center gap-2 rounded-lg bg-(--navy-deep) py-3 font-bold text-white shadow-md transition-colors hover:bg-(--navy-light) disabled:opacity-70"
       >
         <KeyRound className="h-5 w-5" aria-hidden />
-        {isSubmitting ? "Restableciendo…" : "Restablecer contraseña"}
+        {isSubmitting
+          ? isInitialSetup
+            ? "Creando contraseña…"
+            : "Restableciendo…"
+          : isInitialSetup
+            ? "Crear contraseña y activar cuenta"
+            : "Restablecer contraseña"}
       </button>
     </form>
   );

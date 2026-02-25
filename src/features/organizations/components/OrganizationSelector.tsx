@@ -107,11 +107,11 @@ function EmptyState() {
         <Landmark className="size-8 text-(--navy-deep)" aria-hidden />
       </div>
       <h3 className="mb-2 text-lg font-bold text-(--navy-deep) dark:text-white">
-        ¿No encuentras tu organización?
+        ¿No encuentras tu área?
       </h3>
       <p className="mb-6 max-w-sm text-sm text-(--slate-text)">
-        Si eres administrador y no visualizas el área asignada, puedes dar de
-        alta una nueva o ingresar mediante un código.
+        Si eres administrador y no visualizas el área (ANP) asignada, puedes
+        dar de alta una nueva o ingresar mediante un código.
       </p>
       <div className="flex flex-col gap-3 sm:flex-row">
         <Link
@@ -119,7 +119,7 @@ function EmptyState() {
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-(--cyan-accent) px-6 py-3 font-bold text-(--navy-deep) transition-colors hover:bg-(--cyan-hover)"
         >
           <Plus className="size-5" aria-hidden />
-          Crear organización
+          Crear área
         </Link>
         <Link
           href="/organizations/join"
@@ -174,8 +174,8 @@ export function OrganizationSelector() {
     }
   };
 
-  const handleSelect = (organizationId: string) => {
-    window.location.href = `/${organizationId}`;
+  const handleSelect = (areaId: string) => {
+    window.location.href = `/areas/${areaId}`;
   };
 
   const navbarUser = user
@@ -198,10 +198,10 @@ export function OrganizationSelector() {
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div className="space-y-1">
               <h2 className="text-3xl font-extrabold tracking-tight text-(--navy-deep) dark:text-white">
-                Selector de Organización
+                Seleccionar área
               </h2>
               <p className="text-lg text-(--slate-text)">
-                Bienvenido de nuevo, selecciona un Área Natural Protegida para
+                Bienvenido de nuevo. Elige un Área Natural Protegida (ANP) para
                 gestionar.
               </p>
             </div>
@@ -219,7 +219,7 @@ export function OrganizationSelector() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Buscar por nombre, tipo o estado..."
                   className="block w-full rounded-xl border-0 bg-white py-3 pl-10 pr-4 text-(--navy-deep) ring-1 ring-slate-200 placeholder:text-(--slate-text) transition-all focus:ring-2 focus:ring-(--cyan-accent) dark:bg-slate-900 dark:text-white dark:ring-slate-800"
-                  aria-label="Buscar organizaciones"
+                  aria-label="Buscar áreas"
                 />
               </div>
             </div>
@@ -287,7 +287,7 @@ export function OrganizationSelector() {
         {isError && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-900 dark:bg-red-950/30">
             <p className="text-red-700 dark:text-red-300">
-              {errorMessage ?? "No se pudieron cargar las organizaciones."}
+              {errorMessage ?? "No se pudieron cargar las áreas."}
             </p>
             <button
               type="button"
@@ -318,7 +318,7 @@ export function OrganizationSelector() {
           <div className="mt-16 flex flex-col items-center">
             <p className="mt-4 text-xs text-(--slate-text)">
               Mostrando {filteredOrganizations.length} de{" "}
-              {pagination.total} organizaciones registradas
+              {pagination.total} áreas registradas
             </p>
           </div>
         )}

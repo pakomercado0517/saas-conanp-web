@@ -4,9 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Bell, Plus, Menu } from "lucide-react";
 import { getActiveNavItem } from "@/shared/config/dashboardNav";
+import { useAreaContextOptional } from "@/features/organizations/context/AreaContext";
 
 interface DashboardHeaderProps {
-  organizationId: string;
+  areaId: string;
   /** Acción principal (ej. "Nueva Área"). Si no se pasa, no se muestra botón. */
   primaryAction?: { label: string; href: string };
   /** En móvil: abre el drawer de navegación. */
@@ -14,14 +15,16 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({
-  organizationId,
+  areaId,
   primaryAction,
   onMenuClick,
 }: DashboardHeaderProps) {
   const pathname = usePathname();
-  const activeItem = getActiveNavItem(pathname ?? "", organizationId);
+  const activeItem = getActiveNavItem(pathname ?? "", areaId);
   const breadcrumbTitle =
     activeItem?.breadcrumbTitle ?? activeItem?.label ?? "Dashboard";
+  const areaCtx = useAreaContextOptional();
+  const dependenciaId = areaCtx?.dependenciaId;
 
   return (
     <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-900 lg:h-16 lg:px-8">
@@ -36,7 +39,23 @@ export function DashboardHeader({
             <Menu className="size-6" aria-hidden />
           </button>
         )}
-        <span className="truncate text-slate-400">Dashboard</span>
+        {dependenciaId && (
+          <>
+            <Link
+              href={`/dependencias/${dependenciaId}`}
+              className="hidden truncate text-slate-400 transition-colors hover:text-(--cyan-accent) sm:inline"
+            >
+              Dependencia
+            </Link>
+            <ChevronRight
+              className="hidden size-4 shrink-0 text-slate-400 sm:block"
+              aria-hidden
+            />
+          </>
+        )}
+        <span className="truncate text-slate-400">
+          {areaCtx?.area?.name ?? "Dashboard"}
+        </span>
         <ChevronRight className="size-4 shrink-0 text-slate-400" aria-hidden />
         <span className="truncate font-semibold">{breadcrumbTitle}</span>
       </div>
