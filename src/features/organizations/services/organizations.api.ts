@@ -2,6 +2,8 @@ import { apiRequest } from "@/shared/lib/api";
 import type {
   ListOrganizationsParams,
   ListOrganizationsResponse,
+  GetOrganizationResponse,
+  GetConfigAccesoResponse,
 } from "../types";
 
 const BASE = "/api/v1/organizations";
@@ -27,4 +29,27 @@ export async function listOrganizations(
     method: "GET",
     accessToken,
   });
+}
+
+export async function getOrganization(
+  organizationId: string,
+  accessToken?: string | null
+): Promise<GetOrganizationResponse> {
+  return apiRequest<GetOrganizationResponse>(`${BASE}/${organizationId}`, {
+    method: "GET",
+    accessToken,
+  });
+}
+
+export async function getConfigAcceso(
+  organizationId: string,
+  accessToken?: string | null
+): Promise<GetConfigAccesoResponse> {
+  return apiRequest<GetConfigAccesoResponse>(
+    `${BASE}/${organizationId}/config-acceso`,
+    {
+      method: "GET",
+      accessToken,
+    }
+  );
 }

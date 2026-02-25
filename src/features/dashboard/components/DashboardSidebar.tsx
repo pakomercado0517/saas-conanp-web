@@ -6,11 +6,11 @@ import { DashboardNavLinks } from "./DashboardNavLinks";
 import { DashboardUserBlock } from "./DashboardUserBlock";
 
 interface DashboardSidebarProps {
-  organizationId: string;
+  areaId: string;
 }
 
 /** Sidebar desktop: oculto en móvil, visible desde lg. Menú dinámico vía DashboardNavLinks. */
-export function DashboardSidebar({ organizationId }: DashboardSidebarProps) {
+export function DashboardSidebar({ areaId }: DashboardSidebarProps) {
   const pathname = usePathname() ?? "";
 
   return (
@@ -24,8 +24,8 @@ export function DashboardSidebar({ organizationId }: DashboardSidebarProps) {
         </h1>
       </div>
 
-      <DashboardNavLinks organizationId={organizationId} pathname={pathname} />
-      <DashboardUserBlock organizationId={organizationId} />
+      <DashboardNavLinks areaId={areaId} pathname={pathname} />
+      <DashboardUserBlock areaId={areaId} />
     </aside>
   );
 }

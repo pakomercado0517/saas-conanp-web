@@ -98,10 +98,17 @@ export function RegisterFlow({
   }
 
   if (step === "valid" && validated) {
+    const isDependenciaInvitation = validated.data.type === "dependencia";
+    const targetName = isDependenciaInvitation
+      ? validated.data.dependenciaName
+      : validated.data.organizationName;
+    const targetLabel = isDependenciaInvitation ? "la dependencia" : "";
+
     const orgBlock = (
       <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
         <p>
-          Te unirás a <strong>{validated.data.organizationName}</strong> como{" "}
+          Te unirás a {targetLabel}{" "}
+          <strong>{targetName}</strong> como{" "}
           <strong>{ROLE_LABELS[validated.data.role] ?? validated.data.role}</strong>.
           {invitationProof ? " Completa tu registro." : ""}
         </p>

@@ -1,24 +1,25 @@
 import { AuthGuard } from "@/features/auth/components/AuthGuard";
 import { DashboardLayout } from "@/features/dashboard/components/DashboardLayout";
+import { getDashboardHref } from "@/shared/config/dashboardNav";
 
 type LayoutProps = {
   children: React.ReactNode;
-  params: Promise<{ organizationId: string }>;
+  params: Promise<{ areaId: string }>;
 };
 
-export default async function OrganizationDashboardLayout({
+export default async function AreaDashboardLayout({
   children,
   params,
 }: LayoutProps) {
-  const { organizationId } = await params;
+  const { areaId } = await params;
 
   return (
     <AuthGuard>
       <DashboardLayout
-        organizationId={organizationId}
+        areaId={areaId}
         primaryAction={{
           label: "Nueva actividad",
-          href: `/${organizationId}/actividades/nueva`,
+          href: getDashboardHref(areaId, "/actividades/nueva"),
         }}
       >
         {children}

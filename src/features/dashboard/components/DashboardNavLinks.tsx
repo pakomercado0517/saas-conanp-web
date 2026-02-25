@@ -7,9 +7,10 @@ import {
   getActiveNavItem,
 } from "@/shared/config/dashboardNav";
 import type { DashboardNavItem } from "@/shared/config/dashboardNav";
+import { useAreaContextOptional } from "@/features/organizations/context/AreaContext";
 
 interface DashboardNavLinksProps {
-  organizationId: string;
+  areaId: string;
   pathname: string;
   /** En móvil: cerrar drawer al navegar. */
   onNavigate?: () => void;
@@ -20,14 +21,18 @@ interface DashboardNavLinksProps {
 /**
  * Lista de enlaces del menú del dashboard. Única fuente de renderizado del menú;
  * usado en sidebar (desktop) y en drawer (móvil).
+ * Usa ítems filtrados por rol y config-acceso cuando está dentro de AreaContextProvider.
  */
 export function DashboardNavLinks({
-  organizationId,
+  areaId,
   pathname,
   onNavigate,
   linkClassName,
 }: DashboardNavLinksProps) {
-  const activeItem = getActiveNavItem(pathname, organizationId);
+  const areaContext = useAreaContextOptional();
+  const navItems = areaContext?.navItems ?? DASHBOARD_NAV_ITEMS;
+
+  const activeItem = getActiveNavItem(pathname, areaId);
 
   const defaultLinkClass = (item: DashboardNavItem, isActive: boolean) =>
     `flex items-center gap-3 rounded-lg px-3 py-2 font-medium transition-colors ${
@@ -38,8 +43,8 @@ export function DashboardNavLinks({
 
   return (
     <nav className="flex-1 space-y-1 px-4 py-4" aria-label="Menú principal">
-      {DASHBOARD_NAV_ITEMS.map((item) => {
-        const href = getDashboardHref(organizationId, item.path);
+      {navItems.map((item) => {
+        const href = getDashboardHref(areaId, item.path);
         const isActive = activeItem === item;
         const className =
           linkClassName?.(item, isActive) ?? defaultLinkClass(item, isActive);

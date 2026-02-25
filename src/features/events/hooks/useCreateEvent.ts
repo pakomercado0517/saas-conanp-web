@@ -1,17 +1,34 @@
-import type { EventSummary } from "../types";
-import { useMutation } from "@tanstack/react-query";
+"use client";
 
-type UseCreateEventResult = {
-  create: (payload: EventSummary) => Promise<EventSummary>;
-};
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "@/features/auth/store/auth.store";
+import { createEvento } from "../services/events.api";
+import type { CreateEventoPayload, EventoOperativo } from "../types";
 
-export function useCreateEvent() {
-  const mutation = useMutation<EventSummary, Error, EventSummary>({
-    mutationKey: ["events", "create"],
-    mutationFn: async (payload) => payload,
+const QUERY_KEY_PREFIX = ["events"] as const;
+
+export function useCreateEvent(organizationId: string) {
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationKey: [...QUERY_KEY_PREFIX, "create", organizationId],
+    mutationFn: (payload: CreateEventoPayload) =>
+      createEvento(organizationId, payload, accessToken ?? undefined),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...QUERY_KEY_PREFIX, organizationId] });
+    },
   });
 
   return {
-    create: async (payload: EventSummary) => mutation.mutateAsync(payload),
-  } satisfies UseCreateEventResult;
+    create: mutation.mutateAsync,
+    isPending: mutation.isPending,
+    isError: mutation.isError,
+    error: mutation.error,
+  } as {
+    create: (payload: CreateEventoPayload) => Promise<EventoOperativo>;
+    isPending: boolean;
+    isError: boolean;
+    error: Error | null;
+  };
 }
