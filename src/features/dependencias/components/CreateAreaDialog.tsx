@@ -130,7 +130,7 @@ export function CreateAreaDialog({
               {ECOSYSTEM_OPTIONS.map((opt) => (
                 <label
                   key={opt.value}
-                  className="flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium transition-colors has-[:checked]:border-(--cyan-accent) has-[:checked]:bg-(--cyan-accent)/10 has-[:checked]:text-(--cyan-accent) hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                  className="flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-(--slate-text) transition-colors has-checked:border-(--cyan-accent) has-checked:bg-(--cyan-accent) has-checked:text-(--navy-deep) hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
                 >
                   <input
                     type="radio"
