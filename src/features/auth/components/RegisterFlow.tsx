@@ -102,7 +102,9 @@ export function RegisterFlow({
     const targetName = isDependenciaInvitation
       ? validated.data.dependenciaName
       : validated.data.organizationName;
-    const targetLabel = isDependenciaInvitation ? "la dependencia" : "";
+    const targetLabel = isDependenciaInvitation
+      ? "la dependencia"
+      : "el área";
 
     const orgBlock = (
       <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">

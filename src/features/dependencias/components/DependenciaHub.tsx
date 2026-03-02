@@ -189,6 +189,13 @@ export function DependenciaHub({ dependenciaId }: DependenciaHubProps) {
           {/* Sidebar */}
           <aside className="space-y-6">
             <DependenciaPlanCard areasCount={areas.length} maxAreas={1} />
+            {!canCreateArea && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                Has alcanzado el límite de <strong>1 área</strong> del plan FREE
+                para esta dependencia. Para registrar más Áreas Naturales
+                Protegidas necesitarás actualizar tu plan.
+              </div>
+            )}
 
             <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
               <div className="mb-4 flex items-center justify-between">
