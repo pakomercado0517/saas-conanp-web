@@ -29,11 +29,13 @@ export function SmartRedirect() {
 
         if (cancelled) return;
 
+        // Sin dependencias: lleva directo al flujo de creación inicial
         if (deps.length === 0) {
-          router.replace("/select-organization");
+          router.replace("/dependencias/nueva");
           return;
         }
 
+        // Varias dependencias: usa el selector para elegir contexto
         if (deps.length > 1) {
           router.replace("/select-organization");
           return;
@@ -45,16 +47,19 @@ export function SmartRedirect() {
 
         if (cancelled) return;
 
+        // Una dependencia sin áreas: abre el hub para crear la primera área
         if (areas.length === 0) {
           router.replace(`/dependencias/${singleDep.id}`);
           return;
         }
 
+        // Una sola área: entra directo al dashboard de área
         if (areas.length === 1) {
           router.replace(`/areas/${areas[0].id}`);
           return;
         }
 
+        // Varias áreas dentro de una dependencia: vuelve al hub
         router.replace(`/dependencias/${singleDep.id}`);
       } catch {
         if (!cancelled) {
