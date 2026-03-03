@@ -2,28 +2,29 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/store/auth.store";
-import { listMemberships } from "../services/memberships.api";
-import type { ListMembershipsParams, Membership } from "../types";
+import { getReporteCapacidadUtilizada } from "../services/reports.api";
+import type {
+  ReportesCapacidadUtilizadaParams,
+  CapacidadUtilizadaItem,
+} from "../services/reports.api";
 
-const QUERY_KEY_PREFIX = ["memberships"] as const;
+const QUERY_KEY_PREFIX = ["reports", "capacidad-utilizada"] as const;
 
-export function useMemberships(
+export function useReporteCapacidadUtilizada(
   organizationId: string,
-  params: ListMembershipsParams = {}
+  params: ReportesCapacidadUtilizadaParams = {}
 ) {
   const accessToken = useAuthStore((s) => s.accessToken);
 
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, params],
     queryFn: () =>
-      listMemberships(organizationId, params, accessToken ?? undefined),
+      getReporteCapacidadUtilizada(organizationId, params, accessToken ?? undefined),
     enabled: Boolean(accessToken && organizationId),
   });
 
   return {
-    data: query.data?.data as Membership[] | undefined,
-    pagination: query.data?.pagination,
-    limits: query.data?.limits,
+    data: query.data?.data as CapacidadUtilizadaItem[] | undefined,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,

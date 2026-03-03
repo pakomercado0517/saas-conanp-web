@@ -2,28 +2,32 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/store/auth.store";
-import { listMemberships } from "../services/memberships.api";
-import type { ListMembershipsParams, Membership } from "../types";
+import { listActividades } from "../services/activities.api";
+import type { ListActividadesParams, Actividad } from "../types";
 
-const QUERY_KEY_PREFIX = ["memberships"] as const;
+const QUERY_KEY_PREFIX = ["activities"] as const;
 
-export function useMemberships(
+export function useActividades(
   organizationId: string,
-  params: ListMembershipsParams = {}
+  params: ListActividadesParams = {}
 ) {
   const accessToken = useAuthStore((s) => s.accessToken);
 
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, params],
-    queryFn: () =>
-      listMemberships(organizationId, params, accessToken ?? undefined),
+    queryFn: async () => {
+      return listActividades(
+        organizationId,
+        params,
+        accessToken ?? undefined
+      );
+    },
     enabled: Boolean(accessToken && organizationId),
   });
 
   return {
-    data: query.data?.data as Membership[] | undefined,
+    data: query.data?.data as Actividad[] | undefined,
     pagination: query.data?.pagination,
-    limits: query.data?.limits,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,
