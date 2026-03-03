@@ -4,16 +4,32 @@ import Link from "next/link";
 import { CreditCard, AlertCircle } from "lucide-react";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
 
+const SUGGESTED_ACTION_BY_CODE: Record<string, string> = {
+  SUBSCRIPTION_REQUIRED: "Contratar plan",
+  PLAN_INACTIVE: "Actualizar plan",
+  SUBSCRIPTION_CONFLICT: "Ver suscripción",
+};
+
 interface SubscriptionRequiredViewProps {
   areaId: string;
   message?: string;
+  /** Código de error del backend para personalizar el CTA (ej. SUBSCRIPTION_REQUIRED, PLAN_INACTIVE). */
+  errorCode?: string;
+  /** Etiqueta del botón CTA. Si no se pasa, se deriva de errorCode o se usa el valor por defecto. */
+  suggestedActionLabel?: string;
 }
 
 export function SubscriptionRequiredView({
   areaId,
   message,
+  errorCode,
+  suggestedActionLabel,
 }: SubscriptionRequiredViewProps) {
   const suscripcionHref = getDashboardHref(areaId, "/suscripcion");
+  const ctaLabel =
+    suggestedActionLabel ??
+    (errorCode ? SUGGESTED_ACTION_BY_CODE[errorCode] : undefined) ??
+    "Ver planes y contratar";
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-12">
@@ -33,7 +49,7 @@ export function SubscriptionRequiredView({
           className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-5 py-2.5 font-semibold text-white transition-colors hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700"
         >
           <CreditCard className="h-5 w-5" aria-hidden />
-          Ver planes y contratar
+          {ctaLabel}
         </Link>
       </div>
       <p className="mt-6 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">

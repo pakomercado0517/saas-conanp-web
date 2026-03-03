@@ -7,10 +7,10 @@ import { getDashboardHref } from "@/shared/config/dashboardNav";
 import { useMemberships } from "@/features/memberships/hooks/useMemberships";
 import { useInvitations } from "@/features/invitations/hooks/useInvitations";
 import { useCreateInvitation } from "@/features/invitations/hooks/useCreateInvitation";
-import { updateMembership } from "@/features/memberships/services/memberships.api";
+import { updateMembership, deleteMembership } from "@/features/memberships/services/memberships.api";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useQueryClient } from "@tanstack/react-query";
-import type { MembershipRole } from "@/features/memberships/types";
+import type { MembershipRole, MembershipStatus } from "@/features/memberships/types";
 import type { CreateInvitationPayload } from "@/features/invitations/types";
 
 const ROLES: { value: MembershipRole; label: string }[] = [
@@ -20,6 +20,12 @@ const ROLES: { value: MembershipRole; label: string }[] = [
   { value: "observador", label: "Observador" },
 ];
 
+const STATUS_OPTIONS: { value: MembershipStatus; label: string }[] = [
+  { value: "activo", label: "Activo" },
+  { value: "inactivo", label: "Inactivo" },
+  { value: "suspendido", label: "Suspendido" },
+];
+
 interface UsuariosContentProps {
   areaId: string;
 }
@@ -27,7 +33,7 @@ interface UsuariosContentProps {
 export function UsuariosContent({ areaId }: UsuariosContentProps) {
   const queryClient = useQueryClient();
   const accessToken = useAuthStore((s) => s.accessToken);
-  const { data: members, isLoading: loadingMembers, error: membersError, refetch: refetchMembers } = useMemberships(areaId);
+  const { data: members, limits, isLoading: loadingMembers, error: membersError, refetch: refetchMembers } = useMemberships(areaId);
   const { data: invitations, isLoading: loadingInvitations, refetch: refetchInvitations } = useInvitations(areaId);
   const { create: createInvitation, isPending: creatingInvitation, error: createError } = useCreateInvitation(areaId);
 
@@ -35,6 +41,8 @@ export function UsuariosContent({ areaId }: UsuariosContentProps) {
   const [inviteRole, setInviteRole] = useState<MembershipRole>("prestador");
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [roleUpdatingId, setRoleUpdatingId] = useState<string | null>(null);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const handleInvite = async (e: React.FormEvent) => {
@@ -68,6 +76,37 @@ export function UsuariosContent({ areaId }: UsuariosContentProps) {
     }
   };
 
+  const handleStatusChange = async (membershipId: string, status: MembershipStatus) => {
+    setStatusUpdatingId(membershipId);
+    setFeedback(null);
+    try {
+      await updateMembership(areaId, membershipId, { status }, accessToken ?? undefined);
+      setFeedback({ type: "success", message: "Estado actualizado." });
+      queryClient.invalidateQueries({ queryKey: ["memberships", areaId] });
+      refetchMembers();
+    } catch (err) {
+      setFeedback({ type: "error", message: getApiErrorMessage(err) });
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  };
+
+  const handleDelete = async (membershipId: string, userName: string) => {
+    if (!confirm(`¿Eliminar a ${userName} del área? Esta acción no se puede deshacer.`)) return;
+    setDeletingId(membershipId);
+    setFeedback(null);
+    try {
+      await deleteMembership(areaId, membershipId, accessToken ?? undefined);
+      setFeedback({ type: "success", message: "Usuario eliminado del área." });
+      queryClient.invalidateQueries({ queryKey: ["memberships", areaId] });
+      refetchMembers();
+    } catch (err) {
+      setFeedback({ type: "error", message: getApiErrorMessage(err) });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const inicioHref = getDashboardHref(areaId, "");
 
   return (
@@ -81,7 +120,8 @@ export function UsuariosContent({ areaId }: UsuariosContentProps) {
             <button
               type="button"
               onClick={() => setShowInviteForm(true)}
-              className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-300"
+              disabled={limits?.maxUsers != null && members != null && members.length >= limits.maxUsers}
+              className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-300"
             >
               Invitar usuario
             </button>
@@ -141,6 +181,12 @@ export function UsuariosContent({ areaId }: UsuariosContentProps) {
         </p>
       )}
 
+      {limits?.maxUsers != null && members && members.length >= limits.maxUsers && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+          Has alcanzado el límite de usuarios del plan ({limits.maxUsers}). Actualiza tu plan para añadir más usuarios.
+        </div>
+      )}
+
       <section>
         <h2 className="mb-2 text-sm font-medium text-slate-600 dark:text-slate-400">
           Miembros
@@ -168,8 +214,6 @@ export function UsuariosContent({ areaId }: UsuariosContentProps) {
                     <td className="px-4 py-2 text-sm">
                       {m.User?.name ?? m.User?.email ?? m.userId}
                     </td>
-                    <td className="px-4 py-2 text-sm">{m.role}</td>
-                    <td className="px-4 py-2 text-sm">{m.status}</td>
                     <td className="px-4 py-2">
                       <select
                         value={m.role}
@@ -181,6 +225,30 @@ export function UsuariosContent({ areaId }: UsuariosContentProps) {
                           <option key={r.value} value={r.value}>{r.label}</option>
                         ))}
                       </select>
+                    </td>
+                    <td className="px-4 py-2">
+                      <select
+                        value={m.status}
+                        onChange={(e) => handleStatusChange(m.id, e.target.value as MembershipStatus)}
+                        disabled={statusUpdatingId === m.id}
+                        className="rounded border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                      >
+                        {STATUS_OPTIONS.map((s) => (
+                          <option key={s.value} value={s.value}>{s.label}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-2">
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(m.id, m.User?.name ?? m.User?.email ?? "este usuario")}
+                          disabled={deletingId === m.id}
+                          className="text-sm font-medium text-red-600 hover:underline disabled:opacity-50 dark:text-red-400"
+                        >
+                          {deletingId === m.id ? "Eliminando…" : "Eliminar"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { getApiErrorMessage } from "@/shared/types/api";
+import { getDashboardHref } from "@/shared/config/dashboardNav";
 import { useEvents } from "../hooks/useEvents";
 
 interface EventListProps {
@@ -54,6 +56,14 @@ export function EventList({ areaId }: EventListProps) {
               </td>
               <td className="px-4 py-2 text-sm">{ev.peopleCount}</td>
               <td className="px-4 py-2 text-sm">{ev.status}</td>
+              <td className="px-4 py-2">
+                <Link
+                  href={getDashboardHref(areaId, `/eventos/${ev.id}/evidencias`)}
+                  className="text-sm font-medium text-(--cyan-accent) hover:underline"
+                >
+                  Evidencias
+                </Link>
+              </td>
             </tr>
           ))}
         </tbody>

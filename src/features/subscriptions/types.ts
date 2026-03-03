@@ -45,3 +45,32 @@ export interface CurrentSubscriptionResponse {
   data: Subscription | null;
   message?: string;
 }
+
+/** Respuesta de GET /subscription-plans */
+export interface SubscriptionPlansResponse {
+  success: true;
+  data: SubscriptionPlan[];
+  message?: string;
+}
+
+/** Payload para contratar o cambiar plan */
+export interface SubscribeOrChangePlanPayload {
+  planId: string;
+  billingCycle: BillingCycle;
+}
+
+/** Respuesta de contratar/cambiar cuando hay Stripe Checkout */
+export interface SubscribeCheckoutResponse {
+  success: true;
+  data: { checkoutUrl: string };
+  message?: string;
+}
+
+/** Respuesta de contratar/cambiar cuando no hay redirección */
+export interface SubscribeSuccessResponse {
+  success: true;
+  data: { subscription: Subscription };
+  message?: string;
+}
+
+export type SubscribeResponse = SubscribeCheckoutResponse | SubscribeSuccessResponse;

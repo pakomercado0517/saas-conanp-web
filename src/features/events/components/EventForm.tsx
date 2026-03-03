@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { useCreateEvent } from "../hooks/useCreateEvent";
+import { useCreatePaymentIntent } from "@/features/payments/hooks/useCreatePaymentIntent";
 import type { CreateEventoPayload, AgendaType } from "../types";
 
 interface EventFormProps {
@@ -17,6 +18,7 @@ export function EventForm({
   onCancel,
 }: EventFormProps) {
   const { create, isPending, error, isError } = useCreateEvent(areaId);
+  const createPaymentIntent = useCreatePaymentIntent(areaId);
   const [actividadId, setActividadId] = useState("");
   const [prestadorId, setPrestadorId] = useState("");
   const [date, setDate] = useState("");
@@ -53,7 +55,18 @@ export function EventForm({
       };
     }
     try {
-      await create(payload);
+      const evento = await create(payload);
+      if (paymentRequired && evento?.id) {
+        try {
+          const paymentData = await createPaymentIntent.mutateAsync(evento.id);
+          if (paymentData.checkoutUrl) {
+            window.location.href = paymentData.checkoutUrl;
+            return;
+          }
+        } catch (paymentErr) {
+          console.error("Error al crear intención de pago:", paymentErr);
+        }
+      }
       onSuccess?.();
     } catch {
       // Error ya expuesto por isError/error

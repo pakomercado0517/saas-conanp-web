@@ -29,9 +29,14 @@ export interface PaginationMeta {
   totalPages: number;
 }
 
+export interface MembershipLimits {
+  maxUsers?: number;
+}
+
 export interface ListMembershipsResponse {
   success: true;
   data: Membership[];
   pagination: PaginationMeta;
+  limits?: MembershipLimits;
   message?: string;
 }

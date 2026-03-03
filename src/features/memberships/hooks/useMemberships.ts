@@ -23,6 +23,7 @@ export function useMemberships(
   return {
     data: query.data?.data as Membership[] | undefined,
     pagination: query.data?.pagination,
+    limits: query.data?.limits,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,

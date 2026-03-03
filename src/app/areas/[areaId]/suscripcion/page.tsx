@@ -1,5 +1,5 @@
-import { SubscriptionManagementPlaceholder } from "./SubscriptionManagementPlaceholder";
+import { SubscriptionManagement } from "@/features/subscriptions/components/SubscriptionManagement";
 
-export default async function SuscripcionPage() {
-  return <SubscriptionManagementPlaceholder />;
+export default function SuscripcionPage() {
+  return <SubscriptionManagement />;
 }
