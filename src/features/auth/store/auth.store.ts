@@ -12,6 +12,7 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   expiresAt: number | null;
+  setUser: (user: AuthUser) => void;
   setSession: (data: {
     user: AuthUser;
     accessToken: string;
@@ -31,6 +32,8 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       expiresAt: null,
+
+      setUser: (user) => set({ user }),
 
       setSession: (data) => {
         const expiresAt = Date.now() + data.expiresIn * 1000;

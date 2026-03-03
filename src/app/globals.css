@@ -31,4 +31,14 @@
   h4 {
     font-family: var(--font-heading), "Roboto Slab", serif;
   }
+
+  /* Accesibilidad: foco visible en elementos interactivos */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
 }

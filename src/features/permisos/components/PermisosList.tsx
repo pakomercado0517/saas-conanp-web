@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { getApiErrorMessage } from "@/shared/types/api";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { usePermisos } from "../hooks/usePermisos";
 import { useDeletePermiso } from "../hooks/useDeletePermiso";
 import { PermisoForm } from "./PermisoForm";
@@ -88,6 +89,8 @@ export function PermisosList({ areaId }: PermisosListProps) {
         <div className="flex flex-wrap gap-2">
           <input
             type="text"
+            id="permisos-filtro-prestador"
+            aria-label="Filtrar por prestador (ID)"
             placeholder="Filtrar por prestador (ID)"
             value={prestadorFilter}
             onChange={(e) => setPrestadorFilter(e.target.value)}
@@ -95,12 +98,16 @@ export function PermisosList({ areaId }: PermisosListProps) {
           />
           <input
             type="text"
+            id="permisos-filtro-actividad"
+            aria-label="Filtrar por actividad (ID)"
             placeholder="Filtrar por actividad (ID)"
             value={actividadFilter}
             onChange={(e) => setActividadFilter(e.target.value)}
             className="rounded border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
           />
           <select
+            id="permisos-filtro-estado"
+            aria-label="Filtrar por estado"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as PermisoStatus | "")}
             className="rounded border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
@@ -119,7 +126,7 @@ export function PermisosList({ areaId }: PermisosListProps) {
             setEditingPermiso(null);
             setShowForm(true);
           }}
-          className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-900"
+          className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 focus-visible:outline focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 dark:bg-slate-200 dark:text-slate-900 dark:focus-visible:ring-slate-400"
         >
           Nuevo permiso
         </button>
@@ -143,9 +150,16 @@ export function PermisosList({ areaId }: PermisosListProps) {
       )}
 
       {!permisos?.length ? (
-        <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
-          No hay permisos en esta área.
-        </p>
+        <EmptyState
+          message="No hay permisos en esta área. Crea uno para asignar prestadores a actividades."
+          action={{
+            label: "Nuevo permiso",
+            onClick: () => {
+              setEditingPermiso(null);
+              setShowForm(true);
+            },
+          }}
+        />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
           <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">

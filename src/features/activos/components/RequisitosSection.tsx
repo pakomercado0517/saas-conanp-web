@@ -280,6 +280,7 @@ export function RequisitosSection({ areaId, activoId }: RequisitosSectionProps) 
                         <div className="flex flex-col gap-1">
                           <input
                             type="text"
+                            aria-label="Motivo del rechazo"
                             placeholder="Motivo del rechazo"
                             value={rechazarMotivo}
                             onChange={(e) => setRechazarMotivo(e.target.value)}

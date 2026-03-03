@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail, Lock, LogIn } from "lucide-react";
-import { ApiError, getApiErrorMessage } from "@/shared/types/api";
+import { ApiError, getApiErrorMessage, getApiErrorCode } from "@/shared/types/api";
+import { getSuggestedActionForCode } from "@/shared/lib/errorActions";
 import { useAuth } from "../hooks/useAuth";
 import { loginSchema, type LoginFormData } from "../schemas/auth.schema";
 
@@ -22,6 +23,7 @@ interface LoginFormProps {
 export function LoginForm({ returnTo }: LoginFormProps) {
   const [rememberMe, setRememberMe] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [serverErrorCode, setServerErrorCode] = useState<string | undefined>(undefined);
   const { login } = useAuth();
   const {
     register: registerField,
@@ -35,10 +37,12 @@ export function LoginForm({ returnTo }: LoginFormProps) {
 
   async function onSubmit(data: LoginFormData) {
     setServerError(null);
+    setServerErrorCode(undefined);
     try {
       await login(data.email, data.password, returnTo);
     } catch (err) {
       const message = getApiErrorMessage(err);
+      const code = getApiErrorCode(err);
       if (err instanceof ApiError && err.details.length > 0) {
         err.details.forEach(({ campo, mensaje }) => {
           if (campo === "email" || campo === "password") {
@@ -47,15 +51,26 @@ export function LoginForm({ returnTo }: LoginFormProps) {
         });
       } else {
         setServerError(message);
+        setServerErrorCode(code);
       }
     }
   }
 
+  const suggestedAction = getSuggestedActionForCode(serverErrorCode);
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5">
       {serverError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
-          {serverError}
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/50 dark:text-red-300" role="alert">
+          <p>{serverError}</p>
+          {suggestedAction?.href && (
+            <Link
+              href={suggestedAction.href}
+              className="mt-2 inline-block font-medium underline hover:no-underline focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            >
+              {suggestedAction.label}
+            </Link>
+          )}
         </div>
       )}
       <div>

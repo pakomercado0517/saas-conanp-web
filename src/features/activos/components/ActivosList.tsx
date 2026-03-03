@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { useActivos } from "../hooks/useActivos";
 import { useDeleteActivo } from "../hooks/useDeleteActivo";
 import { ActivoForm } from "./ActivoForm";
@@ -78,6 +79,8 @@ export function ActivosList({ areaId }: ActivosListProps) {
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex flex-wrap gap-2">
           <select
+            id="activos-filtro-tipo"
+            aria-label="Filtrar por tipo"
             value={tipoFilter}
             onChange={(e) => setTipoFilter(e.target.value as ActivoTipo | "")}
             className="rounded border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
@@ -90,6 +93,8 @@ export function ActivosList({ areaId }: ActivosListProps) {
             ))}
           </select>
           <select
+            id="activos-filtro-estado"
+            aria-label="Filtrar por estado"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as ActivoStatus | "")}
             className="rounded border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
@@ -108,7 +113,7 @@ export function ActivosList({ areaId }: ActivosListProps) {
             setEditingActivo(null);
             setShowForm(true);
           }}
-          className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-900"
+          className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 focus-visible:outline focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 dark:bg-slate-200 dark:text-slate-900 dark:focus-visible:ring-slate-400"
         >
           Nuevo activo
         </button>
@@ -132,9 +137,16 @@ export function ActivosList({ areaId }: ActivosListProps) {
       )}
 
       {!activos?.length ? (
-        <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
-          No hay activos en esta área.
-        </p>
+        <EmptyState
+          message="No hay activos en esta área. Registra vehículos, equipos o infraestructura."
+          action={{
+            label: "Nuevo activo",
+            onClick: () => {
+              setEditingActivo(null);
+              setShowForm(true);
+            },
+          }}
+        />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
           <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
