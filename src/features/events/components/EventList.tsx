@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { useEvents } from "../hooks/useEvents";
 
 interface EventListProps {
@@ -26,9 +27,13 @@ export function EventList({ areaId }: EventListProps) {
 
   if (!events?.length) {
     return (
-      <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
-        No hay eventos. Crea uno para comenzar.
-      </p>
+      <EmptyState
+        message="No hay eventos en esta área. Crea uno para comenzar."
+        action={{
+          label: "Crear evento",
+          href: getDashboardHref(areaId, "/eventos/nuevo"),
+        }}
+      />
     );
   }
 

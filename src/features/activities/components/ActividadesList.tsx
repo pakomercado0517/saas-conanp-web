@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { useActividades } from "../hooks/useActividades";
 import type { AgendaType, NivelImpacto } from "../types";
 
@@ -43,9 +44,13 @@ export function ActividadesList({ areaId }: ActividadesListProps) {
 
   if (!actividades?.length) {
     return (
-      <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
-        No hay actividades en esta área.
-      </p>
+      <EmptyState
+        message="No hay actividades en esta área. Crea una para comenzar."
+        action={{
+          label: "Crear actividad",
+          href: getDashboardHref(areaId, "/actividades/nueva"),
+        }}
+      />
     );
   }
 

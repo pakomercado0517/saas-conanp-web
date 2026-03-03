@@ -10,6 +10,7 @@ import { useCreateInvitation } from "@/features/invitations/hooks/useCreateInvit
 import { updateMembership, deleteMembership } from "@/features/memberships/services/memberships.api";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useQueryClient } from "@tanstack/react-query";
+import { EmptyState } from "@/shared/components/EmptyState";
 import type { MembershipRole, MembershipStatus } from "@/features/memberships/types";
 import type { CreateInvitationPayload } from "@/features/invitations/types";
 
@@ -121,13 +122,17 @@ export function UsuariosContent({ areaId }: UsuariosContentProps) {
               type="button"
               onClick={() => setShowInviteForm(true)}
               disabled={limits?.maxUsers != null && members != null && members.length >= limits.maxUsers}
-              className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-300"
+              className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 focus-visible:outline focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 disabled:opacity-50 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-300 dark:focus-visible:ring-slate-400"
             >
               Invitar usuario
             </button>
           ) : (
             <form onSubmit={handleInvite} className="flex flex-wrap items-center gap-2">
+              <label htmlFor="invite-email" className="sr-only">
+                Correo electrónico
+              </label>
               <input
+                id="invite-email"
                 type="email"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
@@ -135,7 +140,11 @@ export function UsuariosContent({ areaId }: UsuariosContentProps) {
                 className="rounded border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
                 required
               />
+              <label htmlFor="invite-role" className="sr-only">
+                Rol
+              </label>
               <select
+                id="invite-role"
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as MembershipRole)}
                 className="rounded border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
@@ -147,14 +156,14 @@ export function UsuariosContent({ areaId }: UsuariosContentProps) {
               <button
                 type="submit"
                 disabled={creatingInvitation}
-                className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50 dark:bg-slate-200 dark:text-slate-900"
+                className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 focus-visible:outline focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 disabled:opacity-50 dark:bg-slate-200 dark:text-slate-900 dark:focus-visible:ring-slate-400"
               >
                 {creatingInvitation ? "Enviando…" : "Enviar invitación"}
               </button>
               <button
                 type="button"
                 onClick={() => { setShowInviteForm(false); setInviteEmail(""); setFeedback(null); }}
-                className="rounded-md border border-slate-300 px-4 py-2 text-sm dark:border-slate-600"
+                className="rounded-md border border-slate-300 px-4 py-2 text-sm focus-visible:outline focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 dark:border-slate-600 dark:focus-visible:ring-slate-400"
               >
                 Cancelar
               </button>
@@ -256,7 +265,13 @@ export function UsuariosContent({ areaId }: UsuariosContentProps) {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-slate-500">No hay miembros en esta área.</p>
+          <EmptyState
+            message="No hay miembros en esta área. Invita usuarios para colaborar."
+            action={{
+              label: "Invitar usuario",
+              onClick: () => setShowInviteForm(true),
+            }}
+          />
         )}
       </section>
 

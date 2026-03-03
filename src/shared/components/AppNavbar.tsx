@@ -75,17 +75,24 @@ export function AppNavbar({
 
           {user && (
             <div className="hidden items-center gap-3 sm:flex">
-              <div className="text-right">
+              <Link
+                href="/perfil"
+                className="text-right transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-(--cyan-accent)/50 focus:ring-offset-2 rounded"
+              >
                 <p className="text-sm font-bold leading-none text-(--navy-deep) dark:text-white">
                   {user.name || user.email}
                 </p>
                 <p className="text-xs text-(--slate-text)">{user.email}</p>
-              </div>
-              <div className="flex size-10 items-center justify-center overflow-hidden rounded-full border-2 border-(--cyan-accent)/30 bg-(--cyan-accent)/20">
+              </Link>
+              <Link
+                href="/perfil"
+                className="flex size-10 items-center justify-center overflow-hidden rounded-full border-2 border-(--cyan-accent)/30 bg-(--cyan-accent)/20 transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-(--cyan-accent)/50 focus:ring-offset-2"
+                aria-label="Ir a mi perfil"
+              >
                 <span className="text-sm font-bold text-(--cyan-accent)">
                   {(user.name || user.email).charAt(0).toUpperCase()}
                 </span>
-              </div>
+              </Link>
             </div>
           )}
 

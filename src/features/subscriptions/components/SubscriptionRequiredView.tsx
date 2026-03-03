@@ -3,12 +3,7 @@
 import Link from "next/link";
 import { CreditCard, AlertCircle } from "lucide-react";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
-
-const SUGGESTED_ACTION_BY_CODE: Record<string, string> = {
-  SUBSCRIPTION_REQUIRED: "Contratar plan",
-  PLAN_INACTIVE: "Actualizar plan",
-  SUBSCRIPTION_CONFLICT: "Ver suscripción",
-};
+import { getSuggestedActionForCode } from "@/shared/lib/errorActions";
 
 interface SubscriptionRequiredViewProps {
   areaId: string;
@@ -25,10 +20,11 @@ export function SubscriptionRequiredView({
   errorCode,
   suggestedActionLabel,
 }: SubscriptionRequiredViewProps) {
-  const suscripcionHref = getDashboardHref(areaId, "/suscripcion");
+  const suggestedAction = getSuggestedActionForCode(errorCode, areaId);
+  const suscripcionHref = suggestedAction?.href ?? getDashboardHref(areaId, "/suscripcion");
   const ctaLabel =
     suggestedActionLabel ??
-    (errorCode ? SUGGESTED_ACTION_BY_CODE[errorCode] : undefined) ??
+    suggestedAction?.label ??
     "Ver planes y contratar";
 
   return (

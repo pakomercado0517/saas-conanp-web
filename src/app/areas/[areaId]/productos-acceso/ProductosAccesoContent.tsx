@@ -11,6 +11,7 @@ import { useDeleteProductoAcceso } from "@/features/access-products/hooks/usePro
 import { ProductoAccesoCreateDialog } from "@/features/access-products/components/ProductoAccesoCreateDialog";
 import { ProductoAccesoEditDialog } from "@/features/access-products/components/ProductoAccesoEditDialog";
 import { StockMovimientosSection } from "@/features/access-products/components/StockMovimientosSection";
+import { EmptyState } from "@/shared/components/EmptyState";
 import type { ProductoAcceso } from "@/features/access-products/types";
 
 interface ProductosAccesoContentProps {
@@ -72,7 +73,7 @@ export function ProductosAccesoContent({
           <button
             type="button"
             onClick={() => setShowCreateDialog(true)}
-            className="rounded-md bg-(--cyan-accent) px-4 py-2 text-sm font-bold text-(--navy-deep) hover:bg-(--cyan-hover)"
+            className="rounded-md bg-(--cyan-accent) px-4 py-2 text-sm font-bold text-(--navy-deep) hover:bg-(--cyan-hover) focus-visible:outline focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
           >
             Nuevo producto
           </button>
@@ -161,9 +162,17 @@ export function ProductosAccesoContent({
           ))}
         </div>
       ) : (
-        <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
-          No hay productos de acceso configurados.
-        </p>
+        <EmptyState
+          message="No hay productos de acceso configurados. Crea uno para gestionar brazaletes o pasaportes."
+          action={
+            canManage
+              ? {
+                  label: "Nuevo producto",
+                  onClick: () => setShowCreateDialog(true),
+                }
+              : undefined
+          }
+        />
       )}
 
       <p className="text-sm text-slate-500">

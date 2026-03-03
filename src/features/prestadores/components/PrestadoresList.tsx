@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { useAreaContext } from "@/features/organizations/context/AreaContext";
 import { usePrestadores } from "../hooks/usePrestadores";
 import type { Prestador, PrestadorStatus } from "../types";
@@ -46,9 +47,17 @@ export function PrestadoresList({ areaId }: PrestadoresListProps) {
 
   if (!prestadores?.length) {
     return (
-      <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
-        No hay prestadores en esta área.
-      </p>
+      <EmptyState
+        message="No hay prestadores en esta área. Invita usuarios con rol de prestador para comenzar."
+        action={
+          canEdit
+            ? {
+                label: "Invitar usuario",
+                href: getDashboardHref(areaId, "/usuarios"),
+              }
+            : undefined
+        }
+      />
     );
   }
 
