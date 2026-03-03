@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getApiErrorMessage } from "@/shared/types/api";
+import { getApiErrorMessage, getApiErrorCode } from "@/shared/types/api";
 import { AreaContextProvider, useAreaContext } from "@/features/organizations/context/AreaContext";
 import { SubscriptionRequiredView } from "@/features/subscriptions/components/SubscriptionRequiredView";
 import { DashboardSidebar } from "./DashboardSidebar";
@@ -33,10 +33,15 @@ function DashboardLayoutInner({
 
   if (showSubscriptionRequired) {
     const message = error != null ? getApiErrorMessage(error) : undefined;
+    const errorCode = error != null ? getApiErrorCode(error) : undefined;
     return (
       <div className="flex h-screen w-full flex-col overflow-hidden bg-(--background-light) dark:bg-(--background-dark)">
         <DashboardHeader areaId={areaId} onMenuClick={() => {}} />
-        <SubscriptionRequiredView areaId={areaId} message={message} />
+        <SubscriptionRequiredView
+          areaId={areaId}
+          message={message}
+          errorCode={errorCode}
+        />
       </div>
     );
   }

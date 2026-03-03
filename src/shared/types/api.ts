@@ -38,6 +38,23 @@ function isApiErrorResponse(value: unknown): value is ApiErrorResponse {
 }
 
 /**
+ * Devuelve el código de error del backend si existe (ej. SUBSCRIPTION_REQUIRED, PLAN_INACTIVE).
+ */
+export function getApiErrorCode(res: unknown): string | undefined {
+  if (isApiErrorResponse(res)) return res.code;
+  if (res instanceof ApiError) return res.code;
+  if (
+    typeof res === "object" &&
+    res !== null &&
+    "code" in res &&
+    typeof (res as { code: unknown }).code === "string"
+  ) {
+    return (res as { code: string }).code;
+  }
+  return undefined;
+}
+
+/**
  * Devuelve el mensaje de error para mostrar en UI.
  * Prioriza message del backend, luego error, luego fallback en español.
  */
