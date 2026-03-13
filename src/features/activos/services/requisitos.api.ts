@@ -15,12 +15,11 @@ interface ListRequisitosResponse {
 
 export async function listRequisitos(
   organizationId: string,
-  activoId: string,
-  accessToken?: string | null
+  activoId: string
 ): Promise<ActivoRequisito[]> {
   const res = await apiRequest<ListRequisitosResponse>(
     `${BASE}/${organizationId}/activos/${activoId}/requisitos`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
   return (res as ListRequisitosResponse).data ?? [];
 }
@@ -34,12 +33,11 @@ interface CreateRequisitoResponse {
 export async function createRequisito(
   organizationId: string,
   activoId: string,
-  payload: CreateRequisitoPayload,
-  accessToken?: string | null
+  payload: CreateRequisitoPayload
 ): Promise<ActivoRequisito> {
   const res = await apiRequest<CreateRequisitoResponse>(
     `${BASE}/${organizationId}/activos/${activoId}/requisitos`,
-    { method: "POST", body: payload, accessToken }
+    { method: "POST", body: payload }
   );
   return (res as CreateRequisitoResponse).data;
 }
@@ -54,12 +52,11 @@ export async function updateRequisito(
   organizationId: string,
   activoId: string,
   requisitoId: string,
-  payload: UpdateRequisitoPayload,
-  accessToken?: string | null
+  payload: UpdateRequisitoPayload
 ): Promise<ActivoRequisito> {
   const res = await apiRequest<UpdateRequisitoResponse>(
     `${BASE}/${organizationId}/activos/${activoId}/requisitos/${requisitoId}`,
-    { method: "PATCH", body: payload, accessToken }
+    { method: "PATCH", body: payload }
   );
   return (res as UpdateRequisitoResponse).data;
 }
@@ -72,24 +69,22 @@ interface DeleteRequisitoResponse {
 export async function deleteRequisito(
   organizationId: string,
   activoId: string,
-  requisitoId: string,
-  accessToken?: string | null
+  requisitoId: string
 ): Promise<void> {
   await apiRequest<DeleteRequisitoResponse>(
     `${BASE}/${organizationId}/activos/${activoId}/requisitos/${requisitoId}`,
-    { method: "DELETE", accessToken }
+    { method: "DELETE" }
   );
 }
 
 export async function aprobarRequisito(
   organizationId: string,
   activoId: string,
-  requisitoId: string,
-  accessToken?: string | null
+  requisitoId: string
 ): Promise<ActivoRequisito> {
   const res = await apiRequest<{ success: true; data: ActivoRequisito }>(
     `${BASE}/${organizationId}/activos/${activoId}/requisitos/${requisitoId}/aprobar`,
-    { method: "POST", accessToken }
+    { method: "POST" }
   );
   return (res as { success: true; data: ActivoRequisito }).data;
 }
@@ -98,12 +93,11 @@ export async function rechazarRequisito(
   organizationId: string,
   activoId: string,
   requisitoId: string,
-  motivo: string,
-  accessToken?: string | null
+  motivo: string
 ): Promise<ActivoRequisito> {
   const res = await apiRequest<{ success: true; data: ActivoRequisito }>(
     `${BASE}/${organizationId}/activos/${activoId}/requisitos/${requisitoId}/rechazar`,
-    { method: "POST", body: { motivo }, accessToken }
+    { method: "POST", body: { motivo } }
   );
   return (res as { success: true; data: ActivoRequisito }).data;
 }
@@ -111,12 +105,11 @@ export async function rechazarRequisito(
 export async function suspenderRequisito(
   organizationId: string,
   activoId: string,
-  requisitoId: string,
-  accessToken?: string | null
+  requisitoId: string
 ): Promise<ActivoRequisito> {
   const res = await apiRequest<{ success: true; data: ActivoRequisito }>(
     `${BASE}/${organizationId}/activos/${activoId}/requisitos/${requisitoId}/suspender`,
-    { method: "POST", accessToken }
+    { method: "POST" }
   );
   return (res as { success: true; data: ActivoRequisito }).data;
 }

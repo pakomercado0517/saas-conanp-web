@@ -23,24 +23,22 @@ function buildQuery(params: ListPermisosParams): string {
 
 export async function listPermisos(
   organizationId: string,
-  params: ListPermisosParams = {},
-  accessToken?: string | null
+  params: ListPermisosParams = {}
 ): Promise<ListPermisosResponse> {
   const query = buildQuery(params);
   return apiRequest<ListPermisosResponse>(
     `${BASE}/${organizationId}/permisos${query}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
 export async function getPermiso(
   organizationId: string,
-  permisoId: string,
-  accessToken?: string | null
+  permisoId: string
 ): Promise<GetPermisoResponse> {
   return apiRequest<GetPermisoResponse>(
     `${BASE}/${organizationId}/permisos/${permisoId}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
@@ -52,12 +50,11 @@ interface CreatePermisoResponse {
 
 export async function createPermiso(
   organizationId: string,
-  payload: CreatePermisoPayload,
-  accessToken?: string | null
+  payload: CreatePermisoPayload
 ): Promise<Permiso> {
   const res = await apiRequest<CreatePermisoResponse>(
     `${BASE}/${organizationId}/permisos`,
-    { method: "POST", body: payload, accessToken }
+    { method: "POST", body: payload }
   );
   return (res as CreatePermisoResponse).data;
 }
@@ -71,12 +68,11 @@ interface UpdatePermisoResponse {
 export async function updatePermiso(
   organizationId: string,
   permisoId: string,
-  payload: UpdatePermisoPayload,
-  accessToken?: string | null
+  payload: UpdatePermisoPayload
 ): Promise<Permiso> {
   const res = await apiRequest<UpdatePermisoResponse>(
     `${BASE}/${organizationId}/permisos/${permisoId}`,
-    { method: "PATCH", body: payload, accessToken }
+    { method: "PATCH", body: payload }
   );
   return (res as UpdatePermisoResponse).data;
 }
@@ -88,11 +84,10 @@ interface DeletePermisoResponse {
 
 export async function deletePermiso(
   organizationId: string,
-  permisoId: string,
-  accessToken?: string | null
+  permisoId: string
 ): Promise<void> {
   await apiRequest<DeletePermisoResponse>(
     `${BASE}/${organizationId}/permisos/${permisoId}`,
-    { method: "DELETE", accessToken }
+    { method: "DELETE" }
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import {
   createRequisito,
   updateRequisito,
@@ -21,17 +20,11 @@ export function useCreateRequisito(
   organizationId: string,
   activoId: string
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (payload: CreateRequisitoPayload) => {
-      return createRequisito(
-        organizationId,
-        activoId,
-        payload,
-        accessToken ?? undefined
-      );
+      return createRequisito(organizationId, activoId, payload);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({
@@ -45,7 +38,6 @@ export function useUpdateRequisito(
   organizationId: string,
   activoId: string
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -57,8 +49,7 @@ export function useUpdateRequisito(
         organizationId,
         activoId,
         requisitoId,
-        payload,
-        accessToken ?? undefined
+        payload
       );
     },
     onSuccess: () => {
@@ -73,17 +64,11 @@ export function useDeleteRequisito(
   organizationId: string,
   activoId: string
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (requisitoId: string) => {
-      return deleteRequisito(
-        organizationId,
-        activoId,
-        requisitoId,
-        accessToken ?? undefined
-      );
+      return deleteRequisito(organizationId, activoId, requisitoId);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({
@@ -97,17 +82,11 @@ export function useAprobarRequisito(
   organizationId: string,
   activoId: string
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (requisitoId: string) => {
-      return aprobarRequisito(
-        organizationId,
-        activoId,
-        requisitoId,
-        accessToken ?? undefined
-      );
+      return aprobarRequisito(organizationId, activoId, requisitoId);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({
@@ -121,7 +100,6 @@ export function useRechazarRequisito(
   organizationId: string,
   activoId: string
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -133,8 +111,7 @@ export function useRechazarRequisito(
         organizationId,
         activoId,
         requisitoId,
-        motivo,
-        accessToken ?? undefined
+        motivo
       );
     },
     onSuccess: () => {
@@ -149,17 +126,11 @@ export function useSuspenderRequisito(
   organizationId: string,
   activoId: string
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (requisitoId: string) => {
-      return suspenderRequisito(
-        organizationId,
-        activoId,
-        requisitoId,
-        accessToken ?? undefined
-      );
+      return suspenderRequisito(organizationId, activoId, requisitoId);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({

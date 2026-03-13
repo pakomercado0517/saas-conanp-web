@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { getReporteStockBrazaletes } from "../services/reports.api";
 import type {
   ReportesStockBrazaletesParams,
@@ -14,13 +13,11 @@ export function useReporteStockBrazaletes(
   organizationId: string,
   params: ReportesStockBrazaletesParams = {}
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
-
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, params],
     queryFn: () =>
-      getReporteStockBrazaletes(organizationId, params, accessToken ?? undefined),
-    enabled: Boolean(accessToken && organizationId),
+      getReporteStockBrazaletes(organizationId, params),
+    enabled: Boolean(organizationId),
   });
 
   return {

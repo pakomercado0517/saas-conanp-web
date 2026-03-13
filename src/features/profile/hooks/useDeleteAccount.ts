@@ -5,11 +5,10 @@ import { useAuthStore } from "@/features/auth/store/auth.store";
 import { deleteAccount } from "../services/profile.api";
 
 export function useDeleteAccount() {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const clearSession = useAuthStore((s) => s.clearSession);
 
   const mutation = useMutation({
-    mutationFn: () => deleteAccount(accessToken!),
+    mutationFn: () => deleteAccount(),
     onSuccess: () => {
       clearSession();
       if (typeof window !== "undefined") {

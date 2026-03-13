@@ -27,87 +27,76 @@ function toQuery(params: object): string {
 }
 
 export async function listDependencias(
-  params: ListDependenciasParams = {},
-  accessToken?: string | null
+  params: ListDependenciasParams = {}
 ): Promise<ListDependenciasResponse> {
   return apiRequest<ListDependenciasResponse>(`${BASE}${toQuery(params)}`, {
     method: "GET",
-    accessToken,
   });
 }
 
 export async function getDependencia(
-  dependenciaId: string,
-  accessToken?: string | null
+  dependenciaId: string
 ): Promise<GetDependenciaResponse> {
   return apiRequest<GetDependenciaResponse>(`${BASE}/${dependenciaId}`, {
     method: "GET",
-    accessToken,
   });
 }
 
 export async function createDependencia(
-  payload: CreateDependenciaPayload,
-  accessToken?: string | null
+  payload: CreateDependenciaPayload
 ): Promise<CreateDependenciaResponse> {
   return apiRequest<CreateDependenciaResponse>(BASE, {
     method: "POST",
     body: payload,
-    accessToken,
   });
 }
 
 export async function listDependenciaAreas(
   dependenciaId: string,
-  params: ListDependenciaAreasParams = {},
-  accessToken?: string | null
+  params: ListDependenciaAreasParams = {}
 ): Promise<ListDependenciaAreasResponse> {
   return apiRequest<ListDependenciaAreasResponse>(
     `${BASE}/${dependenciaId}/areas${toQuery(params)}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
 export async function createDependenciaArea(
   dependenciaId: string,
-  payload: CreateDependenciaAreaPayload,
-  accessToken?: string | null
+  payload: CreateDependenciaAreaPayload
 ): Promise<CreateDependenciaAreaResponse> {
   return apiRequest<CreateDependenciaAreaResponse>(
     `${BASE}/${dependenciaId}/areas`,
-    { method: "POST", body: payload, accessToken }
+    { method: "POST", body: payload }
   );
 }
 
 export async function listDependenciaInvitations(
   dependenciaId: string,
-  params: ListDependenciaInvitationsParams = {},
-  accessToken?: string | null
+  params: ListDependenciaInvitationsParams = {}
 ): Promise<ListDependenciaInvitationsResponse> {
   return apiRequest<ListDependenciaInvitationsResponse>(
     `${BASE}/${dependenciaId}/invitations${toQuery(params)}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
 export async function createDependenciaInvitation(
   dependenciaId: string,
-  payload: CreateDependenciaInvitationPayload,
-  accessToken?: string | null
+  payload: CreateDependenciaInvitationPayload
 ): Promise<CreateDependenciaInvitationResponse> {
   return apiRequest<CreateDependenciaInvitationResponse>(
     `${BASE}/${dependenciaId}/invitations`,
-    { method: "POST", body: payload, accessToken }
+    { method: "POST", body: payload }
   );
 }
 
 export async function revokeDependenciaInvitation(
   dependenciaId: string,
-  invitationId: string,
-  accessToken?: string | null
+  invitationId: string
 ): Promise<void> {
   await apiRequest<void>(
     `${BASE}/${dependenciaId}/invitations/${invitationId}/revoke`,
-    { method: "POST", accessToken }
+    { method: "POST" }
   );
 }

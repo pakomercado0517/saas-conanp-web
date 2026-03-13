@@ -56,12 +56,11 @@ interface CreateInvitationResponse {
 
 export async function createInvitation(
   organizationId: string,
-  payload: CreateInvitationPayload,
-  accessToken?: string | null
+  payload: CreateInvitationPayload
 ): Promise<InvitationItem> {
   const res = await apiRequest<CreateInvitationResponse>(
     `${ORG_INVITATIONS_BASE}/${organizationId}/invitations`,
-    { method: "POST", body: payload, accessToken }
+    { method: "POST", body: payload }
   );
   return (res as CreateInvitationResponse).data;
 }
@@ -69,8 +68,7 @@ export async function createInvitation(
 /** GET /api/v1/organizations/:organizationId/invitations — Listar invitaciones (solo admin). */
 export async function listInvitations(
   organizationId: string,
-  params: { page?: number; limit?: number; status?: string } = {},
-  accessToken?: string | null
+  params: { page?: number; limit?: number; status?: string } = {}
 ): Promise<ListInvitationsResponse> {
   const search = new URLSearchParams();
   if (params.page != null) search.set("page", String(params.page));
@@ -79,6 +77,6 @@ export async function listInvitations(
   const query = search.toString();
   return apiRequest<ListInvitationsResponse>(
     `${ORG_INVITATIONS_BASE}/${organizationId}/invitations${query ? `?${query}` : ""}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }

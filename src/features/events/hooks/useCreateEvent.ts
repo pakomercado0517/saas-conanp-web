@@ -1,20 +1,18 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { createEvento } from "../services/events.api";
 import type { CreateEventoPayload, EventoOperativo } from "../types";
 
 const QUERY_KEY_PREFIX = ["events"] as const;
 
 export function useCreateEvent(organizationId: string) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationKey: [...QUERY_KEY_PREFIX, "create", organizationId],
     mutationFn: (payload: CreateEventoPayload) =>
-      createEvento(organizationId, payload, accessToken ?? undefined),
+      createEvento(organizationId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [...QUERY_KEY_PREFIX, organizationId] });
     },

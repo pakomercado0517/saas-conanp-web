@@ -136,13 +136,12 @@ function buildQuery(params: ReportesEventosPorActividadParams): string {
 
 export async function getReporteEventosPorActividad(
   organizationId: string,
-  params: ReportesEventosPorActividadParams = {},
-  accessToken?: string | null
+  params: ReportesEventosPorActividadParams = {}
 ): Promise<ReporteEventosPorActividadResponse> {
   const query = buildQuery(params);
   return apiRequest<ReporteEventosPorActividadResponse>(
     `${BASE}/${organizationId}/reportes/eventos-por-actividad${query}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
@@ -157,58 +156,53 @@ function buildReporteQuery(params: Record<string, string | undefined>): string {
 
 export async function getReporteEventosPorPrestadorFecha(
   organizationId: string,
-  params: ReportesEventosPorPrestadorFechaParams = {},
-  accessToken?: string | null
+  params: ReportesEventosPorPrestadorFechaParams = {}
 ): Promise<ReporteEventosPorPrestadorFechaResponse> {
   const query = buildReporteQuery(params as Record<string, string | undefined>);
   return apiRequest<ReporteEventosPorPrestadorFechaResponse>(
     `${BASE}/${organizationId}/reportes/eventos-por-prestador-fecha${query}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
 export async function getReporteCapacidadUtilizada(
   organizationId: string,
-  params: ReportesCapacidadUtilizadaParams = {},
-  accessToken?: string | null
+  params: ReportesCapacidadUtilizadaParams = {}
 ): Promise<ReporteCapacidadUtilizadaResponse> {
   const query = buildReporteQuery(params as Record<string, string | undefined>);
   return apiRequest<ReporteCapacidadUtilizadaResponse>(
     `${BASE}/${organizationId}/reportes/capacidad-utilizada${query}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
 export async function getReportePrestadoresActivos(
-  organizationId: string,
-  accessToken?: string | null
+  organizationId: string
 ): Promise<ReportePrestadoresActivosResponse> {
   return apiRequest<ReportePrestadoresActivosResponse>(
     `${BASE}/${organizationId}/reportes/prestadores-activos`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
 export async function getReporteStockBrazaletes(
   organizationId: string,
-  params: ReportesStockBrazaletesParams = {},
-  accessToken?: string | null
+  params: ReportesStockBrazaletesParams = {}
 ): Promise<ReporteStockBrazaletesResponse> {
   const query = buildReporteQuery(params as Record<string, string | undefined>);
   return apiRequest<ReporteStockBrazaletesResponse>(
     `${BASE}/${organizationId}/reportes/stock-brazaletes${query}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
 export async function getReporteVentasBrazaletes(
   organizationId: string,
-  params: ReportesVentasBrazaletesParams = {},
-  accessToken?: string | null
+  params: ReportesVentasBrazaletesParams = {}
 ): Promise<ReporteVentasBrazaletesResponse> {
   const query = buildReporteQuery(params as Record<string, string | undefined>);
   return apiRequest<ReporteVentasBrazaletesResponse>(
     `${BASE}/${organizationId}/reportes/ventas-brazaletes${query}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }

@@ -1,19 +1,16 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { reactivateSubscription } from "../services/subscriptions.api";
 
 const QUERY_KEY_PREFIX = ["subscriptions", "current"] as const;
 
 export function useReactivateSubscription(organizationId: string) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationKey: ["subscriptions", "reactivate", organizationId],
-    mutationFn: () =>
-      reactivateSubscription(organizationId, accessToken ?? undefined),
+    mutationFn: () => reactivateSubscription(organizationId),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: [...QUERY_KEY_PREFIX, organizationId],

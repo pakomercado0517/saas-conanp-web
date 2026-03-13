@@ -20,24 +20,22 @@ function buildQuery(params: ListPrestadoresParams): string {
 
 export async function listPrestadores(
   organizationId: string,
-  params: ListPrestadoresParams = {},
-  accessToken?: string | null
+  params: ListPrestadoresParams = {}
 ): Promise<ListPrestadoresResponse> {
   const query = buildQuery(params);
   return apiRequest<ListPrestadoresResponse>(
     `${BASE}/${organizationId}/prestadores${query}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
 export async function getPrestador(
   organizationId: string,
-  prestadorId: string,
-  accessToken?: string | null
+  prestadorId: string
 ): Promise<GetPrestadorResponse> {
   return apiRequest<GetPrestadorResponse>(
     `${BASE}/${organizationId}/prestadores/${prestadorId}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
@@ -50,11 +48,10 @@ interface UpdatePrestadorResponse {
 export async function updatePrestador(
   organizationId: string,
   prestadorId: string,
-  payload: UpdatePrestadorPayload,
-  accessToken?: string | null
+  payload: UpdatePrestadorPayload
 ): Promise<UpdatePrestadorResponse> {
   return apiRequest<UpdatePrestadorResponse>(
     `${BASE}/${organizationId}/prestadores/${prestadorId}`,
-    { method: "PATCH", body: payload, accessToken }
+    { method: "PATCH", body: payload }
   );
 }

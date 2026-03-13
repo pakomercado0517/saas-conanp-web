@@ -8,20 +8,15 @@ import type { MembershipRole } from "../types";
 const QUERY_KEY_PREFIX = ["memberships"] as const;
 
 export function useCurrentUserMembership(organizationId: string) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const userId = useAuthStore((s) => s.user?.id);
 
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, userId],
     queryFn: async () => {
-      const res = await listMemberships(
-        organizationId,
-        { page: 1, limit: 100 },
-        accessToken ?? undefined
-      );
+      const res = await listMemberships(organizationId, { page: 1, limit: 100 });
       return res.data;
     },
-    enabled: Boolean(accessToken && organizationId && userId),
+    enabled: Boolean(organizationId && userId),
   });
 
   const currentMembership = query.data?.find((m) => m.User?.id === userId || m.userId === userId);

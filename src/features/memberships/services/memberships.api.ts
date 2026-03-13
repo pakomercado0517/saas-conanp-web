@@ -23,13 +23,12 @@ function buildQuery(params: ListMembershipsParams): string {
 
 export async function listMemberships(
   organizationId: string,
-  params: ListMembershipsParams = {},
-  accessToken?: string | null
+  params: ListMembershipsParams = {}
 ): Promise<ListMembershipsResponse> {
   const query = buildQuery(params);
   return apiRequest<ListMembershipsResponse>(
     `${BASE}/${organizationId}/memberships${query}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
@@ -47,22 +46,20 @@ interface UpdateMembershipResponse {
 export async function updateMembership(
   organizationId: string,
   membershipId: string,
-  payload: UpdateMembershipPayload,
-  accessToken?: string | null
+  payload: UpdateMembershipPayload
 ): Promise<UpdateMembershipResponse> {
   return apiRequest<UpdateMembershipResponse>(
     `${BASE}/${organizationId}/memberships/${membershipId}`,
-    { method: "PATCH", body: payload, accessToken }
+    { method: "PATCH", body: payload }
   );
 }
 
 export async function deleteMembership(
   organizationId: string,
-  membershipId: string,
-  accessToken?: string | null
+  membershipId: string
 ): Promise<{ success: true; message?: string }> {
   return apiRequest<{ success: true; message?: string }>(
     `${BASE}/${organizationId}/memberships/${membershipId}`,
-    { method: "DELETE", accessToken }
+    { method: "DELETE" }
   );
 }

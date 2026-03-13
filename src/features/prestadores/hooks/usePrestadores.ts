@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { listPrestadores } from "../services/prestadores.api";
 import type { ListPrestadoresParams, Prestador } from "../types";
 
@@ -11,19 +10,13 @@ export function usePrestadores(
   organizationId: string,
   params: ListPrestadoresParams = {}
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
-
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, params],
     queryFn: async () => {
-      const res = await listPrestadores(
-        organizationId,
-        params,
-        accessToken ?? undefined
-      );
+      const res = await listPrestadores(organizationId, params);
       return res;
     },
-    enabled: Boolean(accessToken && organizationId),
+    enabled: Boolean(organizationId),
   });
 
   return {

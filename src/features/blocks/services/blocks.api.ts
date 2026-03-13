@@ -24,14 +24,13 @@ function buildQuery(params: ListBloquesParams): string {
 export async function listBloques(
   organizationId: string,
   actividadId: string,
-  params: ListBloquesParams = {},
-  accessToken?: string | null
+  params: ListBloquesParams = {}
 ): Promise<{ data: Bloque[]; pagination?: ListBloquesResponse["pagination"] }> {
   try {
     const query = buildQuery(params);
     const res = await apiRequest<ListBloquesResponse>(
       `${BASE}/${organizationId}/actividades/${actividadId}/bloques${query}`,
-      { method: "GET", accessToken }
+      { method: "GET" }
     );
     return {
       data: (res as ListBloquesResponse).data ?? [],
@@ -45,13 +44,12 @@ export async function listBloques(
 export async function getBloque(
   organizationId: string,
   actividadId: string,
-  bloqueId: string,
-  accessToken?: string | null
+  bloqueId: string
 ): Promise<Bloque | null> {
   try {
     const res = await apiRequest<GetBloqueResponse>(
       `${BASE}/${organizationId}/actividades/${actividadId}/bloques/${bloqueId}`,
-      { method: "GET", accessToken }
+      { method: "GET" }
     );
     return (res as GetBloqueResponse).data;
   } catch {
@@ -68,12 +66,11 @@ interface CreateBloqueResponse {
 export async function createBloque(
   organizationId: string,
   actividadId: string,
-  payload: CreateBloquePayload,
-  accessToken?: string | null
+  payload: CreateBloquePayload
 ): Promise<Bloque> {
   const res = await apiRequest<CreateBloqueResponse>(
     `${BASE}/${organizationId}/actividades/${actividadId}/bloques`,
-    { method: "POST", body: payload, accessToken }
+    { method: "POST", body: payload }
   );
   return (res as CreateBloqueResponse).data;
 }
@@ -88,12 +85,11 @@ export async function updateBloque(
   organizationId: string,
   actividadId: string,
   bloqueId: string,
-  payload: UpdateBloquePayload,
-  accessToken?: string | null
+  payload: UpdateBloquePayload
 ): Promise<Bloque> {
   const res = await apiRequest<UpdateBloqueResponse>(
     `${BASE}/${organizationId}/actividades/${actividadId}/bloques/${bloqueId}`,
-    { method: "PATCH", body: payload, accessToken }
+    { method: "PATCH", body: payload }
   );
   return (res as UpdateBloqueResponse).data;
 }
@@ -101,11 +97,10 @@ export async function updateBloque(
 export async function deleteBloque(
   organizationId: string,
   actividadId: string,
-  bloqueId: string,
-  accessToken?: string | null
+  bloqueId: string
 ): Promise<void> {
   await apiRequest<{ success: true; message?: string }>(
     `${BASE}/${organizationId}/actividades/${actividadId}/bloques/${bloqueId}`,
-    { method: "DELETE", accessToken }
+    { method: "DELETE" }
   );
 }

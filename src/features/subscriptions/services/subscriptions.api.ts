@@ -10,66 +10,55 @@ const ORG_BASE = "/api/v1/organizations";
 const PLANS_BASE = "/api/v1/subscription-plans";
 
 export async function getCurrentSubscription(
-  organizationId: string,
-  accessToken?: string | null
+  organizationId: string
 ): Promise<CurrentSubscriptionResponse> {
   return apiRequest<CurrentSubscriptionResponse>(
     `${ORG_BASE}/${organizationId}/subscriptions/current`,
     {
       method: "GET",
-      accessToken,
     }
   );
 }
 
-export async function getSubscriptionPlans(
-  accessToken?: string | null
-): Promise<SubscriptionPlansResponse> {
+export async function getSubscriptionPlans(): Promise<SubscriptionPlansResponse> {
   return apiRequest<SubscriptionPlansResponse>(PLANS_BASE, {
     method: "GET",
-    accessToken,
   });
 }
 
 export async function subscribeOrChangePlan(
   organizationId: string,
-  payload: SubscribeOrChangePlanPayload,
-  accessToken?: string | null
+  payload: SubscribeOrChangePlanPayload
 ): Promise<SubscribeResponse> {
   return apiRequest<SubscribeResponse>(
     `${ORG_BASE}/${organizationId}/subscriptions`,
     {
       method: "POST",
       body: payload,
-      accessToken,
     }
   );
 }
 
 export async function cancelSubscriptionAtPeriodEnd(
-  organizationId: string,
-  accessToken?: string | null
+  organizationId: string
 ): Promise<{ success: true; message?: string }> {
   return apiRequest<{ success: true; message?: string }>(
     `${ORG_BASE}/${organizationId}/subscriptions/current/cancel`,
     {
       method: "POST",
       body: {},
-      accessToken,
     }
   );
 }
 
 export async function reactivateSubscription(
-  organizationId: string,
-  accessToken?: string | null
+  organizationId: string
 ): Promise<{ success: true; message?: string }> {
   return apiRequest<{ success: true; message?: string }>(
     `${ORG_BASE}/${organizationId}/subscriptions/current/reactivate`,
     {
       method: "POST",
       body: {},
-      accessToken,
     }
   );
 }

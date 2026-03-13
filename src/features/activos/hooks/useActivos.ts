@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { listActivos } from "../services/activos.api";
 import type { ListActivosParams, Activo } from "../types";
 
@@ -11,19 +10,13 @@ export function useActivos(
   organizationId: string,
   params: ListActivosParams = {}
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
-
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, params],
     queryFn: async () => {
-      const res = await listActivos(
-        organizationId,
-        params,
-        accessToken ?? undefined
-      );
+      const res = await listActivos(organizationId, params);
       return res;
     },
-    enabled: Boolean(accessToken && organizationId),
+    enabled: Boolean(organizationId),
   });
 
   return {

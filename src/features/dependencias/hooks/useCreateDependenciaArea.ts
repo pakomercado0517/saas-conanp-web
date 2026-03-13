@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { createDependenciaArea } from "../services/dependencias.api";
 import { DEPENDENCIA_AREAS_KEY } from "./useDependenciaAreas";
 import type {
@@ -11,13 +10,12 @@ import type {
 } from "../types";
 
 export function useCreateDependenciaArea(dependenciaId: string) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
   const areasKey = DEPENDENCIA_AREAS_KEY(dependenciaId);
 
   const mutation = useMutation({
     mutationFn: (payload: CreateDependenciaAreaPayload) =>
-      createDependenciaArea(dependenciaId, payload, accessToken ?? undefined),
+      createDependenciaArea(dependenciaId, payload),
     onMutate: async (newArea) => {
       await queryClient.cancelQueries({ queryKey: areasKey });
       const previous =

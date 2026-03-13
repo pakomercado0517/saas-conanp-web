@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { getReporteEventosPorActividad } from "../services/reports.api";
 import type { ReportesEventosPorActividadParams } from "../services/reports.api";
 
@@ -11,13 +10,11 @@ export function useReporteEventosPorActividad(
   organizationId: string,
   params: ReportesEventosPorActividadParams = {}
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
-
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, params],
     queryFn: () =>
-      getReporteEventosPorActividad(organizationId, params, accessToken ?? undefined),
-    enabled: Boolean(accessToken && organizationId),
+      getReporteEventosPorActividad(organizationId, params),
+    enabled: Boolean(organizationId),
   });
 
   return {
