@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { listDependenciaInvitations } from "../services/dependencias.api";
 import type { ListDependenciaInvitationsParams } from "../types";
 
@@ -12,17 +11,10 @@ export function useDependenciaInvitations(
   dependenciaId: string,
   params: ListDependenciaInvitationsParams = {}
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
-
   const query = useQuery({
     queryKey: [...DEPENDENCIA_INVITATIONS_KEY(dependenciaId), params],
-    queryFn: () =>
-      listDependenciaInvitations(
-        dependenciaId,
-        params,
-        accessToken ?? undefined
-      ),
-    enabled: Boolean(accessToken && dependenciaId),
+    queryFn: () => listDependenciaInvitations(dependenciaId, params),
+    enabled: Boolean(dependenciaId),
   });
 
   return {

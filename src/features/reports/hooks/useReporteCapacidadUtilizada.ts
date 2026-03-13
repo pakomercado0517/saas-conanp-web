@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { getReporteCapacidadUtilizada } from "../services/reports.api";
 import type {
   ReportesCapacidadUtilizadaParams,
@@ -14,13 +13,11 @@ export function useReporteCapacidadUtilizada(
   organizationId: string,
   params: ReportesCapacidadUtilizadaParams = {}
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
-
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, params],
     queryFn: () =>
-      getReporteCapacidadUtilizada(organizationId, params, accessToken ?? undefined),
-    enabled: Boolean(accessToken && organizationId),
+      getReporteCapacidadUtilizada(organizationId, params),
+    enabled: Boolean(organizationId),
   });
 
   return {

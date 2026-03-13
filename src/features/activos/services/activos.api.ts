@@ -22,24 +22,22 @@ function buildQuery(params: ListActivosParams): string {
 
 export async function listActivos(
   organizationId: string,
-  params: ListActivosParams = {},
-  accessToken?: string | null
+  params: ListActivosParams = {}
 ): Promise<ListActivosResponse> {
   const query = buildQuery(params);
   return apiRequest<ListActivosResponse>(
     `${BASE}/${organizationId}/activos${query}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
 export async function getActivo(
   organizationId: string,
-  activoId: string,
-  accessToken?: string | null
+  activoId: string
 ): Promise<GetActivoResponse> {
   return apiRequest<GetActivoResponse>(
     `${BASE}/${organizationId}/activos/${activoId}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
@@ -51,12 +49,11 @@ interface CreateActivoResponse {
 
 export async function createActivo(
   organizationId: string,
-  payload: CreateActivoPayload,
-  accessToken?: string | null
+  payload: CreateActivoPayload
 ): Promise<Activo> {
   const res = await apiRequest<CreateActivoResponse>(
     `${BASE}/${organizationId}/activos`,
-    { method: "POST", body: payload, accessToken }
+    { method: "POST", body: payload }
   );
   return (res as CreateActivoResponse).data;
 }
@@ -70,12 +67,11 @@ interface UpdateActivoResponse {
 export async function updateActivo(
   organizationId: string,
   activoId: string,
-  payload: UpdateActivoPayload,
-  accessToken?: string | null
+  payload: UpdateActivoPayload
 ): Promise<Activo> {
   const res = await apiRequest<UpdateActivoResponse>(
     `${BASE}/${organizationId}/activos/${activoId}`,
-    { method: "PATCH", body: payload, accessToken }
+    { method: "PATCH", body: payload }
   );
   return (res as UpdateActivoResponse).data;
 }
@@ -87,11 +83,10 @@ interface DeleteActivoResponse {
 
 export async function deleteActivo(
   organizationId: string,
-  activoId: string,
-  accessToken?: string | null
+  activoId: string
 ): Promise<void> {
   await apiRequest<DeleteActivoResponse>(
     `${BASE}/${organizationId}/activos/${activoId}`,
-    { method: "DELETE", accessToken }
+    { method: "DELETE" }
   );
 }

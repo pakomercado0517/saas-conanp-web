@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from "@/shared/lib/api";
+import { useAuthStore } from "@/features/auth/store/auth.store";
 
 const BASE = "/api/v1/organizations";
 
@@ -15,12 +16,13 @@ export interface CreatePaymentIntentResponse {
 
 export async function createPaymentIntent(
   organizationId: string,
-  eventoId: string,
-  accessToken?: string | null
+  eventoId: string
 ): Promise<CreatePaymentIntentResponse["data"]> {
+  const accessToken = useAuthStore.getState().accessToken;
   const url = `${getApiBaseUrl()}${BASE}/${organizationId}/eventos/${eventoId}/create-payment-intent`;
   const res = await fetch(url, {
     method: "POST",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),

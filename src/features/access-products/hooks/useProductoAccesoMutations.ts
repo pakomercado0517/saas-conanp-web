@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import {
   createProductoAcceso,
   updateProductoAcceso,
@@ -15,12 +14,11 @@ import type {
 const QUERY_KEY_PREFIX = ["access-products"] as const;
 
 export function useCreateProductoAcceso(organizationId: string) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: (payload: CreateProductoAccesoPayload) =>
-      createProductoAcceso(organizationId, payload, accessToken ?? undefined),
+      createProductoAcceso(organizationId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [...QUERY_KEY_PREFIX, organizationId] });
     },
@@ -35,12 +33,11 @@ export function useCreateProductoAcceso(organizationId: string) {
 }
 
 export function useUpdateProductoAcceso(organizationId: string, productoId: string) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: (payload: UpdateProductoAccesoPayload) =>
-      updateProductoAcceso(organizationId, productoId, payload, accessToken ?? undefined),
+      updateProductoAcceso(organizationId, productoId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [...QUERY_KEY_PREFIX, organizationId] });
       queryClient.invalidateQueries({
@@ -58,12 +55,11 @@ export function useUpdateProductoAcceso(organizationId: string, productoId: stri
 }
 
 export function useDeleteProductoAcceso(organizationId: string) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: (productoId: string) =>
-      deleteProductoAcceso(organizationId, productoId, accessToken ?? undefined),
+      deleteProductoAcceso(organizationId, productoId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [...QUERY_KEY_PREFIX, organizationId] });
     },

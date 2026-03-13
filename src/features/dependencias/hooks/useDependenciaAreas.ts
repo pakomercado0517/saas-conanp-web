@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { listDependenciaAreas } from "../services/dependencias.api";
 import type { ListDependenciaAreasParams } from "../types";
 
@@ -12,13 +11,10 @@ export function useDependenciaAreas(
   dependenciaId: string,
   params: ListDependenciaAreasParams = {}
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
-
   const query = useQuery({
     queryKey: [...DEPENDENCIA_AREAS_KEY(dependenciaId), params],
-    queryFn: () =>
-      listDependenciaAreas(dependenciaId, params, accessToken ?? undefined),
-    enabled: Boolean(accessToken && dependenciaId),
+    queryFn: () => listDependenciaAreas(dependenciaId, params),
+    enabled: Boolean(dependenciaId),
   });
 
   return {

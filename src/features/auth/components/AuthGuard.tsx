@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { silentRefresh } from "@/shared/lib/api";
+import * as authApi from "../services/auth.api";
 import { useAuthStore } from "../store/auth.store";
 
 interface AuthGuardProps {
@@ -9,20 +11,19 @@ interface AuthGuardProps {
 }
 
 /**
- * Envuelve rutas que requieren sesión. Intenta refresh si hay refreshToken pero no accessToken;
- * si no hay sesión válida, redirige a /auth/login preservando la URL actual en returnTo.
+ * Envuelve rutas que requieren sesión.
+ * Si no hay accessToken + user en memoria, intenta recuperar la sesión via cookie (silentRefresh + /me).
+ * Si falla, redirige a /auth/login preservando returnTo.
  */
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
   const accessToken = useAuthStore((s) => s.accessToken);
-  const refreshToken = useAuthStore((s) => s.refreshToken);
-  const refreshAccessToken = useAuthStore((s) => s.refreshAccessToken);
-  /** null = pendiente, true = refresh ok, false = refresh falló */
-  const [refreshDone, setRefreshDone] = useState<boolean | null>(null);
+  const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
 
-  const ready = accessToken !== null || refreshDone === true;
-  const checking = accessToken === null && refreshToken !== null && refreshDone === null;
+  const isReady = Boolean(accessToken && user);
+  const [failed, setFailed] = useState(false);
 
   const redirectToLogin = useCallback(() => {
     const returnTo = pathname ? encodeURIComponent(pathname) : "";
@@ -31,33 +32,48 @@ export function AuthGuard({ children }: AuthGuardProps) {
   }, [router, pathname]);
 
   useEffect(() => {
-    if (accessToken !== null) return;
-    if (refreshToken === null) {
-      redirectToLogin();
-      return;
-    }
-    refreshAccessToken()
-      .then((token) => {
-        setRefreshDone(!!token);
-        if (!token) redirectToLogin();
-      })
-      .catch(() => {
-        setRefreshDone(false);
+    if (isReady) return;
+
+    let cancelled = false;
+
+    const restore = async () => {
+      const token = await silentRefresh();
+      if (cancelled) return;
+
+      if (!token) {
+        setFailed(true);
         redirectToLogin();
-      });
-  }, [accessToken, refreshToken, refreshAccessToken, redirectToLogin]);
+        return;
+      }
 
-  if (checking) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <p className="text-sm text-slate-500">Cargando…</p>
-      </div>
-    );
-  }
+      try {
+        const userData = await authApi.me();
+        if (cancelled) return;
+        setUser({
+          id: userData.userId,
+          email: userData.email,
+          name: userData.email,
+        });
+      } catch {
+        if (cancelled) return;
+        setFailed(true);
+        redirectToLogin();
+      }
+    };
 
-  if (!ready) {
-    return null;
-  }
+    restore();
+    return () => {
+      cancelled = true;
+    };
+  }, [isReady, setUser, redirectToLogin]);
 
-  return <>{children}</>;
+  if (isReady) return <>{children}</>;
+
+  if (failed) return null;
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-white">
+      <p className="text-sm text-slate-500">Cargando…</p>
+    </div>
+  );
 }

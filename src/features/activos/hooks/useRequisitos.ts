@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { listRequisitos } from "../services/requisitos.api";
 import type { ActivoRequisito } from "../types";
 
@@ -11,19 +10,13 @@ export function useRequisitos(
   organizationId: string,
   activoId: string | null
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
-
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, activoId],
     queryFn: async () => {
       if (!activoId) throw new Error("activoId required");
-      return listRequisitos(
-        organizationId,
-        activoId,
-        accessToken ?? undefined
-      );
+      return listRequisitos(organizationId, activoId);
     },
-    enabled: Boolean(accessToken && organizationId && activoId),
+    enabled: Boolean(organizationId && activoId),
   });
 
   return {

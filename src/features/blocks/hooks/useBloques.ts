@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { listBloques } from "../services/blocks.api";
 import type { ListBloquesParams, Bloque } from "../types";
 
@@ -12,20 +11,13 @@ export function useBloques(
   actividadId: string | null,
   params: ListBloquesParams = {}
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
-
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, actividadId, params],
     queryFn: async () => {
       if (!actividadId) return { data: [] };
-      return listBloques(
-        organizationId,
-        actividadId,
-        params,
-        accessToken ?? undefined
-      );
+      return listBloques(organizationId, actividadId, params);
     },
-    enabled: Boolean(accessToken && organizationId && actividadId),
+    enabled: Boolean(organizationId && actividadId),
   });
 
   return {

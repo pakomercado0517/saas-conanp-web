@@ -24,7 +24,7 @@ export function SmartRedirect() {
 
     async function resolve() {
       try {
-        const depRes = await listDependencias({}, accessToken);
+        const depRes = await listDependencias({});
         const deps = depRes.data;
 
         if (cancelled) return;
@@ -42,7 +42,7 @@ export function SmartRedirect() {
         }
 
         const singleDep = deps[0];
-        const areasRes = await listDependenciaAreas(singleDep.id, {}, accessToken);
+        const areasRes = await listDependenciaAreas(singleDep.id, {});
         const areas = areasRes.data;
 
         if (cancelled) return;

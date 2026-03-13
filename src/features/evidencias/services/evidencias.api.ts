@@ -1,4 +1,5 @@
 import { apiRequest, getApiBaseUrl } from "@/shared/lib/api";
+import { useAuthStore } from "@/features/auth/store/auth.store";
 import type { Evidencia, UpdateEvidenciaPayload } from "../types";
 
 const BASE = "/api/v1/organizations";
@@ -11,12 +12,11 @@ interface ListEvidenciasResponse {
 
 export async function listEvidencias(
   organizationId: string,
-  eventoId: string,
-  accessToken?: string | null
+  eventoId: string
 ): Promise<Evidencia[]> {
   const res = await apiRequest<ListEvidenciasResponse>(
     `${BASE}/${organizationId}/eventos/${eventoId}/evidencias`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
   return (res as ListEvidenciasResponse).data ?? [];
 }
@@ -25,9 +25,9 @@ export async function uploadEvidencia(
   organizationId: string,
   eventoId: string,
   file: File,
-  metadata?: { nombre?: string; descripcion?: string; tipo?: Evidencia["tipo"] },
-  accessToken?: string | null
+  metadata?: { nombre?: string; descripcion?: string; tipo?: Evidencia["tipo"] }
 ): Promise<Evidencia> {
+  const accessToken = useAuthStore.getState().accessToken;
   const url = `${getApiBaseUrl()}${BASE}/${organizationId}/eventos/${eventoId}/evidencias`;
   const formData = new FormData();
   formData.append("file", file);
@@ -37,6 +37,7 @@ export async function uploadEvidencia(
 
   const res = await fetch(url, {
     method: "POST",
+    credentials: "include",
     headers: accessToken
       ? { Authorization: `Bearer ${accessToken}` }
       : {},
@@ -63,12 +64,11 @@ export async function updateEvidencia(
   organizationId: string,
   eventoId: string,
   evidenciaId: string,
-  payload: UpdateEvidenciaPayload,
-  accessToken?: string | null
+  payload: UpdateEvidenciaPayload
 ): Promise<Evidencia> {
   const res = await apiRequest<UpdateEvidenciaResponse>(
     `${BASE}/${organizationId}/eventos/${eventoId}/evidencias/${evidenciaId}`,
-    { method: "PATCH", body: payload, accessToken }
+    { method: "PATCH", body: payload }
   );
   return (res as UpdateEvidenciaResponse).data;
 }
@@ -81,11 +81,10 @@ interface DeleteEvidenciaResponse {
 export async function deleteEvidencia(
   organizationId: string,
   eventoId: string,
-  evidenciaId: string,
-  accessToken?: string | null
+  evidenciaId: string
 ): Promise<void> {
   await apiRequest<DeleteEvidenciaResponse>(
     `${BASE}/${organizationId}/eventos/${eventoId}/evidencias/${evidenciaId}`,
-    { method: "DELETE", accessToken }
+    { method: "DELETE" }
   );
 }

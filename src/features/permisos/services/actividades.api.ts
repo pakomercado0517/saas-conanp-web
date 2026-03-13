@@ -15,13 +15,12 @@ interface ListActividadesResponse {
 const BASE = "/api/v1/organizations";
 
 export async function listActividades(
-  organizationId: string,
-  accessToken?: string | null
+  organizationId: string
 ): Promise<ActividadItem[]> {
   try {
     const res = await apiRequest<ListActividadesResponse>(
       `${BASE}/${organizationId}/actividades`,
-      { method: "GET", accessToken }
+      { method: "GET" }
     );
     return (res as ListActividadesResponse).data ?? [];
   } catch {

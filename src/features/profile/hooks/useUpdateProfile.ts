@@ -8,14 +8,12 @@ import type { UpdateProfilePayload } from "../types";
 const QUERY_KEY = ["profile"] as const;
 
 export function useUpdateProfile() {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const setUser = useAuthStore((s) => s.setUser);
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (payload: UpdateProfilePayload) =>
-      updateProfile(payload, accessToken!),
+    mutationFn: (payload: UpdateProfilePayload) => updateProfile(payload),
     onSuccess: (data) => {
       if (user && data) {
         setUser({

@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { getActividad } from "../services/activities.api";
 import type { Actividad } from "../types";
 
@@ -11,19 +10,13 @@ export function useActividad(
   organizationId: string,
   actividadId: string | null
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
-
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, actividadId],
     queryFn: async () => {
       if (!actividadId) return null;
-      return getActividad(
-        organizationId,
-        actividadId,
-        accessToken ?? undefined
-      );
+      return getActividad(organizationId, actividadId);
     },
-    enabled: Boolean(accessToken && organizationId && actividadId),
+    enabled: Boolean(organizationId && actividadId),
   });
 
   return {

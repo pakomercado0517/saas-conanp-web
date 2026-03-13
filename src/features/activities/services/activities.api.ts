@@ -20,14 +20,13 @@ function buildQuery(params: ListActividadesParams): string {
 
 export async function listActividades(
   organizationId: string,
-  params: ListActividadesParams = {},
-  accessToken?: string | null
+  params: ListActividadesParams = {}
 ): Promise<{ data: Actividad[]; pagination?: ListActividadesResponse["pagination"] }> {
   try {
     const query = buildQuery(params);
     const res = await apiRequest<ListActividadesResponse>(
       `${BASE}/${organizationId}/actividades${query}`,
-      { method: "GET", accessToken }
+      { method: "GET" }
     );
     return {
       data: (res as ListActividadesResponse).data ?? [],
@@ -40,13 +39,12 @@ export async function listActividades(
 
 export async function getActividad(
   organizationId: string,
-  actividadId: string,
-  accessToken?: string | null
+  actividadId: string
 ): Promise<Actividad | null> {
   try {
     const res = await apiRequest<GetActividadResponse>(
       `${BASE}/${organizationId}/actividades/${actividadId}`,
-      { method: "GET", accessToken }
+      { method: "GET" }
     );
     return (res as GetActividadResponse).data;
   } catch {

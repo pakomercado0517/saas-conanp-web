@@ -1,5 +1,6 @@
 /**
- * Contratos de API de autenticación (docs/api_routes/authentication.md).
+ * Contratos de API de autenticación (docs/api_routes/session-auth.md).
+ * Refresh token viaja en cookie httpOnly; el frontend solo maneja el access token en memoria.
  */
 
 export const AUTH_FEATURE_KEY = "auth";
@@ -51,14 +52,6 @@ export interface ResendVerificationPayload {
   email: string;
 }
 
-export interface RefreshPayload {
-  refreshToken: string;
-}
-
-export interface LogoutPayload {
-  refreshToken: string;
-}
-
 // --- Response data (campo `data` de la respuesta) ---
 
 export interface RegisterResponseData {
@@ -66,10 +59,10 @@ export interface RegisterResponseData {
   message: string;
 }
 
+/** Login response: refresh token viaja en Set-Cookie, no en body. */
 export interface AuthResponseData {
   user: AuthUser;
   accessToken: string;
-  refreshToken: string;
   expiresIn: number;
 }
 
@@ -105,7 +98,6 @@ export interface MeResponseData {
 export interface AuthSession {
   user: AuthUser;
   accessToken: string;
-  refreshToken: string;
   expiresIn: number;
   /** Timestamp (ms) en que expira el access token. */
   expiresAt: number;

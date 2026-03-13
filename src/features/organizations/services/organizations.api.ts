@@ -21,35 +21,29 @@ function buildQuery(params: ListOrganizationsParams): string {
 }
 
 export async function listOrganizations(
-  params: ListOrganizationsParams = {},
-  accessToken?: string | null
+  params: ListOrganizationsParams = {}
 ): Promise<ListOrganizationsResponse> {
   const query = buildQuery(params);
   return apiRequest<ListOrganizationsResponse>(`${BASE}${query}`, {
     method: "GET",
-    accessToken,
   });
 }
 
 export async function getOrganization(
-  organizationId: string,
-  accessToken?: string | null
+  organizationId: string
 ): Promise<GetOrganizationResponse> {
   return apiRequest<GetOrganizationResponse>(`${BASE}/${organizationId}`, {
     method: "GET",
-    accessToken,
   });
 }
 
 export async function getConfigAcceso(
-  organizationId: string,
-  accessToken?: string | null
+  organizationId: string
 ): Promise<GetConfigAccesoResponse> {
   return apiRequest<GetConfigAccesoResponse>(
     `${BASE}/${organizationId}/config-acceso`,
     {
       method: "GET",
-      accessToken,
     }
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { listEvidencias } from "../services/evidencias.api";
 import type { Evidencia } from "../types";
 
@@ -11,19 +10,13 @@ export function useEvidencias(
   organizationId: string,
   eventoId: string | null
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
-
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, eventoId],
     queryFn: async () => {
       if (!eventoId) throw new Error("eventoId required");
-      return listEvidencias(
-        organizationId,
-        eventoId,
-        accessToken ?? undefined
-      );
+      return listEvidencias(organizationId, eventoId);
     },
-    enabled: Boolean(accessToken && organizationId && eventoId),
+    enabled: Boolean(organizationId && eventoId),
   });
 
   return {

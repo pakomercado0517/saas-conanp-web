@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { listInvitations } from "../services/invitations.api";
 
 const QUERY_KEY_PREFIX = ["invitations"] as const;
@@ -16,13 +15,10 @@ export function useInvitations(
   organizationId: string,
   params: UseInvitationsParams = {}
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
-
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, params],
-    queryFn: () =>
-      listInvitations(organizationId, params, accessToken ?? undefined),
-    enabled: Boolean(accessToken && organizationId),
+    queryFn: () => listInvitations(organizationId, params),
+    enabled: Boolean(organizationId),
   });
 
   return {

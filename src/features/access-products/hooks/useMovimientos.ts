@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { listMovimientos } from "../services/access-products.api";
 import type { ListMovimientosParams, Movimiento } from "../types";
 
@@ -12,13 +11,11 @@ export function useMovimientos(
   productoId: string | null,
   params: ListMovimientosParams = {}
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
-
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, productoId, params],
     queryFn: () =>
-      listMovimientos(organizationId, productoId!, params, accessToken ?? undefined),
-    enabled: Boolean(accessToken && organizationId && productoId),
+      listMovimientos(organizationId, productoId!, params),
+    enabled: Boolean(organizationId && productoId),
   });
 
   return {

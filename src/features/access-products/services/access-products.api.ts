@@ -37,58 +37,53 @@ function buildProductosQuery(params: ListProductosAccesoParams): string {
 
 export async function listProductosAcceso(
   organizationId: string,
-  params: ListProductosAccesoParams = {},
-  accessToken?: string | null
+  params: ListProductosAccesoParams = {}
 ): Promise<ListProductosAccesoResponse> {
   const query = buildProductosQuery(params);
   return apiRequest<ListProductosAccesoResponse>(
     `${BASE}/${organizationId}/productos-acceso${query}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
 export async function getProductoAcceso(
   organizationId: string,
-  productoId: string,
-  accessToken?: string | null
+  productoId: string
 ): Promise<{ success: true; data: ProductoAcceso; message?: string }> {
   return apiRequest<{ success: true; data: ProductoAcceso; message?: string }>(
     `${BASE}/${organizationId}/productos-acceso/${productoId}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
 export async function createProductoAcceso(
   organizationId: string,
-  payload: CreateProductoAccesoPayload,
-  accessToken?: string | null
+  payload: CreateProductoAccesoPayload
 ): Promise<{ success: true; data: ProductoAcceso; message?: string }> {
   return apiRequest<{ success: true; data: ProductoAcceso; message?: string }>(
     `${BASE}/${organizationId}/productos-acceso`,
-    { method: "POST", body: payload, accessToken }
+    { method: "POST", body: payload }
   );
 }
 
 export async function updateProductoAcceso(
   organizationId: string,
   productoId: string,
-  payload: UpdateProductoAccesoPayload,
-  accessToken?: string | null
+  payload: UpdateProductoAccesoPayload
 ): Promise<{ success: true; data: ProductoAcceso; message?: string }> {
   return apiRequest<{ success: true; data: ProductoAcceso; message?: string }>(
     `${BASE}/${organizationId}/productos-acceso/${productoId}`,
-    { method: "PATCH", body: payload, accessToken }
+    { method: "PATCH", body: payload }
   );
 }
 
 export async function deleteProductoAcceso(
   organizationId: string,
-  productoId: string,
-  accessToken?: string | null
+  productoId: string
 ): Promise<{ success: true; message?: string }> {
   return apiRequest<{ success: true; message?: string }>(
     `${BASE}/${organizationId}/productos-acceso/${productoId}`,
-    { method: "DELETE", accessToken }
+    { method: "DELETE" }
   );
 }
 
@@ -115,36 +110,33 @@ function buildMovimientosQuery(params: ListMovimientosParams): string {
 export async function listMovimientos(
   organizationId: string,
   productoId: string,
-  params: ListMovimientosParams = {},
-  accessToken?: string | null
+  params: ListMovimientosParams = {}
 ): Promise<ListMovimientosResponse> {
   const query = buildMovimientosQuery(params);
   return apiRequest<ListMovimientosResponse>(
     `${BASE}/${organizationId}/productos-acceso/${productoId}/movimientos${query}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
 export async function registrarEntrada(
   organizationId: string,
   productoId: string,
-  payload: RegistrarEntradaPayload,
-  accessToken?: string | null
+  payload: RegistrarEntradaPayload
 ): Promise<{ success: true; data: Movimiento; message?: string }> {
   return apiRequest<{ success: true; data: Movimiento; message?: string }>(
     `${BASE}/${organizationId}/productos-acceso/${productoId}/entradas`,
-    { method: "POST", body: payload, accessToken }
+    { method: "POST", body: payload }
   );
 }
 
 export async function registrarSalida(
   organizationId: string,
   productoId: string,
-  payload: RegistrarSalidaPayload,
-  accessToken?: string | null
+  payload: RegistrarSalidaPayload
 ): Promise<{ success: true; data: Movimiento; message?: string }> {
   return apiRequest<{ success: true; data: Movimiento; message?: string }>(
     `${BASE}/${organizationId}/productos-acceso/${productoId}/salidas`,
-    { method: "POST", body: payload, accessToken }
+    { method: "POST", body: payload }
   );
 }

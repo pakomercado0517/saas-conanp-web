@@ -26,13 +26,12 @@ function buildQuery(params: ListEventosParams): string {
 
 export async function listEventos(
   organizationId: string,
-  params: ListEventosParams = {},
-  accessToken?: string | null
+  params: ListEventosParams = {}
 ): Promise<ListEventosResponse> {
   const query = buildQuery(params);
   return apiRequest<ListEventosResponse>(
     `${BASE}/${organizationId}/eventos${query}`,
-    { method: "GET", accessToken }
+    { method: "GET" }
   );
 }
 
@@ -44,12 +43,11 @@ interface CreateEventoResponse {
 
 export async function createEvento(
   organizationId: string,
-  payload: CreateEventoPayload,
-  accessToken?: string | null
+  payload: CreateEventoPayload
 ): Promise<EventoOperativo> {
   const res = await apiRequest<CreateEventoResponse>(
     `${BASE}/${organizationId}/eventos`,
-    { method: "POST", body: payload, accessToken }
+    { method: "POST", body: payload }
   );
   return (res as CreateEventoResponse).data;
 }

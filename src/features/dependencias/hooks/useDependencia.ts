@@ -1,20 +1,17 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { getDependencia } from "../services/dependencias.api";
 import type { Dependencia } from "../types";
 
 export function useDependencia(dependenciaId: string) {
-  const accessToken = useAuthStore((s) => s.accessToken);
-
   const query = useQuery({
     queryKey: ["dependencias", dependenciaId],
     queryFn: async () => {
-      const res = await getDependencia(dependenciaId, accessToken ?? undefined);
+      const res = await getDependencia(dependenciaId);
       return res.data;
     },
-    enabled: Boolean(accessToken && dependenciaId),
+    enabled: Boolean(dependenciaId),
     retry: (failureCount, error) => {
       const err = error as { statusCode?: number };
       if (err?.statusCode === 403 || err?.statusCode === 404) return false;

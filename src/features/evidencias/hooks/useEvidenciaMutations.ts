@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import {
   uploadEvidencia,
   updateEvidencia,
@@ -12,7 +11,6 @@ import type { EvidenciaTipo, UpdateEvidenciaPayload } from "../types";
 const QUERY_KEY_PREFIX = ["evidencias"] as const;
 
 export function useUploadEvidencia(organizationId: string, eventoId: string) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -28,8 +26,7 @@ export function useUploadEvidencia(organizationId: string, eventoId: string) {
         organizationId,
         eventoId,
         params.file,
-        params.metadata,
-        accessToken ?? undefined
+        params.metadata
       );
     },
     onSuccess: () => {
@@ -41,7 +38,6 @@ export function useUploadEvidencia(organizationId: string, eventoId: string) {
 }
 
 export function useUpdateEvidencia(organizationId: string, eventoId: string) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -56,8 +52,7 @@ export function useUpdateEvidencia(organizationId: string, eventoId: string) {
         organizationId,
         eventoId,
         evidenciaId,
-        payload,
-        accessToken ?? undefined
+        payload
       );
     },
     onSuccess: () => {
@@ -69,7 +64,6 @@ export function useUpdateEvidencia(organizationId: string, eventoId: string) {
 }
 
 export function useDeleteEvidencia(organizationId: string, eventoId: string) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -77,8 +71,7 @@ export function useDeleteEvidencia(organizationId: string, eventoId: string) {
       return deleteEvidencia(
         organizationId,
         eventoId,
-        evidenciaId,
-        accessToken ?? undefined
+        evidenciaId
       );
     },
     onSuccess: () => {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { createDependenciaInvitation } from "../services/dependencias.api";
 import { DEPENDENCIA_INVITATIONS_KEY } from "./useDependenciaInvitations";
 import type {
@@ -10,16 +9,11 @@ import type {
 } from "../types";
 
 export function useCreateDependenciaInvitation(dependenciaId: string) {
-  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: (payload: CreateDependenciaInvitationPayload) =>
-      createDependenciaInvitation(
-        dependenciaId,
-        payload,
-        accessToken ?? undefined
-      ),
+      createDependenciaInvitation(dependenciaId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: DEPENDENCIA_INVITATIONS_KEY(dependenciaId),

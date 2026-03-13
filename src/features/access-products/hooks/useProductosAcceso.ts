@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { listProductosAcceso } from "../services/access-products.api";
 import type { ListProductosAccesoParams } from "../services/access-products.api";
 
@@ -11,13 +10,10 @@ export function useProductosAcceso(
   organizationId: string,
   params: ListProductosAccesoParams = {}
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
-
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, params],
-    queryFn: () =>
-      listProductosAcceso(organizationId, params, accessToken ?? undefined),
-    enabled: Boolean(accessToken && organizationId),
+    queryFn: () => listProductosAcceso(organizationId, params),
+    enabled: Boolean(organizationId),
   });
 
   return {

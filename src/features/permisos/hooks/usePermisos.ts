@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { listPermisos } from "../services/permisos.api";
 import type { ListPermisosParams, Permiso } from "../types";
 
@@ -11,19 +10,13 @@ export function usePermisos(
   organizationId: string,
   params: ListPermisosParams = {}
 ) {
-  const accessToken = useAuthStore((s) => s.accessToken);
-
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, params],
     queryFn: async () => {
-      const res = await listPermisos(
-        organizationId,
-        params,
-        accessToken ?? undefined
-      );
+      const res = await listPermisos(organizationId, params);
       return res;
     },
-    enabled: Boolean(accessToken && organizationId),
+    enabled: Boolean(organizationId),
   });
 
   return {

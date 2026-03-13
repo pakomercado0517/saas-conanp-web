@@ -8,7 +8,6 @@ import { useMemberships } from "@/features/memberships/hooks/useMemberships";
 import { useInvitations } from "@/features/invitations/hooks/useInvitations";
 import { useCreateInvitation } from "@/features/invitations/hooks/useCreateInvitation";
 import { updateMembership, deleteMembership } from "@/features/memberships/services/memberships.api";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { EmptyState } from "@/shared/components/EmptyState";
 import type { MembershipRole, MembershipStatus } from "@/features/memberships/types";
@@ -33,7 +32,6 @@ interface UsuariosContentProps {
 
 export function UsuariosContent({ areaId }: UsuariosContentProps) {
   const queryClient = useQueryClient();
-  const accessToken = useAuthStore((s) => s.accessToken);
   const { data: members, limits, isLoading: loadingMembers, error: membersError, refetch: refetchMembers } = useMemberships(areaId);
   const { data: invitations, isLoading: loadingInvitations, refetch: refetchInvitations } = useInvitations(areaId);
   const { create: createInvitation, isPending: creatingInvitation, error: createError } = useCreateInvitation(areaId);
@@ -66,7 +64,7 @@ export function UsuariosContent({ areaId }: UsuariosContentProps) {
     setRoleUpdatingId(membershipId);
     setFeedback(null);
     try {
-      await updateMembership(areaId, membershipId, { role }, accessToken ?? undefined);
+      await updateMembership(areaId, membershipId, { role });
       setFeedback({ type: "success", message: "Rol actualizado." });
       queryClient.invalidateQueries({ queryKey: ["memberships", areaId] });
       refetchMembers();
@@ -81,7 +79,7 @@ export function UsuariosContent({ areaId }: UsuariosContentProps) {
     setStatusUpdatingId(membershipId);
     setFeedback(null);
     try {
-      await updateMembership(areaId, membershipId, { status }, accessToken ?? undefined);
+      await updateMembership(areaId, membershipId, { status });
       setFeedback({ type: "success", message: "Estado actualizado." });
       queryClient.invalidateQueries({ queryKey: ["memberships", areaId] });
       refetchMembers();
@@ -97,7 +95,7 @@ export function UsuariosContent({ areaId }: UsuariosContentProps) {
     setDeletingId(membershipId);
     setFeedback(null);
     try {
-      await deleteMembership(areaId, membershipId, accessToken ?? undefined);
+      await deleteMembership(areaId, membershipId);
       setFeedback({ type: "success", message: "Usuario eliminado del área." });
       queryClient.invalidateQueries({ queryKey: ["memberships", areaId] });
       refetchMembers();
