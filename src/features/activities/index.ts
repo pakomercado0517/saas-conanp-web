@@ -2,3 +2,7 @@ export * from "./types";
 export * from "./services/activities.api";
 export * from "./hooks/useActividades";
 export * from "./hooks/useActividad";
+export * from "./hooks/useCreateActividad";
+export * from "./hooks/useUpdateActividad";
+export * from "./schemas/activity.schema";
+export * from "./components/ActividadForm";

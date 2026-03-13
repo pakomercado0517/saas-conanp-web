@@ -3,6 +3,10 @@ import type {
   ListActividadesParams,
   ListActividadesResponse,
   GetActividadResponse,
+  CreateActividadPayload,
+  CreateActividadResponse,
+  UpdateActividadPayload,
+  UpdateActividadResponse,
   Actividad,
 } from "../types";
 
@@ -50,4 +54,39 @@ export async function getActividad(
   } catch {
     return null;
   }
+}
+
+/** Input para crear actividad (sin organizationId; se añade en el body). */
+export type CreateActividadInput = Omit<CreateActividadPayload, "organizationId">;
+
+export async function createActividad(
+  organizationId: string,
+  input: CreateActividadInput
+): Promise<Actividad> {
+  const body: CreateActividadPayload = {
+    organizationId,
+    name: input.name,
+    type: input.type,
+    agendaType: input.agendaType,
+    requiresGuide: input.requiresGuide,
+    impactLevel: input.impactLevel,
+    active: input.active,
+  };
+  const res = await apiRequest<CreateActividadResponse>(
+    `${BASE}/${organizationId}/actividades`,
+    { method: "POST", body }
+  );
+  return (res as CreateActividadResponse).data;
+}
+
+export async function updateActividad(
+  organizationId: string,
+  actividadId: string,
+  payload: UpdateActividadPayload
+): Promise<Actividad> {
+  const res = await apiRequest<UpdateActividadResponse>(
+    `${BASE}/${organizationId}/actividades/${actividadId}`,
+    { method: "PATCH", body: payload }
+  );
+  return (res as UpdateActividadResponse).data;
 }
