@@ -4,6 +4,9 @@ import type {
   ListEventosResponse,
   EventoOperativo,
   CreateEventoPayload,
+  GetEventoResponse,
+  UpdateEventoPayload,
+  UpdateEventoResponse,
 } from "../types";
 
 const BASE = "/api/v1/organizations";
@@ -41,6 +44,17 @@ interface CreateEventoResponse {
   message?: string;
 }
 
+export async function getEvento(
+  organizationId: string,
+  eventoId: string
+): Promise<EventoOperativo> {
+  const res = await apiRequest<GetEventoResponse>(
+    `${BASE}/${organizationId}/eventos/${eventoId}`,
+    { method: "GET" }
+  );
+  return (res as GetEventoResponse).data;
+}
+
 export async function createEvento(
   organizationId: string,
   payload: CreateEventoPayload
@@ -50,4 +64,27 @@ export async function createEvento(
     { method: "POST", body: payload }
   );
   return (res as CreateEventoResponse).data;
+}
+
+export async function updateEvento(
+  organizationId: string,
+  eventoId: string,
+  payload: UpdateEventoPayload
+): Promise<EventoOperativo> {
+  const res = await apiRequest<UpdateEventoResponse>(
+    `${BASE}/${organizationId}/eventos/${eventoId}`,
+    { method: "PATCH", body: payload }
+  );
+  return (res as UpdateEventoResponse).data;
+}
+
+export async function cancelEvento(
+  organizationId: string,
+  eventoId: string
+): Promise<EventoOperativo> {
+  const res = await apiRequest<UpdateEventoResponse>(
+    `${BASE}/${organizationId}/eventos/${eventoId}`,
+    { method: "PATCH", body: { status: "cancelado" as const } }
+  );
+  return (res as UpdateEventoResponse).data;
 }

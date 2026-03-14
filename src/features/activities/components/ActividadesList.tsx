@@ -44,18 +44,33 @@ export function ActividadesList({ areaId }: ActividadesListProps) {
 
   if (!actividades?.length) {
     return (
-      <EmptyState
-        message="No hay actividades en esta área. Crea una para comenzar."
-        action={{
-          label: "Crear actividad",
-          href: getDashboardHref(areaId, "/actividades/nueva"),
-        }}
-      />
+      <div className="space-y-4">
+        <Link
+          href={getDashboardHref(areaId, "/actividades/nueva")}
+          className="inline-flex rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-300"
+        >
+          Nueva actividad
+        </Link>
+        <EmptyState
+          message="No hay actividades en esta área. Crea una para comenzar."
+          action={{
+            label: "Crear actividad",
+            href: getDashboardHref(areaId, "/actividades/nueva"),
+          }}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="space-y-4">
+      <Link
+        href={getDashboardHref(areaId, "/actividades/nueva")}
+        className="inline-flex rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-300"
+      >
+        Nueva actividad
+      </Link>
+      <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
       <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
         <thead className="bg-slate-50 dark:bg-slate-800/50">
           <tr>
@@ -106,20 +121,30 @@ export function ActividadesList({ areaId }: ActividadesListProps) {
                 </span>
               </td>
               <td className="px-4 py-2">
-                <Link
-                  href={getDashboardHref(
-                    areaId,
-                    `/actividades/${a.id}/bloques`
-                  )}
-                  className="text-sm font-medium text-(--cyan-accent) hover:underline"
-                >
-                  Bloques
-                </Link>
+                <span className="flex flex-wrap items-center gap-2">
+                  <Link
+                    href={getDashboardHref(areaId, `/actividades/${a.id}/editar`)}
+                    className="text-sm font-medium text-(--primary) hover:underline"
+                  >
+                    Editar
+                  </Link>
+                  <span className="text-slate-300 dark:text-slate-600">|</span>
+                  <Link
+                    href={getDashboardHref(
+                      areaId,
+                      `/actividades/${a.id}/bloques`
+                    )}
+                    className="text-sm font-medium text-(--cyan-accent) hover:underline"
+                  >
+                    Bloques
+                  </Link>
+                </span>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

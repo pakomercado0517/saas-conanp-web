@@ -1,14 +1,23 @@
 "use client";
 
+import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { useCreateBloque } from "../hooks/useBloqueMutations";
-import { createBloqueSchema, type CreateBloqueFormData } from "../schemas/bloque.schema";
+import {
+  createBloquePlantillaSchema,
+  createBloquePorFechaSchema,
+  type CreateBloquePlantillaFormData,
+  type CreateBloquePorFechaFormData,
+} from "../schemas/bloque.schema";
+
+export type BloqueFormTipo = "plantilla" | "porFecha";
 
 interface BloqueFormProps {
   areaId: string;
   actividadId: string;
+  tipo: BloqueFormTipo;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -21,13 +30,29 @@ const labelClass =
 export function BloqueForm({
   areaId,
   actividadId,
+  tipo,
   onSuccess,
   onCancel,
 }: BloqueFormProps) {
+  const isPlantilla = tipo === "plantilla";
   const createMutation = useCreateBloque(areaId, actividadId);
 
-  const form = useForm<CreateBloqueFormData>({
-    resolver: zodResolver(createBloqueSchema),
+  const formPlantilla = useForm<CreateBloquePlantillaFormData>({
+    resolver: zodResolver(
+      createBloquePlantillaSchema
+    ) as Resolver<CreateBloquePlantillaFormData>,
+    defaultValues: {
+      startTime: "09:00",
+      endTime: "12:00",
+      capacidad: 10,
+      plantilla: "",
+    },
+  });
+
+  const formPorFecha = useForm<CreateBloquePorFechaFormData>({
+    resolver: zodResolver(
+      createBloquePorFechaSchema
+    ) as Resolver<CreateBloquePorFechaFormData>,
     defaultValues: {
       date: "",
       startTime: "09:00",
@@ -37,7 +62,22 @@ export function BloqueForm({
     },
   });
 
-  const onSubmit = form.handleSubmit(async (data) => {
+  const onSubmitPlantilla = formPlantilla.handleSubmit(async (data) => {
+    try {
+      await createMutation.mutateAsync({
+        startTime: data.startTime,
+        endTime: data.endTime,
+        capacidad: data.capacidad,
+        plantilla: data.plantilla?.trim() || null,
+      });
+      formPlantilla.reset();
+      onSuccess?.();
+    } catch {
+      // Error manejado por mutación
+    }
+  });
+
+  const onSubmitPorFecha = formPorFecha.handleSubmit(async (data) => {
     try {
       await createMutation.mutateAsync({
         date: data.date,
@@ -46,12 +86,14 @@ export function BloqueForm({
         capacidad: data.capacidad,
         plantilla: data.plantilla?.trim() || null,
       });
-      form.reset();
+      formPorFecha.reset();
       onSuccess?.();
     } catch {
-      // Error manejado
+      // Error manejado por mutación
     }
   });
+
+  const onSubmit = isPlantilla ? onSubmitPlantilla : onSubmitPorFecha;
 
   return (
     <form onSubmit={onSubmit} className="max-w-xl space-y-4">
@@ -64,89 +106,160 @@ export function BloqueForm({
         </p>
       )}
 
-      <div>
-        <label htmlFor="date" className={labelClass}>
-          Fecha
-        </label>
-        <input
-          id="date"
-          type="date"
-          {...form.register("date")}
-          className={inputClass}
-        />
-        {form.formState.errors.date && (
-          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-            {form.formState.errors.date.message}
-          </p>
-        )}
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
+      {!isPlantilla && (
         <div>
-          <label htmlFor="startTime" className={labelClass}>
-            Hora inicio
+          <label htmlFor="bloque-date" className={labelClass}>
+            Fecha
           </label>
           <input
-            id="startTime"
-            type="time"
-            step="1"
-            {...form.register("startTime")}
+            id="bloque-date"
+            type="date"
+            {...formPorFecha.register("date")}
             className={inputClass}
           />
-          {form.formState.errors.startTime && (
+          {formPorFecha.formState.errors.date && (
             <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-              {form.formState.errors.startTime.message}
+              {formPorFecha.formState.errors.date.message}
             </p>
           )}
         </div>
-        <div>
-          <label htmlFor="endTime" className={labelClass}>
-            Hora fin
-          </label>
-          <input
-            id="endTime"
-            type="time"
-            step="1"
-            {...form.register("endTime")}
-            className={inputClass}
-          />
-          {form.formState.errors.endTime && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-              {form.formState.errors.endTime.message}
-            </p>
-          )}
-        </div>
-      </div>
+      )}
 
-      <div>
-        <label htmlFor="capacidad" className={labelClass}>
-          Capacidad
-        </label>
-        <input
-          id="capacidad"
-          type="number"
-          min={1}
-          {...form.register("capacidad", { valueAsNumber: true })}
-          className={inputClass}
-        />
-        {form.formState.errors.capacidad && (
-          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-            {form.formState.errors.capacidad.message}
-          </p>
-        )}
-      </div>
-
-      <div>
-        <label htmlFor="plantilla" className={labelClass}>
-          Plantilla (opcional)
-        </label>
-        <input
-          id="plantilla"
-          type="text"
-          {...form.register("plantilla")}
-          className={inputClass}
-        />
-      </div>
+      {isPlantilla ? (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="startTime" className={labelClass}>
+                Hora inicio
+              </label>
+              <input
+                id="startTime"
+                type="time"
+                step="1"
+                {...formPlantilla.register("startTime")}
+                className={inputClass}
+              />
+              {formPlantilla.formState.errors.startTime && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {formPlantilla.formState.errors.startTime.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <label htmlFor="endTime" className={labelClass}>
+                Hora fin
+              </label>
+              <input
+                id="endTime"
+                type="time"
+                step="1"
+                {...formPlantilla.register("endTime")}
+                className={inputClass}
+              />
+              {formPlantilla.formState.errors.endTime && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {formPlantilla.formState.errors.endTime.message}
+                </p>
+              )}
+            </div>
+          </div>
+          <div>
+            <label htmlFor="capacidad" className={labelClass}>
+              Capacidad
+            </label>
+            <input
+              id="capacidad"
+              type="number"
+              min={1}
+              {...formPlantilla.register("capacidad", { valueAsNumber: true })}
+              className={inputClass}
+            />
+            {formPlantilla.formState.errors.capacidad && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {formPlantilla.formState.errors.capacidad.message}
+              </p>
+            )}
+          </div>
+          <div>
+            <label htmlFor="plantilla" className={labelClass}>
+              Plantilla (opcional)
+            </label>
+            <input
+              id="plantilla"
+              type="text"
+              {...formPlantilla.register("plantilla")}
+              className={inputClass}
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="startTime" className={labelClass}>
+                Hora inicio
+              </label>
+              <input
+                id="startTime"
+                type="time"
+                step="1"
+                {...formPorFecha.register("startTime")}
+                className={inputClass}
+              />
+              {formPorFecha.formState.errors.startTime && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {formPorFecha.formState.errors.startTime.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <label htmlFor="endTime" className={labelClass}>
+                Hora fin
+              </label>
+              <input
+                id="endTime"
+                type="time"
+                step="1"
+                {...formPorFecha.register("endTime")}
+                className={inputClass}
+              />
+              {formPorFecha.formState.errors.endTime && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {formPorFecha.formState.errors.endTime.message}
+                </p>
+              )}
+            </div>
+          </div>
+          <div>
+            <label htmlFor="capacidad" className={labelClass}>
+              Capacidad
+            </label>
+            <input
+              id="capacidad"
+              type="number"
+              min={1}
+              {...formPorFecha.register("capacidad", { valueAsNumber: true })}
+              className={inputClass}
+            />
+            {formPorFecha.formState.errors.capacidad && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {formPorFecha.formState.errors.capacidad.message}
+              </p>
+            )}
+          </div>
+          <div>
+            <label htmlFor="plantilla" className={labelClass}>
+              Plantilla (opcional)
+            </label>
+            <input
+              id="plantilla"
+              type="text"
+              {...formPorFecha.register("plantilla")}
+              className={inputClass}
+            />
+          </div>
+        </>
+      )}
 
       <div className="flex gap-2">
         <button
@@ -154,7 +267,11 @@ export function BloqueForm({
           disabled={createMutation.isPending}
           className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50 dark:bg-slate-200 dark:text-slate-900"
         >
-          {createMutation.isPending ? "Creando…" : "Crear bloque"}
+          {createMutation.isPending
+            ? "Creando…"
+            : isPlantilla
+              ? "Crear bloque plantilla"
+              : "Crear bloque por fecha"}
         </button>
         {onCancel && (
           <button
