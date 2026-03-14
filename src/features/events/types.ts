@@ -79,3 +79,20 @@ export interface CreateEventoPayloadHorarioLibre {
 export type CreateEventoPayload =
   | CreateEventoPayloadBloques
   | CreateEventoPayloadHorarioLibre;
+
+export interface GetEventoResponse {
+  success: true;
+  data: EventoOperativo;
+  message?: string;
+}
+
+/** Payload parcial para edición (PATCH). */
+export type UpdateEventoPayload =
+  | Partial<CreateEventoPayloadBloques>
+  | Partial<CreateEventoPayloadHorarioLibre>;
+
+export interface UpdateEventoResponse {
+  success: true;
+  data: EventoOperativo;
+  message?: string;
+}

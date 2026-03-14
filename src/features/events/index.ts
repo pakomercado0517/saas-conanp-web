@@ -1,1 +1,12 @@
 export const EVENTS_FEATURE_KEY = "events";
+export * from "./types";
+export * from "./services/events.api";
+export * from "./hooks/useEvents";
+export * from "./hooks/useCreateEvent";
+export * from "./hooks/useEvento";
+export * from "./hooks/useUpdateEvento";
+export * from "./hooks/useCancelEvento";
+export * from "./schemas/event.schema";
+export * from "./components/EventForm";
+export * from "./components/EventList";
+export * from "./components/EventFilters";

@@ -17,8 +17,19 @@ function buildQuery(params: ListBloquesParams): string {
   if (params.date) search.set("date", params.date);
   if (params.dateFrom) search.set("dateFrom", params.dateFrom);
   if (params.dateTo) search.set("dateTo", params.dateTo);
+  if (params.isTemplate !== undefined)
+    search.set("isTemplate", String(params.isTemplate));
   const q = search.toString();
   return q ? `?${q}` : "";
+}
+
+/** Normaliza item de API: backend puede devolver capacity en lugar de capacidad. */
+function normalizeBloque(raw: Bloque & { capacity?: number }): Bloque {
+  return {
+    ...raw,
+    capacidad: raw.capacidad ?? raw.capacity ?? 0,
+    date: raw.date ?? null,
+  };
 }
 
 export async function listBloques(
@@ -32,8 +43,12 @@ export async function listBloques(
       `${BASE}/${organizationId}/actividades/${actividadId}/bloques${query}`,
       { method: "GET" }
     );
+    const raw = (res as ListBloquesResponse).data ?? [];
+    const data = raw.map((b) =>
+      normalizeBloque(b as Bloque & { capacity?: number })
+    );
     return {
-      data: (res as ListBloquesResponse).data ?? [],
+      data,
       pagination: (res as ListBloquesResponse).pagination,
     };
   } catch {
@@ -51,7 +66,8 @@ export async function getBloque(
       `${BASE}/${organizationId}/actividades/${actividadId}/bloques/${bloqueId}`,
       { method: "GET" }
     );
-    return (res as GetBloqueResponse).data;
+    const raw = (res as GetBloqueResponse).data;
+    return raw ? normalizeBloque(raw as Bloque & { capacity?: number }) : null;
   } catch {
     return null;
   }
@@ -63,16 +79,37 @@ interface CreateBloqueResponse {
   message?: string;
 }
 
+/** Normaliza hora a HH:mm:ss (el input type="time" devuelve HH:mm). */
+function toTimeHHmmss(v: string): string {
+  if (!v) return v;
+  const parts = v.trim().split(":");
+  if (parts.length === 2) return `${v}:00`;
+  return v;
+}
+
 export async function createBloque(
   organizationId: string,
   actividadId: string,
   payload: CreateBloquePayload
 ): Promise<Bloque> {
-  const res = await apiRequest<CreateBloqueResponse>(
-    `${BASE}/${organizationId}/actividades/${actividadId}/bloques`,
-    { method: "POST", body: payload }
-  );
-  return (res as CreateBloqueResponse).data;
+  const isPlantilla =
+    payload.date == null || payload.date === "";
+  const body: Record<string, unknown> = {
+    startTime: toTimeHHmmss(payload.startTime),
+    endTime: toTimeHHmmss(payload.endTime),
+    capacity: payload.capacidad,
+    date: isPlantilla ? null : payload.date,
+    isTemplate: isPlantilla,
+    ...(payload.plantilla != null &&
+      payload.plantilla !== "" && { plantilla: payload.plantilla }),
+  };
+  const url = `${BASE}/${organizationId}/actividades/${actividadId}/bloques`;
+  const res = await apiRequest<CreateBloqueResponse>(url, {
+    method: "POST",
+    body,
+  });
+  const raw = (res as CreateBloqueResponse).data;
+  return normalizeBloque(raw as Bloque & { capacity?: number });
 }
 
 interface UpdateBloqueResponse {
@@ -91,7 +128,8 @@ export async function updateBloque(
     `${BASE}/${organizationId}/actividades/${actividadId}/bloques/${bloqueId}`,
     { method: "PATCH", body: payload }
   );
-  return (res as UpdateBloqueResponse).data;
+  const raw = (res as UpdateBloqueResponse).data;
+  return normalizeBloque(raw as Bloque & { capacity?: number });
 }
 
 export async function deleteBloque(

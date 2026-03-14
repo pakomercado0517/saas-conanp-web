@@ -1,137 +1,231 @@
 "use client";
 
-import { useState } from "react";
+import type { Resolver } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { getApiErrorMessage } from "@/shared/types/api";
+import { useActividades } from "@/features/activities/hooks/useActividades";
+import { usePrestadores } from "@/features/prestadores/hooks/usePrestadores";
+import { useBloques } from "@/features/blocks/hooks/useBloques";
 import { useCreateEvent } from "../hooks/useCreateEvent";
-import { useCreatePaymentIntent } from "@/features/payments/hooks/useCreatePaymentIntent";
-import type { CreateEventoPayload, AgendaType } from "../types";
+import { useUpdateEvento } from "../hooks/useUpdateEvento";
+import {
+  createEventoSchema,
+  updateEventoSchema,
+} from "../schemas/event.schema";
+import type { CreateEventoFormData, UpdateEventoFormData } from "../schemas/event.schema";
+import type { EventoOperativo } from "../types";
+import type { CreateEventoPayload } from "../types";
+
+const inputClass =
+  "w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100";
+const labelClass =
+  "mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300";
+
+/** Convierte HH:mm a HH:mm:ss si hace falta. */
+function toTimeSeconds(v: string): string {
+  if (!v) return v;
+  const parts = v.split(":");
+  if (parts.length === 2) return `${v}:00`;
+  return v;
+}
+
+const EVENT_DATE_DAYS_AHEAD = 20;
+
+function toYYYYMMDD(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function getEventDateMinMax(): { min: string; max: string } {
+  const today = new Date();
+  const maxDate = new Date(today);
+  maxDate.setDate(maxDate.getDate() + EVENT_DATE_DAYS_AHEAD);
+  return { min: toYYYYMMDD(today), max: toYYYYMMDD(maxDate) };
+}
 
 interface EventFormProps {
   areaId: string;
-  onSuccess?: () => void;
+  evento?: EventoOperativo | null;
+  /** Se invoca al guardar; en creación puede recibir el evento creado (p. ej. para flujo de pago). */
+  onSuccess?: (createdEvento?: EventoOperativo) => void;
   onCancel?: () => void;
 }
 
 export function EventForm({
   areaId,
+  evento,
   onSuccess,
   onCancel,
 }: EventFormProps) {
-  const { create, isPending, error, isError } = useCreateEvent(areaId);
-  const createPaymentIntent = useCreatePaymentIntent(areaId);
-  const [actividadId, setActividadId] = useState("");
-  const [prestadorId, setPrestadorId] = useState("");
-  const [date, setDate] = useState("");
-  const [agendaType, setAgendaType] = useState<AgendaType>("HORARIO_LIBRE");
-  const [bloqueId, setBloqueId] = useState("");
-  const [startTime, setStartTime] = useState("09:00:00");
-  const [endTime, setEndTime] = useState("12:00:00");
-  const [peopleCount, setPeopleCount] = useState(1);
-  const [paymentRequired, setPaymentRequired] = useState(false);
+  const isEdit = Boolean(evento?.id);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    let payload: CreateEventoPayload;
-    if (agendaType === "BLOQUES") {
-      payload = {
-        actividadId,
-        prestadorId,
-        date,
-        agendaType: "BLOQUES",
-        bloqueId,
-        peopleCount: peopleCount || 1,
-        paymentRequired,
-      };
-    } else {
-      payload = {
-        actividadId,
-        prestadorId,
-        date,
-        agendaType: "HORARIO_LIBRE",
-        startTime,
-        endTime,
-        peopleCount: peopleCount || 1,
-        paymentRequired,
-      };
+  const { data: actividades } = useActividades(areaId, { active: true });
+  const { data: prestadores } = usePrestadores(areaId);
+
+  const form = useForm<CreateEventoFormData>({
+    resolver: zodResolver(
+      isEdit ? updateEventoSchema : createEventoSchema
+    ) as Resolver<CreateEventoFormData>,
+    defaultValues: {
+      actividadId: evento?.actividadId ?? "",
+      prestadorId: evento?.prestadorId ?? "",
+      date: evento?.date ?? "",
+      agendaType: evento?.bloqueId ? "BLOQUES" : "HORARIO_LIBRE",
+      bloqueId: evento?.bloqueId ?? "",
+      startTime: evento?.startTime?.slice(0, 5) ?? "09:00",
+      endTime: evento?.endTime?.slice(0, 5) ?? "12:00",
+      peopleCount: evento?.peopleCount ?? 1,
+      paymentRequired: evento?.paymentRequired ?? false,
+    },
+  });
+
+  const createMutation = useCreateEvent(areaId);
+  const updateMutation = useUpdateEvento(areaId, evento?.id ?? "");
+
+  const actividadId = useWatch({
+    control: form.control,
+    name: "actividadId",
+    defaultValue: "",
+  });
+  const date = useWatch({
+    control: form.control,
+    name: "date",
+    defaultValue: "",
+  });
+  const agendaType = useWatch({
+    control: form.control,
+    name: "agendaType",
+    defaultValue: "HORARIO_LIBRE",
+  });
+
+  const { data: bloques, isLoading: loadingBloques } = useBloques(
+    areaId,
+    actividadId && date ? actividadId : null,
+    date ? { date } : {}
+  );
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
+  const error = createMutation.error ?? updateMutation.error;
+
+  const buildPayload = (data: CreateEventoFormData): CreateEventoPayload => {
+    const base = {
+      actividadId: data.actividadId,
+      prestadorId: data.prestadorId,
+      date: data.date,
+      peopleCount: data.peopleCount ?? 1,
+      paymentRequired: data.paymentRequired ?? false,
+    };
+    if (data.agendaType === "BLOQUES") {
+      return { ...base, agendaType: "BLOQUES", bloqueId: data.bloqueId! };
     }
-    try {
-      const evento = await create(payload);
-      if (paymentRequired && evento?.id) {
-        try {
-          const paymentData = await createPaymentIntent.mutateAsync(evento.id);
-          if (paymentData.checkoutUrl) {
-            window.location.href = paymentData.checkoutUrl;
-            return;
-          }
-        } catch (paymentErr) {
-          console.error("Error al crear intención de pago:", paymentErr);
-        }
-      }
-      onSuccess?.();
-    } catch {
-      // Error ya expuesto por isError/error
-    }
+    return {
+      ...base,
+      agendaType: "HORARIO_LIBRE",
+      startTime: toTimeSeconds(data.startTime ?? "09:00"),
+      endTime: toTimeSeconds(data.endTime ?? "12:00"),
+    };
   };
 
+  const onSubmit = form.handleSubmit(async (data) => {
+    const payload = buildPayload(data);
+    if (isEdit) {
+      await updateMutation.update(payload as UpdateEventoFormData);
+      onSuccess?.();
+    } else {
+      const created = await createMutation.create(payload);
+      onSuccess?.(created);
+    }
+  });
+
   return (
-    <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
-      {isError && error && (
-        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
+    <form onSubmit={onSubmit} className="max-w-xl space-y-4">
+      {error && (
+        <p
+          className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200"
+          role="alert"
+        >
           {getApiErrorMessage(error)}
         </p>
       )}
 
       <div>
-        <label htmlFor="actividadId" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-          ID de actividad
+        <label htmlFor="evento-actividadId" className={labelClass}>
+          Actividad
         </label>
-        <input
-          id="actividadId"
-          type="text"
-          value={actividadId}
-          onChange={(e) => setActividadId(e.target.value)}
-          required
-          className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-        />
+        <select
+          id="evento-actividadId"
+          {...form.register("actividadId")}
+          className={inputClass}
+          disabled={isEdit}
+        >
+          <option value="">Selecciona una actividad</option>
+          {actividades?.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.name}
+            </option>
+          ))}
+        </select>
+        {form.formState.errors.actividadId && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {form.formState.errors.actividadId.message}
+          </p>
+        )}
       </div>
 
       <div>
-        <label htmlFor="prestadorId" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-          ID de prestador
+        <label htmlFor="evento-prestadorId" className={labelClass}>
+          Prestador
         </label>
-        <input
-          id="prestadorId"
-          type="text"
-          value={prestadorId}
-          onChange={(e) => setPrestadorId(e.target.value)}
-          required
-          className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-        />
+        <select
+          id="evento-prestadorId"
+          {...form.register("prestadorId")}
+          className={inputClass}
+          disabled={isEdit}
+        >
+          <option value="">Selecciona un prestador</option>
+          {prestadores?.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name ?? p.email ?? p.id}
+            </option>
+          ))}
+        </select>
+        {form.formState.errors.prestadorId && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {form.formState.errors.prestadorId.message}
+          </p>
+        )}
       </div>
 
       <div>
-        <label htmlFor="date" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-          Fecha (YYYY-MM-DD)
+        <label htmlFor="evento-date" className={labelClass}>
+          Fecha
         </label>
         <input
-          id="date"
+          id="evento-date"
           type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-          className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+          {...form.register("date")}
+          className={inputClass}
+          {...getEventDateMinMax()}
         />
+        {form.formState.errors.date && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {form.formState.errors.date.message}
+          </p>
+        )}
       </div>
 
       <div>
-        <label htmlFor="agendaType" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label htmlFor="evento-agendaType" className={labelClass}>
           Tipo de agenda
         </label>
         <select
-          id="agendaType"
-          value={agendaType}
-          onChange={(e) => setAgendaType(e.target.value as AgendaType)}
-          className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+          id="evento-agendaType"
+          {...form.register("agendaType")}
+          className={inputClass}
+          disabled={isEdit}
         >
           <option value="HORARIO_LIBRE">Horario libre</option>
           <option value="BLOQUES">Bloques</option>
@@ -140,77 +234,112 @@ export function EventForm({
 
       {agendaType === "BLOQUES" && (
         <div>
-          <label htmlFor="bloqueId" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-            ID de bloque
+          <label htmlFor="evento-bloqueId" className={labelClass}>
+            Bloque
           </label>
-          <input
-            id="bloqueId"
-            type="text"
-            value={bloqueId}
-            onChange={(e) => setBloqueId(e.target.value)}
-            required
-            className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-          />
+          <select
+            id="evento-bloqueId"
+            {...form.register("bloqueId")}
+            className={inputClass}
+            disabled={isEdit}
+          >
+            <option value="">
+              {!actividadId || !date
+                ? "Selecciona actividad y fecha primero"
+                : loadingBloques
+                  ? "Cargando bloques…"
+                  : !bloques?.length
+                    ? "No hay bloques para esta fecha"
+                    : "Selecciona un bloque"}
+            </option>
+            {bloques?.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.startTime?.slice(0, 5) ?? b.startTime} – {b.endTime?.slice(0, 5) ?? b.endTime}
+              </option>
+            ))}
+          </select>
+          {form.formState.errors.bloqueId && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              {form.formState.errors.bloqueId.message}
+            </p>
+          )}
         </div>
       )}
 
       {agendaType === "HORARIO_LIBRE" && (
         <>
           <div>
-            <label htmlFor="startTime" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-              Hora inicio (HH:mm:ss)
+            <label htmlFor="evento-startTime" className={labelClass}>
+              Hora inicio
             </label>
             <input
-              id="startTime"
-              type="text"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              placeholder="09:00:00"
-              className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              id="evento-startTime"
+              type="time"
+              {...form.register("startTime")}
+              className={inputClass}
             />
+            {form.formState.errors.startTime && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {form.formState.errors.startTime.message}
+              </p>
+            )}
           </div>
           <div>
-            <label htmlFor="endTime" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-              Hora fin (HH:mm:ss)
+            <label htmlFor="evento-endTime" className={labelClass}>
+              Hora fin
             </label>
             <input
-              id="endTime"
-              type="text"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              placeholder="12:00:00"
-              className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              id="evento-endTime"
+              type="time"
+              {...form.register("endTime")}
+              className={inputClass}
             />
+            {form.formState.errors.endTime && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {form.formState.errors.endTime.message}
+              </p>
+            )}
           </div>
         </>
       )}
 
       <div>
-        <label htmlFor="peopleCount" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label htmlFor="evento-peopleCount" className={labelClass}>
           Número de personas
         </label>
         <input
-          id="peopleCount"
+          id="evento-peopleCount"
           type="number"
           min={1}
-          value={peopleCount}
-          onChange={(e) => setPeopleCount(Number(e.target.value) || 1)}
-          className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+          {...form.register("peopleCount", { valueAsNumber: true })}
+          className={inputClass}
         />
+        {form.formState.errors.peopleCount && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {form.formState.errors.peopleCount.message}
+          </p>
+        )}
       </div>
 
       <div className="flex items-center gap-2">
         <input
-          id="paymentRequired"
+          id="evento-paymentRequired"
           type="checkbox"
-          checked={paymentRequired}
-          onChange={(e) => setPaymentRequired(e.target.checked)}
-          className="rounded border-slate-300"
+          {...form.register("paymentRequired")}
+          className="size-4 rounded border-slate-300 dark:border-slate-600"
         />
-        <label htmlFor="paymentRequired" className="text-sm text-slate-700 dark:text-slate-300">
+        <label
+          htmlFor="evento-paymentRequired"
+          className="text-sm text-slate-700 dark:text-slate-300"
+        >
           Requiere pago
         </label>
       </div>
+      {form.formState.errors.paymentRequired && (
+        <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+          {form.formState.errors.paymentRequired.message}
+        </p>
+      )}
 
       <div className="flex gap-2">
         <button
@@ -218,7 +347,7 @@ export function EventForm({
           disabled={isPending}
           className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50 dark:bg-slate-200 dark:text-slate-900"
         >
-          {isPending ? "Creando…" : "Crear evento"}
+          {isPending ? "Guardando…" : isEdit ? "Guardar" : "Crear evento"}
         </button>
         {onCancel && (
           <button
