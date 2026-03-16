@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { useActividades } from "@/features/activities/hooks/useActividades";
+import { useCapacidadPorBloques } from "@/features/activities/hooks/useCapacidadPorBloques";
 import { usePrestadores } from "@/features/prestadores/hooks/usePrestadores";
 import { useBloques } from "@/features/blocks/hooks/useBloques";
 import { useCreateEvent } from "../hooks/useCreateEvent";
@@ -101,10 +103,32 @@ export function EventForm({
     defaultValue: "HORARIO_LIBRE",
   });
 
+  const selectedActivity = useMemo(
+    () => actividades?.find((a) => a.id === actividadId),
+    [actividades, actividadId]
+  );
+
+  useEffect(() => {
+    if (!isEdit && selectedActivity) {
+      form.setValue("agendaType", selectedActivity.agendaType);
+    }
+  }, [isEdit, selectedActivity, form]);
+
   const { data: bloques, isLoading: loadingBloques } = useBloques(
     areaId,
-    actividadId && date ? actividadId : null,
-    date ? { date } : {}
+    actividadId && date && agendaType === "BLOQUES" ? actividadId : null,
+    date && agendaType === "BLOQUES" ? { date } : {}
+  );
+
+  const bloqueIds = useMemo(() => bloques?.map((b) => b.id) ?? [], [bloques]);
+  const {
+    dataByBloqueId,
+    isLoading: loadingCapacidad,
+  } = useCapacidadPorBloques(
+    areaId,
+    actividadId,
+    date,
+    agendaType === "BLOQUES" && bloqueIds.length > 0 ? bloqueIds : []
   );
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -130,6 +154,21 @@ export function EventForm({
   };
 
   const onSubmit = form.handleSubmit(async (data) => {
+    if (data.agendaType === "BLOQUES" && data.bloqueId) {
+      const cap = dataByBloqueId[data.bloqueId];
+      const peopleCount = data.peopleCount ?? 1;
+      if (
+        cap != null &&
+        typeof cap.capacidadDisponible === "number" &&
+        peopleCount > cap.capacidadDisponible
+      ) {
+        form.setError("peopleCount", {
+          type: "manual",
+          message: `Máximo ${cap.capacidadDisponible} plazas disponibles en este bloque.`,
+        });
+        return;
+      }
+    }
     const payload = buildPayload(data);
     if (isEdit) {
       await updateMutation.update(payload as UpdateEventoFormData);
@@ -217,20 +256,14 @@ export function EventForm({
         )}
       </div>
 
-      <div>
-        <label htmlFor="evento-agendaType" className={labelClass}>
-          Tipo de agenda
-        </label>
-        <select
-          id="evento-agendaType"
-          {...form.register("agendaType")}
-          className={inputClass}
-          disabled={isEdit}
-        >
-          <option value="HORARIO_LIBRE">Horario libre</option>
-          <option value="BLOQUES">Bloques</option>
-        </select>
-      </div>
+      {selectedActivity && (
+        <div>
+          <span className={labelClass}>Tipo de agenda</span>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            {agendaType === "BLOQUES" ? "Bloques" : "Horario libre"}
+          </p>
+        </div>
+      )}
 
       {agendaType === "BLOQUES" && (
         <div>
@@ -246,17 +279,29 @@ export function EventForm({
             <option value="">
               {!actividadId || !date
                 ? "Selecciona actividad y fecha primero"
-                : loadingBloques
+                : loadingBloques || loadingCapacidad
                   ? "Cargando bloques…"
                   : !bloques?.length
                     ? "No hay bloques para esta fecha"
                     : "Selecciona un bloque"}
             </option>
-            {bloques?.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.startTime?.slice(0, 5) ?? b.startTime} – {b.endTime?.slice(0, 5) ?? b.endTime}
-              </option>
-            ))}
+            {bloques?.map((b) => {
+              const cap = dataByBloqueId[b.id];
+              const disp =
+                cap != null && typeof cap.capacidadDisponible === "number"
+                  ? cap.capacidadDisponible
+                  : null;
+              const horario = `${b.startTime?.slice(0, 5) ?? b.startTime} – ${b.endTime?.slice(0, 5) ?? b.endTime}`;
+              const label =
+                disp != null
+                  ? `${horario} — ${disp} plazas disponibles`
+                  : horario;
+              return (
+                <option key={b.id} value={b.id}>
+                  {label}
+                </option>
+              );
+            })}
           </select>
           {form.formState.errors.bloqueId && (
             <p className="mt-1 text-sm text-red-600 dark:text-red-400">

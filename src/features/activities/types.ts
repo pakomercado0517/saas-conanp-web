@@ -72,3 +72,20 @@ export interface UpdateActividadResponse {
   data: Actividad;
   message?: string;
 }
+
+/** Parámetros para verificar capacidad (GET capacidad/verificar). */
+export interface CapacidadVerificarParams {
+  date: string;
+  bloqueId: string;
+  /** Cantidad a reservar; si se envía, el backend valida si hay cupo. */
+  cantidad?: number;
+}
+
+/** Respuesta de capacidad/verificar para un bloque y fecha. */
+export interface CapacidadVerificarResponse {
+  disponible: boolean;
+  capacidadTotal: number;
+  capacidadUsada: number;
+  capacidadDisponible: number;
+  limite: number;
+}
