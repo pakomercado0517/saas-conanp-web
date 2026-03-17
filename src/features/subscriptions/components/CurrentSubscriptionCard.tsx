@@ -130,7 +130,7 @@ export function CurrentSubscriptionCard({
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="font-semibold text-slate-800 dark:text-slate-100">
-              Plan actual: {planName}
+              Plan actual: <span className="uppercase">{planName}</span>
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400">
               Estado: {STATUS_LABELS[subscription.status]}

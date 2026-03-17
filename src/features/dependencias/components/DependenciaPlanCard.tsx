@@ -5,21 +5,25 @@ import { CreditCard, ArrowUpRight } from "lucide-react";
 interface DependenciaPlanCardProps {
   areasCount: number;
   maxAreas: number;
+  /** Nombre del plan cuando viene del backend; si no se pasa, se muestra "Plan actual" */
+  planName?: string | null;
 }
 
 export function DependenciaPlanCard({
   areasCount,
   maxAreas,
+  planName = null,
 }: DependenciaPlanCardProps) {
-  const areasUsage = Math.min(areasCount / maxAreas, 1);
+  const areasUsage = maxAreas > 0 ? Math.min(areasCount / maxAreas, 1) : 0;
+  const displayName = planName ?? "Plan actual";
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CreditCard className="size-5 text-(--cyan-accent)" aria-hidden />
-          <h3 className="font-bold text-(--navy-deep) dark:text-white">
-            Plan FREE
+          <h3 className="font-bold uppercase text-(--navy-deep) dark:text-white">
+            {displayName}
           </h3>
         </div>
         <button

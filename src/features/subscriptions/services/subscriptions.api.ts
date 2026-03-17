@@ -1,7 +1,8 @@
 import { apiRequest } from "@/shared/lib/api";
 import type {
   CurrentSubscriptionResponse,
-  SubscriptionPlansResponse,
+  SubscriptionPlan,
+  SubscriptionPlansListResponse,
   SubscribeOrChangePlanPayload,
   SubscribeResponse,
 } from "../types";
@@ -20,10 +21,17 @@ export async function getCurrentSubscription(
   );
 }
 
-export async function getSubscriptionPlans(): Promise<SubscriptionPlansResponse> {
-  return apiRequest<SubscriptionPlansResponse>(PLANS_BASE, {
+/** Respuesta cruda de GET /subscription-plans (paginada o lista) */
+export async function getSubscriptionPlans(): Promise<SubscriptionPlansListResponse> {
+  return apiRequest<SubscriptionPlansListResponse>(PLANS_BASE, {
     method: "GET",
   });
+}
+
+/** Catálogo normalizado: siempre array de planes para consumo en UI */
+export async function getSubscriptionPlansCatalog(): Promise<SubscriptionPlan[]> {
+  const res = await getSubscriptionPlans();
+  return Array.isArray(res.data) ? res.data : [];
 }
 
 export async function subscribeOrChangePlan(

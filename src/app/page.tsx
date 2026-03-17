@@ -72,7 +72,7 @@ export default function HomePage() {
                 robusta, segura y escalable. Control total de permisos, activos
                 y capacidad de carga.
               </p>
-              <div className="flex flex-col gap-4 sm:flex-row">
+              <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
                 <Link
                   href="/auth/login"
                   className="inline-flex items-center justify-center rounded bg-(--cyan-accent) px-8 py-4 font-bold text-(--navy-deep) shadow-lg shadow-(--cyan-accent)/10 transition-all hover:-translate-y-0.5"
@@ -85,6 +85,12 @@ export default function HomePage() {
                 >
                   ¿Tienes una invitación? Regístrate
                 </Link>
+                <a
+                  href="#pricing"
+                  className="inline-flex items-center justify-center rounded border border-(--cyan-accent)/40 px-8 py-4 font-semibold text-(--cyan-accent) transition-colors hover:bg-(--cyan-accent)/10"
+                >
+                  Ver planes
+                </a>
               </div>
               <p className="text-sm text-(--slate-text)/80">
                 El acceso a la plataforma es por invitación o por alta de un administrador.

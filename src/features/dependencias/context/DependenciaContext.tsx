@@ -7,6 +7,8 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
+import { getMaxAreas, isWithinAreaLimit } from "@/features/subscriptions/lib/planLimits";
+import type { SubscriptionPlan } from "@/features/subscriptions/types";
 import { useDependencia } from "../hooks/useDependencia";
 import { useDependenciaAreas } from "../hooks/useDependenciaAreas";
 import { useDependenciaInvitations } from "../hooks/useDependenciaInvitations";
@@ -16,6 +18,9 @@ import type {
   DependenciaInvitation,
 } from "../types";
 
+/** Límite de áreas por defecto cuando el plan no está disponible (backend-driven cuando exista) */
+export const DEFAULT_MAX_AREAS_WHEN_UNKNOWN = 1;
+
 export interface DependenciaContextValue {
   dependenciaId: string;
   dependencia: Dependencia | null;
@@ -24,6 +29,10 @@ export interface DependenciaContextValue {
   isLoading: boolean;
   error: unknown;
   canCreateArea: boolean;
+  /** Límite de áreas del plan actual; fallback a DEFAULT_MAX_AREAS_WHEN_UNKNOWN si no hay plan */
+  maxAreas: number;
+  /** Nombre del plan cuando viene del backend; null si no aplica */
+  planName: string | null;
   refetch: () => void;
 }
 
@@ -41,11 +50,14 @@ export function useDependenciaContext(): DependenciaContextValue {
 
 interface DependenciaContextProviderProps {
   dependenciaId: string;
+  /** Plan de la organización/dependencia cuando esté disponible; si no se pasa, se usa fallback de límites */
+  subscriptionPlan?: SubscriptionPlan | null;
   children: ReactNode;
 }
 
 export function DependenciaContextProvider({
   dependenciaId,
+  subscriptionPlan = null,
   children,
 }: DependenciaContextProviderProps) {
   const dep = useDependencia(dependenciaId);
@@ -58,7 +70,10 @@ export function DependenciaContextProvider({
   const areas = useMemo(() => areasQuery.data ?? [], [areasQuery.data]);
   const invitations = useMemo(() => invQuery.data ?? [], [invQuery.data]);
 
-  const canCreateArea = areas.length < 1;
+  const maxAreas =
+    getMaxAreas(subscriptionPlan) ?? DEFAULT_MAX_AREAS_WHEN_UNKNOWN;
+  const canCreateArea = isWithinAreaLimit(subscriptionPlan, areas.length);
+  const planName = subscriptionPlan?.name ?? null;
 
   const refetch = useCallback(() => {
     dep.refetch();
@@ -75,6 +90,8 @@ export function DependenciaContextProvider({
       isLoading,
       error: dep.error ?? areasQuery.error,
       canCreateArea,
+      maxAreas,
+      planName,
       refetch,
     }),
     [
@@ -86,6 +103,8 @@ export function DependenciaContextProvider({
       isLoading,
       areasQuery.error,
       canCreateArea,
+      maxAreas,
+      planName,
       refetch,
     ]
   );

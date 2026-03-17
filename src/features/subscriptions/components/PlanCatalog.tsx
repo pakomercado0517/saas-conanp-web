@@ -1,10 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CreditCard, Loader2 } from "lucide-react";
 import { useSubscriptionPlans } from "../hooks/useSubscriptionPlans";
 import { useSubscribeOrChangePlan } from "../hooks/useSubscribeOrChangePlan";
+import { getPlanLimitLabels } from "../lib/planLimits";
+import { PENDING_PLAN_ID_STORAGE_KEY, type SubscriptionPlan } from "../types";
 import { PlanSelectorDialog } from "./PlanSelectorDialog";
+
+function formatPlanPrice(plan: SubscriptionPlan): string | null {
+  const monthly = plan.priceMonthly;
+  if (typeof monthly === "number" && monthly > 0) {
+    return `$${monthly.toLocaleString("es-MX")}/mes`;
+  }
+  if (typeof monthly === "number" && monthly === 0) return "Gratis";
+  if (monthly == null) return "Personalizado";
+  return null;
+}
 
 interface PlanCatalogProps {
   areaId: string;
@@ -18,6 +30,27 @@ export function PlanCatalog({ areaId }: PlanCatalogProps) {
   const { isPending } = useSubscribeOrChangePlan(areaId);
 
   const availablePlans = plans.filter((p) => p.active !== false);
+  const hasAppliedPendingPlan = useRef(false);
+
+  useEffect(() => {
+    if (isLoading || isError || availablePlans.length === 0 || hasAppliedPendingPlan.current) return;
+    try {
+      const pending = sessionStorage.getItem(PENDING_PLAN_ID_STORAGE_KEY);
+      sessionStorage.removeItem(PENDING_PLAN_ID_STORAGE_KEY);
+      if (!pending?.trim()) return;
+      const exists = availablePlans.some((p) => p.id === pending.trim());
+      if (exists) {
+        hasAppliedPendingPlan.current = true;
+        const planId = pending.trim();
+        queueMicrotask(() => {
+          setInitialPlanId(planId);
+          setShowSubscribeDialog(true);
+        });
+      }
+    } catch {
+      // ignore
+    }
+  }, [isLoading, isError, availablePlans]);
 
   if (isLoading) {
     return (
@@ -71,23 +104,26 @@ export function PlanCatalog({ areaId }: PlanCatalogProps) {
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-slate-800 dark:text-slate-100">
+                  <p className="font-semibold uppercase text-slate-800 dark:text-slate-100">
                     {plan.name}
                   </p>
-                  {(plan.maxUsers != null ||
-                    plan.maxEventos != null ||
-                    plan.maxActividades != null) && (
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {[
-                        plan.maxUsers != null && `${plan.maxUsers} usuarios`,
-                        plan.maxEventos != null && `${plan.maxEventos} eventos`,
-                        plan.maxActividades != null &&
-                          `${plan.maxActividades} actividades`,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
+                  {plan.description && (
+                    <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                      {plan.description}
                     </p>
                   )}
+                  {(() => {
+                    const price = formatPlanPrice(plan);
+                    const labels = getPlanLimitLabels(plan);
+                    if (!price && labels.length === 0) return null;
+                    return (
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {[price, labels.length > 0 ? labels.join(" · ") : null]
+                          .filter(Boolean)
+                          .join(" — ")}
+                      </p>
+                    );
+                  })()}
                 </div>
               </div>
               <button

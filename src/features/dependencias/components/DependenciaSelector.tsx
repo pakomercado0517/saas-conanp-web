@@ -59,7 +59,7 @@ function DependenciaCard({
           )}
           <span className="flex items-center gap-1">
             <Users className="size-3.5" aria-hidden />
-            Plan FREE
+            Plan actual
           </span>
         </div>
       </div>
