@@ -5,6 +5,8 @@ import type {
   GetPrestadorResponse,
   UpdatePrestadorPayload,
   Prestador,
+  CreatePrestadorCompletoPayload,
+  CreatePrestadorCompletoResponse,
 } from "../types";
 
 const BASE = "/api/v1/organizations";
@@ -53,5 +55,15 @@ export async function updatePrestador(
   return apiRequest<UpdatePrestadorResponse>(
     `${BASE}/${organizationId}/prestadores/${prestadorId}`,
     { method: "PATCH", body: payload }
+  );
+}
+
+export async function createPrestadorCompleto(
+  organizationId: string,
+  payload: CreatePrestadorCompletoPayload
+): Promise<CreatePrestadorCompletoResponse> {
+  return apiRequest<CreatePrestadorCompletoResponse>(
+    `${BASE}/${organizationId}/prestadores/crear-completo`,
+    { method: "POST", body: payload }
   );
 }
