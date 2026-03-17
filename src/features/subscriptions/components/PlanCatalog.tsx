@@ -41,8 +41,11 @@ export function PlanCatalog({ areaId }: PlanCatalogProps) {
       const exists = availablePlans.some((p) => p.id === pending.trim());
       if (exists) {
         hasAppliedPendingPlan.current = true;
-        setInitialPlanId(pending.trim());
-        setShowSubscribeDialog(true);
+        const planId = pending.trim();
+        queueMicrotask(() => {
+          setInitialPlanId(planId);
+          setShowSubscribeDialog(true);
+        });
       }
     } catch {
       // ignore
