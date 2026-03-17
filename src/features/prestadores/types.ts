@@ -45,3 +45,43 @@ export interface UpdatePrestadorPayload {
   phone?: string | null;
   status?: PrestadorStatus;
 }
+
+/** Tipos de activo permitidos al crear prestador (según ecosystem_type del área). */
+export type ActivoTipoCrear = "embarcacion" | "vehiculo" | "guia" | "equipo";
+
+export interface ActivoCreateItem {
+  type: ActivoTipoCrear;
+}
+
+export interface CreatePrestadorCompletoPayload {
+  email: string;
+  name: string;
+  password: string;
+  status?: PrestadorStatus;
+  permitExpiresAt?: string | null;
+  activos?: ActivoCreateItem[];
+}
+
+export interface CreatePrestadorCompletoResponse {
+  success: true;
+  prestador: {
+    id: string;
+    userId: string;
+    dependenciaId: string;
+    status: string;
+    permitExpiresAt: string | null;
+    createdAt: string;
+  };
+  user: {
+    id: string;
+    email: string;
+    name: string;
+  };
+  activos: Array<{
+    id: string;
+    type: string;
+    status: string;
+    ownerId: string;
+  }>;
+  message?: string;
+}

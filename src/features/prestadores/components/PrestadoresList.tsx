@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { useAreaContext } from "@/features/organizations/context/AreaContext";
 import { usePrestadores } from "../hooks/usePrestadores";
+import { CreatePrestadorSheet } from "./CreatePrestadorSheet";
 import type { Prestador, PrestadorStatus } from "../types";
 
 const STATUS_LABELS: Record<PrestadorStatus, string> = {
@@ -28,10 +30,12 @@ interface PrestadoresListProps {
 
 export function PrestadoresList({ areaId }: PrestadoresListProps) {
   const { role } = useAreaContext();
-  const { data: prestadores, isLoading, isError, error } = usePrestadores(areaId);
+  const { data: prestadores, isLoading, isError, error, refetch } = usePrestadores(areaId);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const canEdit = role === "admin" || role === "gestor" || role === "prestador";
   const canViewDetail = canEdit || role === "observador";
+  const canCreatePrestador = role === "admin" || role === "gestor";
 
   if (isLoading) {
     return <p className="text-sm text-slate-500">Cargando prestadores…</p>;
@@ -47,22 +51,44 @@ export function PrestadoresList({ areaId }: PrestadoresListProps) {
 
   if (!prestadores?.length) {
     return (
-      <EmptyState
-        message="No hay prestadores en esta área. Invita usuarios con rol de prestador para comenzar."
-        action={
-          canEdit
-            ? {
-                label: "Invitar usuario",
-                href: getDashboardHref(areaId, "/usuarios"),
-              }
-            : undefined
-        }
-      />
+      <>
+        <EmptyState
+          message="Aún no hay prestadores registrados en esta área. Usa el botón «Crear prestador» para dar de alta el primero."
+          action={
+            canCreatePrestador
+              ? {
+                  label: "Crear prestador",
+                  onClick: () => setSheetOpen(true),
+                }
+              : undefined
+          }
+        />
+        {canCreatePrestador && (
+          <CreatePrestadorSheet
+            areaId={areaId}
+            open={sheetOpen}
+            onClose={() => setSheetOpen(false)}
+            onSuccess={() => refetch()}
+          />
+        )}
+      </>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+    <>
+      {canCreatePrestador && (
+        <div className="mb-4 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setSheetOpen(true)}
+            className="inline-flex items-center gap-2 rounded-lg bg-(--cyan-accent) px-4 py-2.5 text-sm font-bold text-(--navy-deep) transition-colors hover:bg-(--cyan-hover)"
+          >
+            Crear prestador
+          </button>
+        </div>
+      )}
+      <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
       <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
         <thead className="bg-slate-50 dark:bg-slate-800/50">
           <tr>
@@ -112,5 +138,14 @@ export function PrestadoresList({ areaId }: PrestadoresListProps) {
         </tbody>
       </table>
     </div>
+      {canCreatePrestador && (
+        <CreatePrestadorSheet
+          areaId={areaId}
+          open={sheetOpen}
+          onClose={() => setSheetOpen(false)}
+          onSuccess={() => refetch()}
+        />
+      )}
+    </>
   );
 }
