@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { validateInvitation } from "@/features/invitations";
 import type { ValidateInvitationResponseData } from "@/features/invitations";
+import { PENDING_PLAN_ID_STORAGE_KEY } from "@/features/subscriptions/types";
 import type { InvitationCodeFormData } from "../schemas/auth.schema";
 import { InvitationCodeForm } from "./InvitationCodeForm";
 import { RegisterForm } from "./RegisterForm";
@@ -19,6 +20,8 @@ const ROLE_LABELS: Record<string, string> = {
 interface RegisterFlowProps {
   invitationIdFromUrl: string | null;
   tokenFromUrl: string | null;
+  /** Plan elegido desde la landing; se guarda para pre-seleccionar al gestionar suscripción tras el login */
+  planIdFromUrl?: string | null;
 }
 
 type Step = "idle" | "validating" | "valid" | "invalid";
@@ -26,7 +29,16 @@ type Step = "idle" | "validating" | "valid" | "invalid";
 export function RegisterFlow({
   invitationIdFromUrl,
   tokenFromUrl,
+  planIdFromUrl = null,
 }: RegisterFlowProps) {
+  useEffect(() => {
+    if (typeof window === "undefined" || !planIdFromUrl?.trim()) return;
+    try {
+      sessionStorage.setItem(PENDING_PLAN_ID_STORAGE_KEY, planIdFromUrl.trim());
+    } catch {
+      // ignore
+    }
+  }, [planIdFromUrl]);
   const hasParams = Boolean(
     invitationIdFromUrl?.trim() && tokenFromUrl?.trim()
   );

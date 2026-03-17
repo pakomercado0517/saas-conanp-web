@@ -11,13 +11,18 @@ export const metadata = {
 };
 
 type Props = {
-  searchParams: Promise<{ invitationId?: string; token?: string }>;
+  searchParams: Promise<{
+    invitationId?: string;
+    token?: string;
+    planId?: string;
+  }>;
 };
 
 export default async function RegisterPage({ searchParams }: Props) {
   const params = await searchParams;
   const invitationId = params.invitationId ?? null;
   const token = params.token ?? null;
+  const planId = params.planId ?? null;
 
   return (
     <GuestRedirect>
@@ -51,11 +56,17 @@ export default async function RegisterPage({ searchParams }: Props) {
             <p className="mt-2 text-slate-500">
               Necesitas una invitación para registrarte. Usa el enlace del correo o ingresa tu código.
             </p>
+            {planId && (
+              <p className="mt-2 text-sm text-(--cyan-accent)">
+                Después de iniciar sesión podrás activar el plan que elegiste.
+              </p>
+            )}
 
             <div className="mt-8 rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
               <RegisterFlow
                 invitationIdFromUrl={invitationId}
                 tokenFromUrl={token}
+                planIdFromUrl={planId}
               />
             </div>
 

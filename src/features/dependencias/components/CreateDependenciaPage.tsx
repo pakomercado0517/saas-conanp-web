@@ -91,8 +91,8 @@ export function CreateDependenciaPage() {
             </h1>
             <p className="max-w-xl text-sm text-(--slate-text)">
               Registra la unidad organizativa que agrupa tus Áreas Naturales
-              Protegidas. Con el plan FREE podrás crear una dependencia y su
-              primera área para comenzar a operar.
+              Protegidas. Podrás crear una dependencia y su primera área para
+              comenzar a operar.
             </p>
           </header>
 

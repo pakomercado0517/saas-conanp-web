@@ -5,7 +5,18 @@ import { X, Loader2, CreditCard } from "lucide-react";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { useSubscriptionPlans } from "../hooks/useSubscriptionPlans";
 import { useSubscribeOrChangePlan } from "../hooks/useSubscribeOrChangePlan";
-import type { BillingCycle } from "../types";
+import { getPlanLimitLabels } from "../lib/planLimits";
+import type { BillingCycle, SubscriptionPlan } from "../types";
+
+function formatPlanPriceForCycle(plan: SubscriptionPlan, cycle: BillingCycle): string | null {
+  const amount = cycle === "yearly" ? plan.priceYearly : plan.priceMonthly;
+  if (typeof amount === "number" && amount > 0) {
+    return `$${amount.toLocaleString("es-MX")}${cycle === "yearly" ? "/año" : "/mes"}`;
+  }
+  if (typeof amount === "number" && amount === 0) return "Gratis";
+  if (amount == null) return "Personalizado";
+  return null;
+}
 
 const BILLING_OPTIONS: { value: BillingCycle; label: string }[] = [
   { value: "monthly", label: "Mensual" },
@@ -151,24 +162,26 @@ function PlanSelectorDialogContent({
                     />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-800 dark:text-slate-100">
+                    <p className="font-semibold uppercase text-slate-800 dark:text-slate-100">
                       {plan.name}
                     </p>
-                    {(plan.maxUsers != null ||
-                      plan.maxEventos != null ||
-                      plan.maxActividades != null) && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {[
-                          plan.maxUsers != null && `${plan.maxUsers} usuarios`,
-                          plan.maxEventos != null &&
-                            `${plan.maxEventos} eventos`,
-                          plan.maxActividades != null &&
-                            `${plan.maxActividades} actividades`,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")}
+                    {plan.description && (
+                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-1">
+                        {plan.description}
                       </p>
                     )}
+                    {(() => {
+                      const price = formatPlanPriceForCycle(plan, billingCycle);
+                      const labels = getPlanLimitLabels(plan);
+                      if (!price && labels.length === 0) return null;
+                      return (
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {[price, labels.length > 0 ? labels.join(" · ") : null]
+                            .filter(Boolean)
+                            .join(" — ")}
+                        </p>
+                      );
+                    })()}
                   </div>
                 </div>
                 {displaySelectedPlanId === plan.id && (

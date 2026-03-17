@@ -81,7 +81,9 @@ export function SubscriptionSummaryCard({
         <p className="text-lg font-bold">{statusLabel}</p>
         {subscription && (
           <>
-            <p className="text-sm text-slate-600 dark:text-slate-400">Plan: {planName}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Plan: <span className="uppercase">{planName}</span>
+            </p>
             {periodEnd && (
               <p className="text-xs text-slate-500">Vence: {periodEnd}</p>
             )}
