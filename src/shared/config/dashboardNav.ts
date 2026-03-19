@@ -9,6 +9,7 @@ import {
   Ticket,
   BarChart3,
   Users,
+  ListChecks,
 } from "lucide-react";
 
 export interface DashboardNavItem {
@@ -78,6 +79,12 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     breadcrumbTitle: "Usuarios",
     icon: Users,
   },
+  {
+    path: "/configuracion/requisitos-catalogo",
+    label: "Catálogo de requisitos",
+    breadcrumbTitle: "Catálogo de requisitos",
+    icon: ListChecks,
+  },
 ];
 
 /**
@@ -102,9 +109,13 @@ export function getDashboardHref(areaId: string, itemPath: string): string {
 }
 
 /**
- * Roles que pueden ver reportes y gestión de usuarios (solo admin).
+ * Roles que pueden ver reportes, usuarios y catálogo de requisitos (solo admin).
  */
-const ADMIN_ONLY_PATHS = ["/reportes", "/usuarios"];
+const ADMIN_ONLY_PATHS = [
+  "/reportes",
+  "/usuarios",
+  "/configuracion/requisitos-catalogo",
+];
 
 /**
  * Path de productos de acceso (visible solo si config-acceso habilita brazaletes).
