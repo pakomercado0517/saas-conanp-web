@@ -5,27 +5,37 @@ import { useState } from "react";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
 import { EmptyState } from "@/shared/components/EmptyState";
+import { useAlertDialog } from "@/shared/components/AlertDialogProvider";
 import { useActivos } from "../hooks/useActivos";
 import { useDeleteActivo } from "../hooks/useDeleteActivo";
+import { useActivoNombre } from "../hooks/useActivoNombre";
 import { ActivoForm } from "./ActivoForm";
+import { CreateActivoWizard } from "./CreateActivoWizard";
+import { RequisitosSection } from "./RequisitosSection";
 import type { Activo, ActivoTipo, ActivoStatus } from "../types";
 
 const TIPO_LABELS: Record<ActivoTipo, string> = {
+  embarcacion: "Embarcación",
   vehiculo: "Vehículo",
+  guia: "Guía",
   equipo: "Equipo",
-  infraestructura: "Infraestructura",
-  otro: "Otro",
 };
 
 const STATUS_LABELS: Record<ActivoStatus, string> = {
-  activo: "Activo",
-  inactivo: "Inactivo",
+  pendiente: "Pendiente",
+  aprobado: "Aprobado",
+  rechazado: "Rechazado",
   suspendido: "Suspendido",
-  pendiente_validacion: "Pendiente validación",
 };
 
 function getPropietarioName(a: Activo): string {
-  return a.Propietario?.name ?? a.propietarioId;
+  return a.Propietario?.name ?? a.ownerId;
+}
+
+function ActivoNombreCell({ areaId, activoId }: { areaId: string; activoId: string }) {
+  const { nombre, isLoading } = useActivoNombre(areaId, activoId);
+  if (isLoading) return <span className="text-slate-400">—</span>;
+  return <span>{nombre ?? "Sin nombre"}</span>;
 }
 
 interface ActivosListProps {
@@ -35,8 +45,9 @@ interface ActivosListProps {
 export function ActivosList({ areaId }: ActivosListProps) {
   const [tipoFilter, setTipoFilter] = useState<ActivoTipo | "">("");
   const [statusFilter, setStatusFilter] = useState<ActivoStatus | "">("");
-  const [showForm, setShowForm] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   const [editingActivo, setEditingActivo] = useState<Activo | null>(null);
+  const alertDialog = useAlertDialog();
 
   const { data: activos, isLoading, isError, error, refetch } = useActivos(
     areaId,
@@ -48,16 +59,27 @@ export function ActivosList({ areaId }: ActivosListProps) {
   const deleteMutation = useDeleteActivo(areaId);
 
   const handleDelete = async (activo: Activo) => {
-    if (!confirm("¿Eliminar este activo?")) return;
+    const confirmed = await alertDialog.confirm({
+      title: "Eliminar activo",
+      description: "¿Eliminar este activo? Esta acción no se puede deshacer.",
+      cancelLabel: "Cancelar",
+      confirmLabel: "Eliminar",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
     try {
-      await deleteMutation.mutateAsync(activo.id);
+      const message = await deleteMutation.mutateAsync(activo.id);
+      alertDialog.open({
+        title: "Activo eliminado",
+        description: message ?? "El activo se eliminó correctamente.",
+      });
     } catch {
       // Error manejado
     }
   };
 
   const handleFormSuccess = () => {
-    setShowForm(false);
+    setShowWizard(false);
     setEditingActivo(null);
     void refetch();
   };
@@ -111,7 +133,7 @@ export function ActivosList({ areaId }: ActivosListProps) {
           type="button"
           onClick={() => {
             setEditingActivo(null);
-            setShowForm(true);
+            setShowWizard(true);
           }}
           className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 focus-visible:outline focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 dark:bg-slate-200 dark:text-slate-900 dark:focus-visible:ring-slate-400"
         >
@@ -119,20 +141,39 @@ export function ActivosList({ areaId }: ActivosListProps) {
         </button>
       </div>
 
-      {(showForm || editingActivo) && (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/30">
-          <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-300">
-            {editingActivo ? "Editar activo" : "Crear activo"}
-          </h3>
-          <ActivoForm
-            areaId={areaId}
-            activo={editingActivo ?? undefined}
-            onSuccess={handleFormSuccess}
-            onCancel={() => {
-              setShowForm(false);
-              setEditingActivo(null);
-            }}
-          />
+      {showWizard && (
+        <CreateActivoWizard
+          open={showWizard}
+          areaId={areaId}
+          onClose={() => setShowWizard(false)}
+          onCompleted={() => {
+            handleFormSuccess();
+          }}
+        />
+      )}
+
+      {editingActivo && (
+        <div className="space-y-4">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/30">
+            <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Editar activo
+            </h3>
+            <ActivoForm
+              areaId={areaId}
+              activo={editingActivo}
+              onSuccess={handleFormSuccess}
+              onCancel={() => setEditingActivo(null)}
+            />
+          </div>
+          {editingActivo && (
+            <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900/30">
+              <RequisitosSection
+                areaId={areaId}
+                activoId={editingActivo.id}
+                activoTipo={editingActivo.type}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -143,7 +184,7 @@ export function ActivosList({ areaId }: ActivosListProps) {
             label: "Nuevo activo",
             onClick: () => {
               setEditingActivo(null);
-              setShowForm(true);
+              setShowWizard(true);
             },
           }}
         />
@@ -177,11 +218,11 @@ export function ActivosList({ areaId }: ActivosListProps) {
                       href={getDashboardHref(areaId, `/activos/${a.id}`)}
                       className="font-medium text-slate-800 hover:underline dark:text-slate-100"
                     >
-                      {a.nombre}
+                      <ActivoNombreCell areaId={areaId} activoId={a.id} />
                     </Link>
                   </td>
                   <td className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">
-                    {TIPO_LABELS[a.tipo]}
+                    {TIPO_LABELS[a.type]}
                   </td>
                   <td className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">
                     {getPropietarioName(a)}
@@ -189,9 +230,9 @@ export function ActivosList({ areaId }: ActivosListProps) {
                   <td className="px-4 py-2 text-sm">
                     <span
                       className={`rounded-full px-2 py-1 text-xs font-medium ${
-                        a.status === "activo"
+                        a.status === "aprobado"
                           ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                          : a.status === "inactivo"
+                          : a.status === "rechazado"
                             ? "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
                             : a.status === "suspendido"
                               ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
@@ -213,7 +254,7 @@ export function ActivosList({ areaId }: ActivosListProps) {
                         type="button"
                         onClick={() => {
                           setEditingActivo(a);
-                          setShowForm(false);
+                          setShowWizard(false);
                         }}
                         className="text-sm font-medium text-(--cyan-accent) hover:underline"
                       >

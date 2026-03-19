@@ -26,9 +26,33 @@ export interface CreateDependenciaPayload {
   name: string;
 }
 
+/** Tipo de activo para ítem del catálogo (crear área). */
+export type RequisitoCatalogoTipoActivo =
+  | "embarcacion"
+  | "vehiculo"
+  | "guia"
+  | "equipo";
+
+/** Tipo de dato del valor en el catálogo. */
+export type RequisitoCatalogoTipoDato = "string" | "date" | "number";
+
+/** Un ítem del catálogo al crear área (requisitoCatalogo). */
+export interface RequisitoCatalogoItemCreate {
+  tipoActivo: RequisitoCatalogoTipoActivo;
+  key: string;
+  label?: string | null;
+  tipoDato: RequisitoCatalogoTipoDato;
+  requerido?: boolean;
+  requiereDocumento?: boolean;
+  orden?: number;
+  activo?: boolean;
+}
+
 export interface CreateDependenciaAreaPayload {
   name: string;
   ecosystem_type: EcosystemType;
+  /** Opcional: definiciones del catálogo de requisitos de activos para esta área. */
+  requisitoCatalogo?: RequisitoCatalogoItemCreate[];
 }
 
 export interface CreateDependenciaInvitationPayload {

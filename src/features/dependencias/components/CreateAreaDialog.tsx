@@ -1,20 +1,34 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, MapPin, Loader2 } from "lucide-react";
+import { X, MapPin, Loader2, Plus, Trash2 } from "lucide-react";
 import { ApiError, getApiErrorMessage } from "@/shared/types/api";
 import { useCreateDependenciaArea } from "../hooks/useCreateDependenciaArea";
 import {
   createAreaSchema,
   type CreateAreaFormData,
+  type RequisitoCatalogoItemFormData,
 } from "../schemas/dependencia.schema";
 
 const ECOSYSTEM_OPTIONS = [
   { value: "terrestre" as const, label: "Terrestre" },
   { value: "maritimo" as const, label: "Marítimo" },
   { value: "mixto" as const, label: "Mixto" },
+];
+
+const TIPO_ACTIVO_OPTIONS: { value: RequisitoCatalogoItemFormData["tipoActivo"]; label: string }[] = [
+  { value: "embarcacion", label: "Embarcación" },
+  { value: "vehiculo", label: "Vehículo" },
+  { value: "guia", label: "Guía" },
+  { value: "equipo", label: "Equipo" },
+];
+
+const TIPO_DATO_OPTIONS: { value: RequisitoCatalogoItemFormData["tipoDato"]; label: string }[] = [
+  { value: "string", label: "Texto" },
+  { value: "date", label: "Fecha" },
+  { value: "number", label: "Número" },
 ];
 
 interface CreateAreaDialogProps {
@@ -35,19 +49,56 @@ export function CreateAreaDialog({
 
   const {
     register,
+    control,
     handleSubmit,
     setError,
     reset,
     formState: { errors },
   } = useForm<CreateAreaFormData>({
     resolver: zodResolver(createAreaSchema),
-    defaultValues: { name: "", ecosystem_type: undefined },
+    defaultValues: {
+      name: "",
+      ecosystem_type: undefined,
+      requisitoCatalogo: [],
+    },
   });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "requisitoCatalogo",
+  });
+
+  const defaultCatalogoItem: RequisitoCatalogoItemFormData = {
+    tipoActivo: "equipo",
+    key: "",
+    tipoDato: "string",
+    requerido: false,
+    requiereDocumento: false,
+    orden: 0,
+  };
 
   async function onSubmit(data: CreateAreaFormData) {
     setServerError(null);
+    const payload = {
+      name: data.name,
+      ecosystem_type: data.ecosystem_type,
+      ...(data.requisitoCatalogo?.length
+        ? {
+            requisitoCatalogo: data.requisitoCatalogo.map((item) => ({
+              tipoActivo: item.tipoActivo,
+              key: item.key,
+              label: item.label || undefined,
+              tipoDato: item.tipoDato,
+              requerido: item.requerido ?? false,
+              requiereDocumento: item.requiereDocumento ?? false,
+              orden: item.orden,
+              activo: item.activo ?? true,
+            })),
+          }
+        : {}),
+    };
     try {
-      await create(data);
+      await create(payload);
       reset();
       onSuccess?.();
       onClose();
@@ -57,6 +108,8 @@ export function CreateAreaDialog({
         err.details.forEach(({ campo, mensaje }) => {
           if (campo === "name" || campo === "ecosystem_type") {
             setError(campo, { type: "server", message: mensaje });
+          } else if (campo?.startsWith("requisitoCatalogo.")) {
+            setError("requisitoCatalogo", { type: "server", message: mensaje });
           }
         });
       } else {
@@ -145,6 +198,137 @@ export function CreateAreaDialog({
             {errors.ecosystem_type && (
               <p className="mt-1 text-sm text-red-600">
                 {errors.ecosystem_type.message}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-(--navy-deep) dark:text-slate-200">
+                Requisitos de activos para esta área
+              </span>
+              <button
+                type="button"
+                onClick={() => append(defaultCatalogoItem)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-(--slate-text) hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                <Plus className="size-3.5" aria-hidden />
+                Añadir ítem
+              </button>
+            </div>
+            {errors.requisitoCatalogo?.message && (
+              <p className="text-sm text-red-600">{errors.requisitoCatalogo.message}</p>
+            )}
+            <ul className="space-y-3">
+              {fields.map((field, index) => (
+                <li
+                  key={field.id}
+                  className="grid gap-2 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800"
+                >
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <div>
+                      <label className="mb-0.5 block text-xs font-medium text-slate-600 dark:text-slate-400">
+                        Tipo activo
+                      </label>
+                      <select
+                        className="w-full rounded border border-slate-200 bg-white py-1.5 px-2 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+                        {...register(`requisitoCatalogo.${index}.tipoActivo`)}
+                      >
+                        {TIPO_ACTIVO_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-0.5 block text-xs font-medium text-slate-600 dark:text-slate-400">
+                        Clave
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="ej. permiso_operacion"
+                        className="w-full rounded border border-slate-200 py-1.5 px-2 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+                        {...register(`requisitoCatalogo.${index}.key`)}
+                      />
+                      {errors.requisitoCatalogo?.[index]?.key && (
+                        <p className="mt-0.5 text-xs text-red-600">
+                          {errors.requisitoCatalogo[index]?.key?.message}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="mb-0.5 block text-xs font-medium text-slate-600 dark:text-slate-400">
+                        Etiqueta (opcional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej. Permiso de operación"
+                        className="w-full rounded border border-slate-200 py-1.5 px-2 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+                        {...register(`requisitoCatalogo.${index}.label`)}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-0.5 block text-xs font-medium text-slate-600 dark:text-slate-400">
+                        Tipo dato
+                      </label>
+                      <select
+                        className="w-full rounded border border-slate-200 bg-white py-1.5 px-2 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+                        {...register(`requisitoCatalogo.${index}.tipoDato`)}
+                      >
+                        {TIPO_DATO_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                      <input
+                        type="checkbox"
+                        className="rounded border-slate-300"
+                        {...register(`requisitoCatalogo.${index}.requerido`)}
+                      />
+                      Requerido
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                      <input
+                        type="checkbox"
+                        className="rounded border-slate-300"
+                        {...register(`requisitoCatalogo.${index}.requiereDocumento`)}
+                      />
+                      Requiere documento
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                        Orden
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        className="w-16 rounded border border-slate-200 py-1 px-2 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+                        {...register(`requisitoCatalogo.${index}.orden`, {
+                          valueAsNumber: true,
+                        })}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => remove(index)}
+                      className="ml-auto rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-slate-700 dark:hover:text-red-400"
+                      aria-label="Eliminar ítem"
+                    >
+                      <Trash2 className="size-4" aria-hidden />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {fields.length === 0 && (
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Opcional. Añade ítems para definir el catálogo de requisitos por tipo de activo.
               </p>
             )}
           </div>

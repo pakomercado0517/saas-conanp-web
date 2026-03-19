@@ -8,17 +8,17 @@ import { RequisitosSection } from "./RequisitosSection";
 import type { ActivoTipo, ActivoStatus } from "../types";
 
 const TIPO_LABELS: Record<ActivoTipo, string> = {
+  embarcacion: "Embarcación",
   vehiculo: "Vehículo",
+  guia: "Guía",
   equipo: "Equipo",
-  infraestructura: "Infraestructura",
-  otro: "Otro",
 };
 
 const STATUS_LABELS: Record<ActivoStatus, string> = {
-  activo: "Activo",
-  inactivo: "Inactivo",
+  pendiente: "Pendiente",
+  aprobado: "Aprobado",
+  rechazado: "Rechazado",
   suspendido: "Suspendido",
-  pendiente_validacion: "Pendiente validación",
 };
 
 interface ActivoDetailProps {
@@ -76,7 +76,7 @@ export function ActivoDetail({ areaId, activoId }: ActivoDetailProps) {
           <>
             <div className="flex flex-wrap items-center justify-between gap-4">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                {activo.nombre}
+                {activo.nombre || "Sin nombre"}
               </h2>
               <button
                 type="button"
@@ -89,16 +89,16 @@ export function ActivoDetail({ areaId, activoId }: ActivoDetailProps) {
             <dl className="mt-4 grid gap-2 sm:grid-cols-2">
               <div>
                 <dt className="text-xs font-medium text-slate-500">Tipo</dt>
-                <dd className="text-sm">{TIPO_LABELS[activo.tipo]}</dd>
+                <dd className="text-sm">{TIPO_LABELS[activo.type]}</dd>
               </div>
               <div>
                 <dt className="text-xs font-medium text-slate-500">Estado</dt>
                 <dd className="text-sm">
                   <span
                     className={`rounded-full px-2 py-1 text-xs font-medium ${
-                      activo.status === "activo"
+                      activo.status === "aprobado"
                         ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                        : activo.status === "inactivo"
+                        : activo.status === "rechazado"
                           ? "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
                           : activo.status === "suspendido"
                             ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
@@ -114,7 +114,7 @@ export function ActivoDetail({ areaId, activoId }: ActivoDetailProps) {
                   Propietario
                 </dt>
                 <dd className="text-sm">
-                  {activo.Propietario?.name ?? activo.propietarioId}
+                  {activo.Propietario?.name ?? activo.ownerId}
                 </dd>
               </div>
               {activo.descripcion && (
@@ -133,7 +133,11 @@ export function ActivoDetail({ areaId, activoId }: ActivoDetailProps) {
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900/30">
-        <RequisitosSection areaId={areaId} activoId={activoId} />
+        <RequisitosSection
+          areaId={areaId}
+          activoId={activoId}
+          activoTipo={activo.type}
+        />
       </div>
     </div>
   );

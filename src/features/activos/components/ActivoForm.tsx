@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { getApiErrorMessage } from "@/shared/types/api";
+import { ApiError, getApiErrorMessage, getApiValidationDetails } from "@/shared/types/api";
 import { useCreateActivo } from "../hooks/useCreateActivo";
 import { useUpdateActivo } from "../hooks/useUpdateActivo";
 import { usePrestadores } from "@/features/prestadores/hooks/usePrestadores";
@@ -15,10 +15,10 @@ import {
 import type { Activo, ActivoTipo, UpdateActivoPayload } from "../types";
 
 const TIPO_OPTIONS: { value: ActivoTipo; label: string }[] = [
+  { value: "embarcacion", label: "Embarcación" },
   { value: "vehiculo", label: "Vehículo" },
+  { value: "guia", label: "Guía" },
   { value: "equipo", label: "Equipo" },
-  { value: "infraestructura", label: "Infraestructura" },
-  { value: "otro", label: "Otro" },
 ];
 
 interface ActivoFormProps {
@@ -48,26 +48,37 @@ function CreateActivoFormInner({
   const form = useForm<CreateActivoFormData>({
     resolver: zodResolver(createActivoSchema),
     defaultValues: {
-      tipo: "equipo",
+      type: "equipo",
       propietarioId: "",
-      nombre: "",
-      descripcion: "",
-      status: "activo",
+      status: "pendiente",
     },
   });
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
-      await createMutation.mutateAsync({
-        tipo: data.tipo,
-        propietarioId: data.propietarioId,
-        nombre: data.nombre,
-        descripcion: data.descripcion?.trim() || null,
-        status: data.status ?? "activo",
-      });
+      const payload: Parameters<typeof createMutation.mutateAsync>[0] = {
+        ownerId: data.propietarioId.trim(),
+        type: data.type,
+        status: data.status,
+      };
+      await createMutation.mutateAsync(payload);
       onSuccess?.();
-    } catch {
-      // Error manejado
+    } catch (err) {
+      const details = err instanceof ApiError ? err.details : getApiValidationDetails(err);
+      if (details.length > 0) {
+        const fieldMap: Record<string, keyof CreateActivoFormData> = {
+          owner_id: "propietarioId",
+          ownerId: "propietarioId",
+          propietario_id: "propietarioId",
+          propietarioId: "propietarioId",
+          type: "type",
+          status: "status",
+        };
+        details.forEach(({ campo, mensaje }) => {
+          const field = fieldMap[campo] ?? (campo as keyof CreateActivoFormData);
+          if (field) form.setError(field, { type: "server", message: mensaje });
+        });
+      }
     }
   });
 
@@ -83,10 +94,10 @@ function CreateActivoFormInner({
       )}
 
       <div>
-        <label htmlFor="tipo" className={labelClass}>
+        <label htmlFor="type" className={labelClass}>
           Tipo
         </label>
-        <select id="tipo" {...form.register("tipo")} className={inputClass}>
+        <select id="type" {...form.register("type")} className={inputClass}>
           {TIPO_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
@@ -119,41 +130,14 @@ function CreateActivoFormInner({
       </div>
 
       <div>
-        <label htmlFor="nombre" className={labelClass}>
-          Nombre
-        </label>
-        <input
-          id="nombre"
-          type="text"
-          {...form.register("nombre")}
-          className={inputClass}
-        />
-        {form.formState.errors.nombre && (
-          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-            {form.formState.errors.nombre.message}
-          </p>
-        )}
-      </div>
-
-      <div>
-        <label htmlFor="descripcion" className={labelClass}>
-          Descripción (opcional)
-        </label>
-        <textarea
-          id="descripcion"
-          {...form.register("descripcion")}
-          rows={3}
-          className={inputClass}
-        />
-      </div>
-
-      <div>
         <label htmlFor="status" className={labelClass}>
           Estado inicial
         </label>
         <select id="status" {...form.register("status")} className={inputClass}>
-          <option value="activo">Activo</option>
-          <option value="pendiente_validacion">Pendiente de validación</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="aprobado">Aprobado</option>
+          <option value="rechazado">Rechazado</option>
+          <option value="suspendido">Suspendido</option>
         </select>
       </div>
 
@@ -196,10 +180,8 @@ function EditActivoFormInner({
   const form = useForm<UpdateActivoFormData>({
     resolver: zodResolver(updateActivoSchema),
     defaultValues: {
-      tipo: activo.tipo,
-      propietarioId: activo.propietarioId,
-      nombre: activo.nombre,
-      descripcion: activo.descripcion ?? "",
+      tipo: activo.type,
+      propietarioId: activo.ownerId,
       status: activo.status,
     },
   });
@@ -207,10 +189,8 @@ function EditActivoFormInner({
   const onSubmit = form.handleSubmit(async (data) => {
     try {
       const payload: UpdateActivoPayload = {
-        tipo: data.tipo,
-        propietarioId: data.propietarioId,
-        nombre: data.nombre,
-        descripcion: data.descripcion && data.descripcion.trim() ? data.descripcion : null,
+        type: data.tipo,
+        ownerId: data.propietarioId,
         status: data.status,
       };
       await updateMutation.mutateAsync({ activoId: activo.id, payload });
@@ -268,43 +248,14 @@ function EditActivoFormInner({
       </div>
 
       <div>
-        <label htmlFor="nombre" className={labelClass}>
-          Nombre
-        </label>
-        <input
-          id="nombre"
-          type="text"
-          {...form.register("nombre")}
-          className={inputClass}
-        />
-        {form.formState.errors.nombre && (
-          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-            {form.formState.errors.nombre.message}
-          </p>
-        )}
-      </div>
-
-      <div>
-        <label htmlFor="descripcion" className={labelClass}>
-          Descripción (opcional)
-        </label>
-        <textarea
-          id="descripcion"
-          {...form.register("descripcion")}
-          rows={3}
-          className={inputClass}
-        />
-      </div>
-
-      <div>
         <label htmlFor="status" className={labelClass}>
           Estado
         </label>
         <select id="status" {...form.register("status")} className={inputClass}>
-          <option value="activo">Activo</option>
-          <option value="inactivo">Inactivo</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="aprobado">Aprobado</option>
+          <option value="rechazado">Rechazado</option>
           <option value="suspendido">Suspendido</option>
-          <option value="pendiente_validacion">Pendiente de validación</option>
         </select>
       </div>
 
