@@ -19,6 +19,7 @@ export interface EventoOperativo {
   id: string;
   organizationId: string;
   prestadorId: string;
+  activoIds: string[];
   actividadId: string;
   date: string;
   bloqueId: string | null;
@@ -58,6 +59,7 @@ export interface ListEventosResponse {
 export interface CreateEventoPayloadBloques {
   actividadId: string;
   prestadorId: string;
+  activoIds: string[];
   date: string;
   agendaType: "BLOQUES";
   bloqueId: string;
@@ -68,6 +70,7 @@ export interface CreateEventoPayloadBloques {
 export interface CreateEventoPayloadHorarioLibre {
   actividadId: string;
   prestadorId: string;
+  activoIds: string[];
   date: string;
   agendaType: "HORARIO_LIBRE";
   startTime: string;

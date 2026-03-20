@@ -8,21 +8,17 @@ import { EmptyState } from "@/shared/components/EmptyState";
 import { useAreaContext } from "@/features/organizations/context/AreaContext";
 import { usePrestadores } from "../hooks/usePrestadores";
 import { CreatePrestadorSheet } from "./CreatePrestadorSheet";
-import type { Prestador, PrestadorStatus } from "../types";
+import {
+  getPrestadorDisplayEmail,
+  getPrestadorDisplayName,
+} from "../lib/prestador-display";
+import type { PrestadorStatus } from "../types";
 
 const STATUS_LABELS: Record<PrestadorStatus, string> = {
   activo: "Activo",
   inactivo: "Inactivo",
   suspendido: "Suspendido",
 };
-
-function getDisplayName(p: Prestador): string {
-  return p.name ?? p.User?.name ?? p.email ?? p.User?.email ?? p.userId ?? "—";
-}
-
-function getDisplayEmail(p: Prestador): string {
-  return p.email ?? p.User?.email ?? "—";
-}
 
 interface PrestadoresListProps {
   areaId: string;
@@ -116,11 +112,11 @@ export function PrestadoresList({ areaId }: PrestadoresListProps) {
                   href={getDashboardHref(areaId, `/prestadores/${p.id}`)}
                   className="font-medium text-slate-800 hover:underline dark:text-slate-100"
                 >
-                  {getDisplayName(p)}
+                  {getPrestadorDisplayName(p)}
                 </Link>
               </td>
               <td className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">
-                {getDisplayEmail(p)}
+                {getPrestadorDisplayEmail(p)}
               </td>
               <td className="px-4 py-2 text-sm">{STATUS_LABELS[p.status]}</td>
               {canViewDetail && (
