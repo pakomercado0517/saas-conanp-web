@@ -24,6 +24,9 @@ const timeStringSchema = z
 const baseEventoFields = {
   actividadId: z.string().min(1, "Selecciona una actividad"),
   prestadorId: z.string().min(1, "Selecciona un prestador"),
+  activoIds: z
+    .array(z.string().min(1, "Selecciona un activo"))
+    .min(1, "Selecciona al menos un activo"),
   date: z.string().min(1, "La fecha es requerida"),
   agendaType: z.enum(["BLOQUES", "HORARIO_LIBRE"], {
     message: "Selecciona el tipo de agenda",

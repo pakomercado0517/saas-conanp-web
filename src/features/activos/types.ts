@@ -81,6 +81,11 @@ export interface Activo {
   /** Se maneja como requisito (key `nombre`), puede venir vacío. */
   nombre?: string | null;
   descripcion?: string | null;
+  /**
+   * Capacidad nominal del activo (personas u operaciones), si el backend la expone.
+   * Se usa como base para UX y/o validaciones adicionales.
+   */
+  capacidadPersonas?: number | null;
   createdAt?: string;
   updatedAt?: string;
   Propietario?: { id: string; name?: string };

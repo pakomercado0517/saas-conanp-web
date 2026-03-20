@@ -28,6 +28,9 @@ type RawActivo = Partial<{
   status: Activo["status"];
   nombre: string | null;
   descripcion: string | null;
+  capacidadPersonas: number | string | null;
+  capacidad: number | string | null;
+  capacity: number | string | null;
   createdAt: string;
   updatedAt: string;
   Propietario: RawOwner;
@@ -44,6 +47,15 @@ function normalizeActivo(raw: RawActivo): Activo {
     rawOwner?.name ??
     rawOwner?.email ??
     undefined;
+
+  const capacidadRaw = raw.capacidadPersonas ?? raw.capacidad ?? raw.capacity;
+  const capacidadPersonas =
+    typeof capacidadRaw === "number"
+      ? capacidadRaw
+      : capacidadRaw != null
+        ? Number(capacidadRaw)
+        : null;
+
   return {
     id: String(raw.id ?? ""),
     organizationId: String(raw.organizationId ?? ""),
@@ -52,6 +64,7 @@ function normalizeActivo(raw: RawActivo): Activo {
     status: (raw.status ?? "pendiente") as Activo["status"],
     nombre: raw.nombre ?? null,
     descripcion: raw.descripcion ?? null,
+    capacidadPersonas,
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
     Propietario: rawOwner?.id ? { id: rawOwner.id, name: ownerName } : undefined,
