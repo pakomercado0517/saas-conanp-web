@@ -433,6 +433,19 @@ export function EventForm({
         )}
       </div>
 
+      {actividadId && prestadorId && (
+        <p className="rounded-md border border-sky-200 bg-sky-50 p-3 text-sm text-sky-950 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-100">
+          El prestador debe contar con un permiso vigente para la actividad elegida en la fecha del
+          evento. Si falta, el servidor rechazará la reserva.{" "}
+          <Link
+            href={getDashboardHref(areaId, "/permisos")}
+            className="font-medium text-sky-800 underline hover:no-underline dark:text-sky-200"
+          >
+            Ir a permisos por actividad
+          </Link>
+        </p>
+      )}
+
       <div>
         <label className={labelClass}>Activos del prestador</label>
         {loadingActivos ? (

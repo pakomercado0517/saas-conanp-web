@@ -1,8 +1,13 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useEffect } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getApiErrorMessage } from "@/shared/types/api";
+import {
+  formatIsoToDateInput,
+  getDefaultTimeZone,
+} from "@/shared/lib/date";
 import { useCreatePermiso } from "../hooks/useCreatePermiso";
 import { useUpdatePermiso } from "../hooks/useUpdatePermiso";
 import { usePrestadores } from "@/features/prestadores/hooks/usePrestadores";
@@ -15,32 +20,25 @@ import {
 } from "../schemas/permiso.schema";
 import type { Permiso, UpdatePermisoPayload } from "../types";
 
-const STATUS_OPTIONS: { value: "vigente" | "pendiente"; label: string }[] = [
-  { value: "vigente", label: "Vigente" },
-  { value: "pendiente", label: "Pendiente" },
+const STATUS_OPTIONS: { value: "activo" | "inactivo"; label: string }[] = [
+  { value: "activo", label: "Activo" },
+  { value: "inactivo", label: "Inactivo" },
 ];
 
 const STATUS_EDIT_OPTIONS: { value: Permiso["status"]; label: string }[] = [
-  { value: "vigente", label: "Vigente" },
+  { value: "activo", label: "Activo" },
+  { value: "inactivo", label: "Inactivo" },
   { value: "vencido", label: "Vencido" },
-  { value: "revocado", label: "Revocado" },
-  { value: "pendiente", label: "Pendiente" },
+  { value: "suspendido", label: "Suspendido" },
 ];
 
 interface PermisoFormProps {
   areaId: string;
   permiso?: Permiso | null;
+  /** Prestador preseleccionado al crear (p. ej. filtro del listado). */
+  defaultPrestadorId?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
-}
-
-function formatDateForInput(iso: string): string {
-  try {
-    const d = new Date(iso);
-    return d.toISOString().slice(0, 10);
-  } catch {
-    return "";
-  }
 }
 
 const inputClass =
@@ -50,10 +48,12 @@ const labelClass =
 
 function CreatePermisoFormInner({
   areaId,
+  defaultPrestadorId,
   onSuccess,
   onCancel,
 }: {
   areaId: string;
+  defaultPrestadorId?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
@@ -64,13 +64,26 @@ function CreatePermisoFormInner({
   const form = useForm<CreatePermisoFormData>({
     resolver: zodResolver(createPermisoSchema),
     defaultValues: {
-      prestadorId: "",
+      prestadorId: defaultPrestadorId ?? "",
       actividadId: "",
+      appliesToAllAreas: false,
       vigenciaDesde: "",
       vigenciaHasta: "",
-      status: "vigente",
+      status: "activo",
       documentoUrl: "",
     },
+  });
+
+  useEffect(() => {
+    if (defaultPrestadorId) {
+      form.setValue("prestadorId", defaultPrestadorId);
+    }
+  }, [defaultPrestadorId, form]);
+
+  const appliesToAllAreasCreate = useWatch({
+    control: form.control,
+    name: "appliesToAllAreas",
+    defaultValue: false,
   });
 
   const onSubmit = form.handleSubmit(async (data) => {
@@ -78,9 +91,10 @@ function CreatePermisoFormInner({
       await createMutation.mutateAsync({
         prestadorId: data.prestadorId,
         actividadId: data.actividadId,
+        appliesToAllAreas: data.appliesToAllAreas,
         vigenciaDesde: data.vigenciaDesde,
         vigenciaHasta: data.vigenciaHasta,
-        status: data.status ?? "vigente",
+        status: data.status ?? "activo",
         documentoUrl: data.documentoUrl?.trim() || null,
       });
       onSuccess?.();
@@ -154,6 +168,33 @@ function CreatePermisoFormInner({
             {form.formState.errors.actividadId.message}
           </p>
         )}
+      </div>
+
+      <div className="flex items-start gap-3 rounded-md border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/20">
+        <input
+          id="appliesToAllAreas-create"
+          type="checkbox"
+          className="mt-1 size-4 rounded border-slate-300 dark:border-slate-600"
+          checked={Boolean(appliesToAllAreasCreate)}
+          onChange={(e) => {
+            form.setValue("appliesToAllAreas", e.target.checked, {
+              shouldValidate: true,
+              shouldDirty: true,
+            });
+          }}
+        />
+        <div>
+          <label
+            htmlFor="appliesToAllAreas-create"
+            className="text-sm font-medium text-slate-800 dark:text-slate-100"
+          >
+            Aplica a todas las áreas
+          </label>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Si lo marcas, el permiso queda registrado para todas las áreas naturales protegidas y no
+            tendrás que repetir la misma información en cada área.
+          </p>
+        </div>
       </div>
 
       <div>
@@ -255,25 +296,36 @@ function EditPermisoFormInner({
   onCancel?: () => void;
 }) {
   const updateMutation = useUpdatePermiso(areaId);
+  const tz = getDefaultTimeZone();
 
   const form = useForm<UpdatePermisoFormData>({
     resolver: zodResolver(updatePermisoSchema),
     defaultValues: {
-      vigenciaDesde: formatDateForInput(permiso.vigenciaDesde),
-      vigenciaHasta: formatDateForInput(permiso.vigenciaHasta),
+      appliesToAllAreas: permiso.appliesToAllAreas,
+      vigenciaDesde: formatIsoToDateInput(permiso.vigenciaDesde, tz),
+      vigenciaHasta: formatIsoToDateInput(permiso.vigenciaHasta, tz),
       status: permiso.status,
       documentoUrl: permiso.documentoUrl ?? "",
     },
   });
 
+  const appliesToAllAreasEdit = useWatch({
+    control: form.control,
+    name: "appliesToAllAreas",
+    defaultValue: permiso.appliesToAllAreas,
+  });
+
   const onSubmit = form.handleSubmit(async (data) => {
     try {
       const payload: UpdatePermisoPayload = {
+        appliesToAllAreas: data.appliesToAllAreas,
         vigenciaDesde: data.vigenciaDesde,
         vigenciaHasta: data.vigenciaHasta,
         status: data.status,
         documentoUrl:
-          data.documentoUrl && data.documentoUrl.trim() ? data.documentoUrl : null,
+          data.documentoUrl && data.documentoUrl.trim()
+            ? data.documentoUrl
+            : null,
       };
       await updateMutation.mutateAsync({ permisoId: permiso.id, payload });
       onSuccess?.();
@@ -292,6 +344,33 @@ function EditPermisoFormInner({
           {getApiErrorMessage(updateMutation.error)}
         </p>
       )}
+
+      <div className="flex items-start gap-3 rounded-md border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/20">
+        <input
+          id="appliesToAllAreas-edit"
+          type="checkbox"
+          className="mt-1 size-4 rounded border-slate-300 dark:border-slate-600"
+          checked={Boolean(appliesToAllAreasEdit)}
+          onChange={(e) => {
+            form.setValue("appliesToAllAreas", e.target.checked, {
+              shouldValidate: true,
+              shouldDirty: true,
+            });
+          }}
+        />
+        <div>
+          <label
+            htmlFor="appliesToAllAreas-edit"
+            className="text-sm font-medium text-slate-800 dark:text-slate-100"
+          >
+            Aplica a todas las áreas
+          </label>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Si lo marcas, el permiso queda registrado para todas las áreas naturales protegidas y no
+            tendrás que repetir la misma información en cada área.
+          </p>
+        </div>
+      </div>
 
       <div>
         <label htmlFor="vigenciaDesde" className={labelClass}>
@@ -383,6 +462,7 @@ function EditPermisoFormInner({
 export function PermisoForm({
   areaId,
   permiso,
+  defaultPrestadorId,
   onSuccess,
   onCancel,
 }: PermisoFormProps) {
@@ -402,6 +482,7 @@ export function PermisoForm({
   return (
     <CreatePermisoFormInner
       areaId={areaId}
+      defaultPrestadorId={defaultPrestadorId}
       onSuccess={onSuccess}
       onCancel={onCancel}
     />

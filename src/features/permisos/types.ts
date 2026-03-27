@@ -1,10 +1,13 @@
-export type PermisoStatus = "vigente" | "vencido" | "revocado" | "pendiente";
+/** Estados alineados con el backend (permiso.validator). */
+export type PermisoStatus = "activo" | "inactivo" | "vencido" | "suspendido";
 
 export interface Permiso {
   id: string;
   organizationId: string;
   prestadorId: string;
   actividadId: string;
+  /** Si es true, el permiso aplica en todas las áreas (ANP); evita duplicar el mismo registro por área. */
+  appliesToAllAreas: boolean;
   status: PermisoStatus;
   vigenciaDesde: string;
   vigenciaHasta: string;
@@ -18,6 +21,7 @@ export interface Permiso {
 export interface ListPermisosParams {
   page?: number;
   limit?: number;
+  /** Obligatorio para listar (contrato API). */
   prestadorId?: string;
   actividadId?: string;
   status?: PermisoStatus;
@@ -43,13 +47,15 @@ export interface GetPermisoResponse {
   message?: string;
 }
 
+/** Payload de dominio (formulario); el servicio mapea a DTO del API. */
 export interface CreatePermisoPayload {
   prestadorId: string;
   actividadId: string;
   vigenciaDesde: string;
   vigenciaHasta: string;
-  status?: "vigente" | "pendiente";
+  status?: "activo" | "inactivo";
   documentoUrl?: string | null;
+  appliesToAllAreas?: boolean;
 }
 
 export interface UpdatePermisoPayload {
@@ -57,4 +63,5 @@ export interface UpdatePermisoPayload {
   vigenciaHasta?: string;
   status?: PermisoStatus;
   documentoUrl?: string | null;
+  appliesToAllAreas?: boolean;
 }

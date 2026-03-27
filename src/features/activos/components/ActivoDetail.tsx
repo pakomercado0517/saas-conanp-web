@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { getApiErrorMessage } from "@/shared/types/api";
+import { useAreaContext } from "@/features/organizations/context/AreaContext";
 import { useActivo } from "../hooks/useActivo";
 import { ActivoForm } from "./ActivoForm";
 import { RequisitosSection } from "./RequisitosSection";
@@ -27,6 +28,8 @@ interface ActivoDetailProps {
 }
 
 export function ActivoDetail({ areaId, activoId }: ActivoDetailProps) {
+  const { role } = useAreaContext();
+  const isAdmin = role === "admin";
   const [editing, setEditing] = useState(false);
 
   const { data: activo, isLoading, isError, error, refetch } = useActivo(
@@ -78,13 +81,15 @@ export function ActivoDetail({ areaId, activoId }: ActivoDetailProps) {
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 {activo.nombre || "Sin nombre"}
               </h2>
-              <button
-                type="button"
-                onClick={() => setEditing(true)}
-                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium dark:border-slate-600"
-              >
-                Editar
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setEditing(true)}
+                  className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium dark:border-slate-600"
+                >
+                  Editar
+                </button>
+              )}
             </div>
             <dl className="mt-4 grid gap-2 sm:grid-cols-2">
               <div>
