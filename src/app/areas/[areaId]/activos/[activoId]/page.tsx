@@ -1,15 +1,41 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
 import { ActivoDetail } from "@/features/activos/components/ActivoDetail";
+import { buildActivoDependenciaDetailHref } from "@/features/activos/lib/activo-dependencia-routes";
 
 type PageProps = {
   params: Promise<{ areaId: string; activoId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function ActivoDetailPage({ params }: PageProps) {
+function firstString(
+  value: string | string[] | undefined
+): string | undefined {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value) && value[0] != null) return value[0];
+  return undefined;
+}
+
+export default async function ActivoDetailPage({ params, searchParams }: PageProps) {
   const { areaId, activoId } = await params;
-  const activosHref = getDashboardHref(areaId, "/activos");
+  const sp = await searchParams;
+  const dependenciaId = firstString(sp.dependenciaId);
+  const prestadorId = firstString(sp.prestadorId);
+
+  if (dependenciaId && prestadorId) {
+    redirect(
+      buildActivoDependenciaDetailHref(
+        dependenciaId,
+        prestadorId,
+        areaId,
+        activoId
+      )
+    );
+  }
+
   const inicioHref = getDashboardHref(areaId, "");
+  const activosHref = getDashboardHref(areaId, "/activos");
 
   return (
     <div className="space-y-6 p-4 md:p-6">

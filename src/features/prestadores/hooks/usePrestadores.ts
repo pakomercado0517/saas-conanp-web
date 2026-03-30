@@ -8,7 +8,8 @@ const QUERY_KEY_PREFIX = ["prestadores"] as const;
 
 export function usePrestadores(
   organizationId: string,
-  params: ListPrestadoresParams = {}
+  params: ListPrestadoresParams = {},
+  options?: { enabled?: boolean }
 ) {
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, params],
@@ -16,7 +17,8 @@ export function usePrestadores(
       const res = await listPrestadores(organizationId, params);
       return res;
     },
-    enabled: Boolean(organizationId),
+    enabled:
+      Boolean(organizationId) && (options?.enabled !== false),
   });
 
   return {

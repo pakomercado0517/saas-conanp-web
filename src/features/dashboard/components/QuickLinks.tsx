@@ -1,20 +1,31 @@
 "use client";
 
 import Link from "next/link";
+import { UsersRound } from "lucide-react";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
 import type { DashboardNavItem } from "@/shared/config/dashboardNav";
 
-const QUICK_ACCESS_PATHS = ["/actividades", "/eventos", "/prestadores", "/reportes"];
+const QUICK_ACCESS_PATHS = ["/actividades", "/eventos", "/reportes"];
 
 interface QuickLinksProps {
   areaId: string;
   navItems: DashboardNavItem[];
+  /** Enlace a prestadores a nivel dependencia (cuando el área tiene dependencia padre). */
+  prestadoresDependenciaHref?: string | null;
 }
 
-export function QuickLinks({ areaId, navItems }: QuickLinksProps) {
-  const links = navItems.filter((item) => item.path && QUICK_ACCESS_PATHS.includes(item.path));
+export function QuickLinks({
+  areaId,
+  navItems,
+  prestadoresDependenciaHref,
+}: QuickLinksProps) {
+  const links = navItems.filter(
+    (item) => item.path && QUICK_ACCESS_PATHS.includes(item.path)
+  );
 
-  if (links.length === 0) {
+  const showPrestadoresDep = Boolean(prestadoresDependenciaHref);
+
+  if (links.length === 0 && !showPrestadoresDep) {
     return null;
   }
 
@@ -38,6 +49,17 @@ export function QuickLinks({ areaId, navItems }: QuickLinksProps) {
             </Link>
           );
         })}
+        {showPrestadoresDep && prestadoresDependenciaHref ? (
+          <Link
+            href={prestadoresDependenciaHref}
+            className="flex flex-col items-center gap-2 rounded-lg border border-slate-200 p-4 transition-colors hover:bg-slate-50 hover:border-(--primary)/30 dark:border-slate-700 dark:hover:bg-slate-800/50 dark:hover:border-(--primary)/30"
+          >
+            <span className="rounded-lg bg-(--primary)/10 p-2">
+              <UsersRound className="size-5 text-(--primary)" aria-hidden />
+            </span>
+            <span className="text-center text-sm font-medium">Prestadores</span>
+          </Link>
+        ) : null}
       </div>
     </div>
   );

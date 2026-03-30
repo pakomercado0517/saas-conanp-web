@@ -2,9 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Home,
   Activity,
-  UsersRound,
   Key,
-  Package,
   CalendarDays,
   Ticket,
   BarChart3,
@@ -38,22 +36,10 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     icon: Activity,
   },
   {
-    path: "/prestadores",
-    label: "Prestadores",
-    breadcrumbTitle: "Prestadores",
-    icon: UsersRound,
-  },
-  {
     path: "/permisos",
     label: "Permisos",
     breadcrumbTitle: "Permisos",
     icon: Key,
-  },
-  {
-    path: "/activos",
-    label: "Activos",
-    breadcrumbTitle: "Activos",
-    icon: Package,
   },
   {
     path: "/eventos",
@@ -156,7 +142,7 @@ export function getActiveNavItem(
   if (normalized === base) {
     return DASHBOARD_NAV_ITEMS[0];
   }
-  // Coincidencia exacta o prefijo (subrutas): /actividades, /actividades/nueva, /prestadores/123
+  // Coincidencia exacta o prefijo (subrutas): /actividades, /actividades/nueva
   return DASHBOARD_NAV_ITEMS.find(
     (item) =>
       item.path &&

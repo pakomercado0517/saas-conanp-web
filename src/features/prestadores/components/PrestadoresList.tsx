@@ -31,7 +31,7 @@ export function PrestadoresList({ areaId }: PrestadoresListProps) {
 
   const canEdit = role === "admin" || role === "gestor" || role === "prestador";
   const canViewDetail = canEdit || role === "observador";
-  const canCreatePrestador = role === "admin" || role === "gestor";
+  const canCreatePrestador = role === "admin";
 
   if (isLoading) {
     return <p className="text-sm text-slate-500">Cargando prestadores…</p>;

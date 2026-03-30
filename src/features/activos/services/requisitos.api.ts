@@ -26,7 +26,7 @@ function normalizeRequisito(raw: RawActivoRequisito): ActivoRequisito {
   return {
     id: raw.id,
     activoId: raw.activoId,
-    clave: raw.key ?? raw.clave ?? "",
+    clave: (raw.key ?? raw.clave ?? "").trim(),
     valor: raw.value ?? raw.valor ?? "",
     documentoUrl: raw.documentUrl ?? raw.documentoUrl ?? null,
     status: raw.status,
@@ -71,11 +71,6 @@ export async function createRequisito(
     documentUrl: payload.documentUrl ?? null,
     validated: payload.validated ?? false,
   };
-  console.log("[Activos][Requisitos] POST requisito:", {
-    organizationId,
-    activoId,
-    body,
-  });
   const res = await apiRequest<CreateRequisitoResponse>(
     `${BASE}/${organizationId}/activos/${activoId}/requisitos`,
     { method: "POST", body }
@@ -95,12 +90,6 @@ export async function updateRequisito(
   requisitoId: string,
   payload: UpdateRequisitoPayload
 ): Promise<ActivoRequisito> {
-  console.log("[Activos][Requisitos] PATCH requisito:", {
-    organizationId,
-    activoId,
-    requisitoId,
-    payload,
-  });
   const res = await apiRequest<UpdateRequisitoResponse>(
     `${BASE}/${organizationId}/activos/${activoId}/requisitos/${requisitoId}`,
     { method: "PATCH", body: payload }

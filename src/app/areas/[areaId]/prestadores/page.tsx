@@ -1,6 +1,4 @@
-import Link from "next/link";
-import { getDashboardHref } from "@/shared/config/dashboardNav";
-import { PrestadoresList } from "@/features/prestadores/components/PrestadoresList";
+import { PrestadoresAreaRedirect } from "./PrestadoresAreaRedirect";
 
 type PageProps = {
   params: Promise<{ areaId: string }>;
@@ -8,21 +6,5 @@ type PageProps = {
 
 export default async function PrestadoresPage({ params }: PageProps) {
   const { areaId } = await params;
-  const inicioHref = getDashboardHref(areaId, "");
-
-  return (
-    <div className="space-y-6 p-4 md:p-6">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-        Prestadores
-      </h1>
-
-      <PrestadoresList areaId={areaId} />
-
-      <p className="text-sm text-slate-500">
-        <Link href={inicioHref} className="underline hover:no-underline">
-          Volver al inicio del área
-        </Link>
-      </p>
-    </div>
-  );
+  return <PrestadoresAreaRedirect areaId={areaId} />;
 }

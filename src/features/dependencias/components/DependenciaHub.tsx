@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Building2, UserPlus } from "lucide-react";
+import { ArrowLeft, Building2, UserPlus, UsersRound, Users } from "lucide-react";
 import { AppNavbar } from "@/shared/components/AppNavbar";
 import { AppFooter } from "@/shared/components/AppFooter";
 import { getApiErrorMessage } from "@/shared/types/api";
@@ -14,6 +14,7 @@ import { CreateAreaDialog } from "./CreateAreaDialog";
 import { CreateDependenciaInvitationDialog } from "./CreateDependenciaInvitationDialog";
 import { DependenciaInvitationsList } from "./DependenciaInvitationsList";
 import { DependenciaPlanCard } from "./DependenciaPlanCard";
+import { useMembershipRolesInAreas } from "@/features/memberships/hooks/useMembershipRolesInAreas";
 
 interface DependenciaHubProps {
   dependenciaId: string;
@@ -33,6 +34,10 @@ export function DependenciaHub({ dependenciaId }: DependenciaHubProps) {
     planName,
     refetch,
   } = useDependenciaContext();
+
+  const areaIds = areas.map((a) => a.id);
+  const { isAdminInAnyArea, isLoading: rolesLoading } =
+    useMembershipRolesInAreas(areaIds);
 
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showCreateArea, setShowCreateArea] = useState(false);
@@ -172,6 +177,51 @@ export function DependenciaHub({ dependenciaId }: DependenciaHubProps) {
             )}
           </div>
         </section>
+
+        {!rolesLoading && areas.length > 0 && (
+          <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Link
+              href={`/dependencias/${dependenciaId}/prestadores`}
+              className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-(--cyan-accent)/50 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800"
+            >
+              <span className="flex size-12 items-center justify-center rounded-xl bg-(--cyan-accent)/10 transition-colors group-hover:bg-(--cyan-accent)/20">
+                <UsersRound
+                  className="size-6 text-(--cyan-accent)"
+                  aria-hidden
+                />
+              </span>
+              <span>
+                <span className="block text-base font-bold text-(--navy-deep) dark:text-white">
+                  Prestadores de la dependencia
+                </span>
+                <span className="text-sm text-(--slate-text)">
+                  Listado y alta de prestadores en todas las ANP
+                </span>
+              </span>
+            </Link>
+            {isAdminInAnyArea && (
+              <Link
+                href={`/dependencias/${dependenciaId}/usuarios`}
+                className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-(--cyan-accent)/50 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800"
+              >
+                <span className="flex size-12 items-center justify-center rounded-xl bg-(--cyan-accent)/10 transition-colors group-hover:bg-(--cyan-accent)/20">
+                  <Users
+                    className="size-6 text-(--cyan-accent)"
+                    aria-hidden
+                  />
+                </span>
+                <span>
+                  <span className="block text-base font-bold text-(--navy-deep) dark:text-white">
+                    Usuarios por área
+                  </span>
+                  <span className="text-sm text-(--slate-text)">
+                    Accede a membresías de cada ANP
+                  </span>
+                </span>
+              </Link>
+            )}
+          </section>
+        )}
 
         {/* Content grid */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">

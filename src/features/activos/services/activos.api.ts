@@ -21,12 +21,14 @@ type RawOwner = Partial<{
 type RawActivo = Partial<{
   id: string;
   organizationId: string;
-  type: Activo["type"];
-  tipo: Activo["type"];
+  type: string;
+  tipo: string;
   ownerId: string;
   propietarioId: string;
-  status: Activo["status"];
+  status: string;
   nombre: string | null;
+  name: string | null;
+  titulo: string | null;
   descripcion: string | null;
   capacidadPersonas: number | string | null;
   capacidad: number | string | null;
@@ -39,12 +41,62 @@ type RawActivo = Partial<{
   Owner: RawOwner;
 }>;
 
+/** Mapea variantes del backend (docs: infraestructura, otro) al tipo de dominio del frontend. */
+function normalizeActivoTipo(raw: unknown): Activo["type"] {
+  const s =
+    typeof raw === "string"
+      ? raw.trim().toLowerCase()
+      : raw != null
+        ? String(raw).trim().toLowerCase()
+        : "";
+  if (s === "embarcacion" || s === "vehiculo" || s === "guia" || s === "equipo") {
+    return s;
+  }
+  if (s === "infraestructura" || s === "otro") {
+    return "equipo";
+  }
+  return "equipo";
+}
+
+/**
+ * Mapea status del backend (docs: activo, inactivo, pendiente_validacion) al enum de UI.
+ * `activo` en API = activo operativo → se muestra como «Aprobado» en la UI.
+ * @see docs/api_routes/activos.md
+ */
+function normalizeActivoStatus(raw: unknown): Activo["status"] {
+  const s =
+    typeof raw === "string"
+      ? raw.trim().toLowerCase()
+      : raw != null
+        ? String(raw).trim().toLowerCase()
+        : "";
+  if (
+    s === "pendiente" ||
+    s === "aprobado" ||
+    s === "rechazado" ||
+    s === "suspendido"
+  ) {
+    return s;
+  }
+  if (s === "activo") {
+    return "aprobado";
+  }
+  if (s === "pendiente_validacion") {
+    return "pendiente";
+  }
+  if (s === "inactivo") {
+    return "rechazado";
+  }
+  return "pendiente";
+}
+
 function normalizeActivo(raw: RawActivo): Activo {
   const rawOwner: RawOwner | undefined =
     raw.Propietario ?? raw.propietario ?? raw.owner ?? raw.Owner;
   const ownerName =
     (rawOwner?.User?.name ?? undefined) ??
     rawOwner?.name ??
+    (rawOwner as { nombre?: string | null })?.nombre ??
     rawOwner?.email ??
     undefined;
 
@@ -56,18 +108,34 @@ function normalizeActivo(raw: RawActivo): Activo {
         ? Number(capacidadRaw)
         : null;
 
+  const nombreRaw = raw.nombre ?? raw.name ?? raw.titulo ?? null;
+  const nombre =
+    typeof nombreRaw === "string" && nombreRaw.trim().length > 0
+      ? nombreRaw.trim()
+      : null;
+
+  const ownerId = String(
+    raw.ownerId ?? raw.propietarioId ?? rawOwner?.id ?? ""
+  );
+
   return {
     id: String(raw.id ?? ""),
     organizationId: String(raw.organizationId ?? ""),
-    type: (raw.type ?? raw.tipo ?? "equipo") as Activo["type"],
-    ownerId: String(raw.ownerId ?? raw.propietarioId ?? rawOwner?.id ?? ""),
-    status: (raw.status ?? "pendiente") as Activo["status"],
-    nombre: raw.nombre ?? null,
+    type: normalizeActivoTipo(raw.type ?? raw.tipo),
+    ownerId,
+    status: normalizeActivoStatus(raw.status),
+    nombre,
     descripcion: raw.descripcion ?? null,
     capacidadPersonas,
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
-    Propietario: rawOwner?.id ? { id: rawOwner.id, name: ownerName } : undefined,
+    Propietario:
+      rawOwner?.id || ownerId
+        ? {
+            id: String(rawOwner?.id ?? ownerId),
+            name: ownerName,
+          }
+        : undefined,
   };
 }
 
@@ -95,6 +163,35 @@ export async function listActivos(
     ...(res as ListActivosResponse),
     data: (data ?? []).map(normalizeActivo),
   };
+}
+
+const LIST_ACTIVOS_PAGE_LIMIT = 100;
+
+/**
+ * Lista activos cuyo propietario coincide con el prestador indicado, recorriendo
+ * la paginación del listado por organización (máx. 100 por página).
+ */
+export async function listActivosOwnedByPrestador(
+  organizationId: string,
+  ownerPrestadorId: string
+): Promise<Activo[]> {
+  const result: Activo[] = [];
+  let page = 1;
+  let totalPages = 1;
+  do {
+    const res = await listActivos(organizationId, {
+      page,
+      limit: LIST_ACTIVOS_PAGE_LIMIT,
+    });
+    for (const a of res.data) {
+      if (a.ownerId === ownerPrestadorId) {
+        result.push(a);
+      }
+    }
+    totalPages = res.pagination.totalPages;
+    page += 1;
+  } while (page <= totalPages);
+  return result;
 }
 
 export async function getActivo(

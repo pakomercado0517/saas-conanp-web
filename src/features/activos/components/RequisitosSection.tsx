@@ -104,7 +104,8 @@ export function RequisitosSection({
   const requisitoByKey = useMemo(() => {
     const map = new Map<string, ActivoRequisito>();
     for (const r of requisitos ?? []) {
-      map.set(r.clave, r);
+      const k = r.clave.trim();
+      if (k) map.set(k, r);
     }
     return map;
   }, [requisitos]);
@@ -394,11 +395,16 @@ export function RequisitosSection({
           </thead>
           <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900/30">
             {sortedCatalog.map((item) => {
-              const req = requisitoByKey.get(item.key);
+              const req = requisitoByKey.get(item.key.trim()) ?? requisitoByKey.get(item.key);
+              const etiquetaRequisito =
+                item.label?.trim() ||
+                item.key?.trim() ||
+                req?.clave?.trim() ||
+                "—";
               return (
                 <tr key={item.id}>
-                  <td className="px-4 py-2 text-sm font-medium">
-                    {item.label ?? item.key}
+                  <td className="px-4 py-2 text-sm font-medium text-slate-900 dark:text-slate-100">
+                    {etiquetaRequisito}
                   </td>
                   <td className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">
                     {req ? req.valor : "—"}
@@ -415,7 +421,7 @@ export function RequisitosSection({
                             onChange={(e) =>
                               setRechazarMotivo(e.target.value)
                             }
-                            className="rounded border px-2 py-1 text-sm"
+                            className="rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
                           />
                           <div className="flex gap-1">
                             <button
@@ -435,7 +441,7 @@ export function RequisitosSection({
                                 setRechazandoId(null);
                                 setRechazarMotivo("");
                               }}
-                              className="text-xs text-slate-600 hover:underline"
+                              className="text-xs text-slate-600 hover:underline dark:text-slate-400"
                             >
                               Cancelar
                             </button>

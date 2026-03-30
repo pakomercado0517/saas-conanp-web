@@ -6,6 +6,7 @@ import { getApiErrorMessage } from "@/shared/types/api";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { useAlertDialog } from "@/shared/components/AlertDialogProvider";
+import { useAreaContext } from "@/features/organizations/context/AreaContext";
 import { useActivos } from "../hooks/useActivos";
 import { useDeleteActivo } from "../hooks/useDeleteActivo";
 import { useActivoNombre } from "../hooks/useActivoNombre";
@@ -43,6 +44,8 @@ interface ActivosListProps {
 }
 
 export function ActivosList({ areaId }: ActivosListProps) {
+  const { role } = useAreaContext();
+  const isAdmin = role === "admin";
   const [tipoFilter, setTipoFilter] = useState<ActivoTipo | "">("");
   const [statusFilter, setStatusFilter] = useState<ActivoStatus | "">("");
   const [showWizard, setShowWizard] = useState(false);
@@ -129,16 +132,18 @@ export function ActivosList({ areaId }: ActivosListProps) {
             ))}
           </select>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setEditingActivo(null);
-            setShowWizard(true);
-          }}
-          className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 focus-visible:outline focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 dark:bg-slate-200 dark:text-slate-900 dark:focus-visible:ring-slate-400"
-        >
-          Nuevo activo
-        </button>
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={() => {
+              setEditingActivo(null);
+              setShowWizard(true);
+            }}
+            className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 focus-visible:outline focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 dark:bg-slate-200 dark:text-slate-900 dark:focus-visible:ring-slate-400"
+          >
+            Nuevo activo
+          </button>
+        )}
       </div>
 
       {showWizard && (
@@ -180,13 +185,17 @@ export function ActivosList({ areaId }: ActivosListProps) {
       {!activos?.length ? (
         <EmptyState
           message="No hay activos en esta área. Registra vehículos, equipos o infraestructura."
-          action={{
-            label: "Nuevo activo",
-            onClick: () => {
-              setEditingActivo(null);
-              setShowWizard(true);
-            },
-          }}
+          action={
+            isAdmin
+              ? {
+                  label: "Nuevo activo",
+                  onClick: () => {
+                    setEditingActivo(null);
+                    setShowWizard(true);
+                  },
+                }
+              : undefined
+          }
         />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
@@ -250,24 +259,28 @@ export function ActivosList({ areaId }: ActivosListProps) {
                       >
                         Ver
                       </Link>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingActivo(a);
-                          setShowWizard(false);
-                        }}
-                        className="text-sm font-medium text-(--cyan-accent) hover:underline"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(a)}
-                        disabled={deleteMutation.isPending}
-                        className="text-sm font-medium text-red-600 hover:underline disabled:opacity-50 dark:text-red-400"
-                      >
-                        Eliminar
-                      </button>
+                      {isAdmin && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingActivo(a);
+                              setShowWizard(false);
+                            }}
+                            className="text-sm font-medium text-(--cyan-accent) hover:underline"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(a)}
+                            disabled={deleteMutation.isPending}
+                            className="text-sm font-medium text-red-600 hover:underline disabled:opacity-50 dark:text-red-400"
+                          >
+                            Eliminar
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

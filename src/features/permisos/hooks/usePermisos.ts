@@ -10,13 +10,14 @@ export function usePermisos(
   organizationId: string,
   params: ListPermisosParams = {}
 ) {
+  const prestadorId = params.prestadorId;
   const query = useQuery({
     queryKey: [...QUERY_KEY_PREFIX, organizationId, params],
     queryFn: async () => {
       const res = await listPermisos(organizationId, params);
       return res;
     },
-    enabled: Boolean(organizationId),
+    enabled: Boolean(organizationId && prestadorId),
   });
 
   return {
