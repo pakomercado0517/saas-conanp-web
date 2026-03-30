@@ -69,11 +69,25 @@ export interface CreateActivoWizardProps {
   fixedOwnerPrestadorId?: string;
   /** Etiqueta para mostrar cuando el propietario está fijado (p. ej. nombre del prestador). */
   fixedOwnerDisplayName?: string;
+  /**
+   * URL del catálogo de requisitos (p. ej. `/dependencias/.../requisitos-catalogo` en flujo dependencia).
+   * Por defecto: dashboard del área `/areas/:areaId/configuracion/requisitos-catalogo`.
+   */
+  requisitosCatalogoHref?: string;
 }
 
 export function CreateActivoWizard(props: CreateActivoWizardProps) {
-  const { open, areaId, onClose, fixedOwnerPrestadorId, fixedOwnerDisplayName } =
-    props;
+  const {
+    open,
+    areaId,
+    onClose,
+    fixedOwnerPrestadorId,
+    fixedOwnerDisplayName,
+    requisitosCatalogoHref,
+  } = props;
+  const configurarCatalogoHref =
+    requisitosCatalogoHref ??
+    getDashboardHref(areaId, "/configuracion/requisitos-catalogo");
   const { data: prestadores, isLoading: prestadoresLoading } = usePrestadores(
     areaId,
     {},
@@ -415,10 +429,7 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
                   </div>
                   {isAdmin && (
                     <Link
-                      href={getDashboardHref(
-                        areaId,
-                        "/configuracion/requisitos-catalogo"
-                      )}
+                      href={configurarCatalogoHref}
                       className="inline-flex items-center gap-2 text-sm font-medium text-(--cyan-accent) hover:underline"
                       target="_blank"
                       rel="noreferrer"

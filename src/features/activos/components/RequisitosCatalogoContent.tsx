@@ -43,12 +43,29 @@ const TIPO_DATO_LABELS: Record<string, string> = {
   number: "Número",
 };
 
-interface RequisitosCatalogoContentProps {
-  areaId: string;
+const DEFAULT_ACCESS_DENIED =
+  "Solo los administradores del área pueden configurar el catálogo de requisitos.";
+
+export interface RequisitosCatalogoPanelProps {
+  /** ID de organización (ANP) para API y fallback cuando el catálogo se lista por dependencia */
+  organizationId: string;
+  /** Si existe, operaciones CRUD usan la API por dependencia */
+  dependenciaId?: string | null;
+  canManage: boolean;
+  /** Subtítulo bajo el título principal (solo si showPageHeader es true) */
+  pageDescription: string;
+  showPageHeader?: boolean;
+  accessDeniedMessage?: string;
 }
 
-export function RequisitosCatalogoContent({ areaId }: RequisitosCatalogoContentProps) {
-  const { role, dependenciaId } = useAreaContext();
+export function RequisitosCatalogoPanel({
+  organizationId,
+  dependenciaId,
+  canManage,
+  pageDescription,
+  showPageHeader = true,
+  accessDeniedMessage = DEFAULT_ACCESS_DENIED,
+}: RequisitosCatalogoPanelProps) {
   const catalogOptions = { dependenciaId: dependenciaId ?? undefined };
   const [tipoActivoFilter, setTipoActivoFilter] = useState<
     TipoActivoCatalogo | ""
@@ -58,22 +75,30 @@ export function RequisitosCatalogoContent({ areaId }: RequisitosCatalogoContentP
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  const { data: catalogRaw = [], isLoading, isError, error } = useActivoRequisitoCatalogo(areaId, catalogOptions);
+  const { data: catalogRaw = [], isLoading, isError, error } =
+    useActivoRequisitoCatalogo(organizationId, catalogOptions);
   const catalogItems =
     tipoActivoFilter === ""
       ? catalogRaw
       : catalogRaw.filter((c) => c.tipoActivo === tipoActivoFilter);
-  const createMutation = useCreateActivoRequisitoCatalogoItem(areaId, catalogOptions);
-  const updateMutation = useUpdateActivoRequisitoCatalogoItem(areaId, catalogOptions);
-  const deleteMutation = useDeleteActivoRequisitoCatalogoItem(areaId, catalogOptions);
+  const createMutation = useCreateActivoRequisitoCatalogoItem(
+    organizationId,
+    catalogOptions
+  );
+  const updateMutation = useUpdateActivoRequisitoCatalogoItem(
+    organizationId,
+    catalogOptions
+  );
+  const deleteMutation = useDeleteActivoRequisitoCatalogoItem(
+    organizationId,
+    catalogOptions
+  );
 
-  const isAdmin = role === "admin";
-
-  if (!isAdmin) {
+  if (!canManage) {
     return (
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center dark:border-amber-800 dark:bg-amber-950/30">
         <p className="text-(--slate-text) dark:text-slate-300">
-          Solo los administradores del área pueden configurar el catálogo de requisitos.
+          {accessDeniedMessage}
         </p>
       </div>
     );
@@ -83,23 +108,8 @@ export function RequisitosCatalogoContent({ areaId }: RequisitosCatalogoContentP
     (a, b) => a.orden - b.orden || a.key.localeCompare(b.key)
   );
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-(--cyan-accent)/10">
-            <ListChecks className="size-5 text-(--cyan-accent)" aria-hidden />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-(--navy-deep) dark:text-white">
-              Catálogo de requisitos
-            </h1>
-            <p className="text-sm text-(--slate-text) dark:text-slate-400">
-              Define los requisitos por tipo de activo para esta área.
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
+  const toolbar = (
+    <div className="flex flex-wrap items-center gap-3">
           <select
             value={tipoActivoFilter}
             onChange={(e) =>
@@ -127,8 +137,33 @@ export function RequisitosCatalogoContent({ areaId }: RequisitosCatalogoContentP
             <Plus className="size-4" aria-hidden />
             Añadir entrada
           </button>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      {showPageHeader ? (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-lg bg-(--cyan-accent)/10">
+              <ListChecks className="size-5 text-(--cyan-accent)" aria-hidden />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-(--navy-deep) dark:text-white">
+                Catálogo de requisitos
+              </h1>
+              <p className="text-sm text-(--slate-text) dark:text-slate-400">
+                {pageDescription}
+              </p>
+            </div>
+          </div>
+          {toolbar}
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
+          {toolbar}
+        </div>
+      )}
 
       {(serverError || (isError && error)) && (
         <div
@@ -307,6 +342,25 @@ export function RequisitosCatalogoContent({ areaId }: RequisitosCatalogoContentP
         />
       )}
     </div>
+  );
+}
+
+/** Vista en dashboard del área (requiere AreaContextProvider). */
+export interface RequisitosCatalogoContentProps {
+  areaId: string;
+}
+
+export function RequisitosCatalogoContent({
+  areaId,
+}: RequisitosCatalogoContentProps) {
+  const { role, dependenciaId } = useAreaContext();
+  return (
+    <RequisitosCatalogoPanel
+      organizationId={areaId}
+      dependenciaId={dependenciaId}
+      canManage={role === "admin"}
+      pageDescription="Define los requisitos por tipo de activo para esta área."
+    />
   );
 }
 

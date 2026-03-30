@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Building2, UserPlus, UsersRound, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  ListChecks,
+  UserPlus,
+  UsersRound,
+  Users,
+} from "lucide-react";
 import { AppNavbar } from "@/shared/components/AppNavbar";
 import { AppFooter } from "@/shared/components/AppFooter";
 import { getApiErrorMessage } from "@/shared/types/api";
@@ -179,7 +186,7 @@ export function DependenciaHub({ dependenciaId }: DependenciaHubProps) {
         </section>
 
         {!rolesLoading && areas.length > 0 && (
-          <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Link
               href={`/dependencias/${dependenciaId}/prestadores`}
               className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-(--cyan-accent)/50 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800"
@@ -199,27 +206,48 @@ export function DependenciaHub({ dependenciaId }: DependenciaHubProps) {
                 </span>
               </span>
             </Link>
-            {isAdminInAnyArea && (
-              <Link
-                href={`/dependencias/${dependenciaId}/usuarios`}
-                className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-(--cyan-accent)/50 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800"
-              >
-                <span className="flex size-12 items-center justify-center rounded-xl bg-(--cyan-accent)/10 transition-colors group-hover:bg-(--cyan-accent)/20">
-                  <Users
-                    className="size-6 text-(--cyan-accent)"
-                    aria-hidden
-                  />
-                </span>
-                <span>
-                  <span className="block text-base font-bold text-(--navy-deep) dark:text-white">
-                    Usuarios por área
+            {isAdminInAnyArea ? (
+              <>
+                <Link
+                  href={`/dependencias/${dependenciaId}/usuarios`}
+                  className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-(--cyan-accent)/50 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800"
+                >
+                  <span className="flex size-12 items-center justify-center rounded-xl bg-(--cyan-accent)/10 transition-colors group-hover:bg-(--cyan-accent)/20">
+                    <Users
+                      className="size-6 text-(--cyan-accent)"
+                      aria-hidden
+                    />
                   </span>
-                  <span className="text-sm text-(--slate-text)">
-                    Accede a membresías de cada ANP
+                  <span>
+                    <span className="block text-base font-bold text-(--navy-deep) dark:text-white">
+                      Usuarios por área
+                    </span>
+                    <span className="text-sm text-(--slate-text)">
+                      Accede a membresías de cada ANP
+                    </span>
                   </span>
-                </span>
-              </Link>
-            )}
+                </Link>
+                <Link
+                  href={`/dependencias/${dependenciaId}/requisitos-catalogo`}
+                  className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-(--cyan-accent)/50 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800"
+                >
+                  <span className="flex size-12 items-center justify-center rounded-xl bg-(--cyan-accent)/10 transition-colors group-hover:bg-(--cyan-accent)/20">
+                    <ListChecks
+                      className="size-6 text-(--cyan-accent)"
+                      aria-hidden
+                    />
+                  </span>
+                  <span>
+                    <span className="block text-base font-bold text-(--navy-deep) dark:text-white">
+                      Catálogo de requisitos
+                    </span>
+                    <span className="text-sm text-(--slate-text)">
+                      Requisitos de activos por tipo para las ANP
+                    </span>
+                  </span>
+                </Link>
+              </>
+            ) : null}
           </section>
         )}
 

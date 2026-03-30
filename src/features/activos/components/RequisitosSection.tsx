@@ -249,8 +249,8 @@ export function RequisitosSection({
         </h3>
         <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
           {hasCatalogForOtherTypes
-            ? `No hay requisitos definidos para el tipo «${tipoActivoLabel}». Un administrador puede añadirlos en Configuración → Catálogo de requisitos.`
-            : "No hay catálogo de requisitos para este tipo de activo. Un administrador puede configurarlo en Configuración → Catálogo de requisitos."}
+            ? `No hay requisitos definidos para el tipo «${tipoActivoLabel}». Un administrador puede añadirlos en el catálogo de requisitos de la dependencia (hub de dependencia).`
+            : "No hay catálogo de requisitos para este tipo de activo. Un administrador puede configurarlo en el catálogo de requisitos de la dependencia."}
         </p>
       </div>
     );

@@ -1,4 +1,4 @@
-import { RequisitosCatalogoContent } from "./RequisitosCatalogoContent";
+import { RequisitosCatalogoContent } from "@/features/activos/components/RequisitosCatalogoContent";
 
 type PageProps = {
   params: Promise<{ areaId: string }>;
