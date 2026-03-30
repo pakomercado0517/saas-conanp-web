@@ -6,7 +6,6 @@ import {
   CalendarDays,
   Ticket,
   BarChart3,
-  ListChecks,
 } from "lucide-react";
 
 export interface DashboardNavItem {
@@ -58,12 +57,6 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     breadcrumbTitle: "Reportes",
     icon: BarChart3,
   },
-  {
-    path: "/configuracion/requisitos-catalogo",
-    label: "Catálogo de requisitos",
-    breadcrumbTitle: "Catálogo de requisitos",
-    icon: ListChecks,
-  },
 ];
 
 /**
@@ -88,12 +81,9 @@ export function getDashboardHref(areaId: string, itemPath: string): string {
 }
 
 /**
- * Roles que pueden ver reportes y catálogo de requisitos (solo admin).
+ * Roles que pueden ver reportes (solo admin).
  */
-const ADMIN_ONLY_PATHS = [
-  "/reportes",
-  "/configuracion/requisitos-catalogo",
-];
+const ADMIN_ONLY_PATHS = ["/reportes"];
 
 /**
  * Path de productos de acceso (visible solo si config-acceso habilita brazaletes).

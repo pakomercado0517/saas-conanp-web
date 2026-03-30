@@ -282,6 +282,7 @@ export function PrestadorActivosSection({
             onClose={handleCloseWizard}
             fixedOwnerPrestadorId={wizardBinding.prestadorId}
             fixedOwnerDisplayName={prestadorDisplayName}
+            requisitosCatalogoHref={`/dependencias/${dependenciaId}/requisitos-catalogo`}
             onCompleted={() => {
               invalidateActivos();
               handleCloseWizard();
