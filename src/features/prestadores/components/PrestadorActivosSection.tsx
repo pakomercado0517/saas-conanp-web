@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { getDashboardHref } from "@/shared/config/dashboardNav";
+import { buildActivoDependenciaDetailHref } from "@/features/activos/lib/activo-dependencia-routes";
 import { useAlertDialog } from "@/shared/components/AlertDialogProvider";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { AreaContextProvider } from "@/features/organizations/context/AreaContext";
@@ -31,20 +31,6 @@ const STATUS_LABELS: Record<ActivoStatus, string> = {
   suspendido: "Suspendido",
 };
 
-function buildActivoDetailHref(
-  areaId: string,
-  activoId: string,
-  dependenciaId: string,
-  prestadorId: string
-): string {
-  const base = getDashboardHref(areaId, `/activos/${activoId}`);
-  const q = new URLSearchParams({
-    dependenciaId,
-    prestadorId,
-    areaId,
-  });
-  return `${base}?${q.toString()}`;
-}
 
 function ActivoNombreCell({
   areaId,
@@ -324,11 +310,11 @@ function ActivoRowActions({
 }: ActivoRowActionsProps) {
   const { areaId, prestadorId, activo } = row;
   const deleteMutation = useDeleteActivo(areaId);
-  const detailHref = buildActivoDetailHref(
-    areaId,
-    activo.id,
+  const detailHref = buildActivoDependenciaDetailHref(
     dependenciaId,
-    prestadorId
+    prestadorId,
+    areaId,
+    activo.id
   );
 
   const handleDelete = async () => {

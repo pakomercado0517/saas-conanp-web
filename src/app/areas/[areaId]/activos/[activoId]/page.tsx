@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
 import { ActivoDetail } from "@/features/activos/components/ActivoDetail";
+import { buildActivoDependenciaDetailHref } from "@/features/activos/lib/activo-dependencia-routes";
 
 type PageProps = {
   params: Promise<{ areaId: string; activoId: string }>;
@@ -21,14 +23,19 @@ export default async function ActivoDetailPage({ params, searchParams }: PagePro
   const dependenciaId = firstString(sp.dependenciaId);
   const prestadorId = firstString(sp.prestadorId);
 
+  if (dependenciaId && prestadorId) {
+    redirect(
+      buildActivoDependenciaDetailHref(
+        dependenciaId,
+        prestadorId,
+        areaId,
+        activoId
+      )
+    );
+  }
+
   const inicioHref = getDashboardHref(areaId, "");
   const activosHref = getDashboardHref(areaId, "/activos");
-  const fromDependencia = Boolean(dependenciaId && prestadorId);
-
-  const prestadorDependenciaHref =
-    dependenciaId && prestadorId
-      ? `/dependencias/${dependenciaId}/prestadores/${prestadorId}`
-      : null;
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -37,42 +44,19 @@ export default async function ActivoDetailPage({ params, searchParams }: PagePro
           Inicio
         </Link>
         <span>/</span>
-        {fromDependencia && prestadorDependenciaHref ? (
-          <>
-            <Link
-              href={prestadorDependenciaHref}
-              className="underline hover:no-underline"
-            >
-              Prestador
-            </Link>
-            <span>/</span>
-          </>
-        ) : (
-          <>
-            <Link href={activosHref} className="underline hover:no-underline">
-              Activos
-            </Link>
-            <span>/</span>
-          </>
-        )}
+        <Link href={activosHref} className="underline hover:no-underline">
+          Activos
+        </Link>
+        <span>/</span>
         <span className="text-slate-700 dark:text-slate-300">Detalle</span>
       </div>
 
       <ActivoDetail areaId={areaId} activoId={activoId} />
 
       <p className="text-sm text-slate-500">
-        {fromDependencia && prestadorDependenciaHref ? (
-          <Link
-            href={prestadorDependenciaHref}
-            className="underline hover:no-underline"
-          >
-            Volver al prestador
-          </Link>
-        ) : (
-          <Link href={activosHref} className="underline hover:no-underline">
-            Volver a activos
-          </Link>
-        )}
+        <Link href={activosHref} className="underline hover:no-underline">
+          Volver a activos
+        </Link>
       </p>
     </div>
   );
