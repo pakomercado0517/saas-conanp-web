@@ -1,4 +1,4 @@
-import { UsuariosContent } from "./UsuariosContent";
+import { UsuariosContent } from "@/features/memberships/components/UsuariosContent";
 
 type PageProps = {
   params: Promise<{ areaId: string }>;
