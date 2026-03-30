@@ -97,6 +97,35 @@ export async function listActivos(
   };
 }
 
+const LIST_ACTIVOS_PAGE_LIMIT = 100;
+
+/**
+ * Lista activos cuyo propietario coincide con el prestador indicado, recorriendo
+ * la paginación del listado por organización (máx. 100 por página).
+ */
+export async function listActivosOwnedByPrestador(
+  organizationId: string,
+  ownerPrestadorId: string
+): Promise<Activo[]> {
+  const result: Activo[] = [];
+  let page = 1;
+  let totalPages = 1;
+  do {
+    const res = await listActivos(organizationId, {
+      page,
+      limit: LIST_ACTIVOS_PAGE_LIMIT,
+    });
+    for (const a of res.data) {
+      if (a.ownerId === ownerPrestadorId) {
+        result.push(a);
+      }
+    }
+    totalPages = res.pagination.totalPages;
+    page += 1;
+  } while (page <= totalPages);
+  return result;
+}
+
 export async function getActivo(
   organizationId: string,
   activoId: string

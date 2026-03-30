@@ -3,7 +3,6 @@ import {
   Home,
   Activity,
   Key,
-  Package,
   CalendarDays,
   Ticket,
   BarChart3,
@@ -41,12 +40,6 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     label: "Permisos",
     breadcrumbTitle: "Permisos",
     icon: Key,
-  },
-  {
-    path: "/activos",
-    label: "Activos",
-    breadcrumbTitle: "Activos",
-    icon: Package,
   },
   {
     path: "/eventos",

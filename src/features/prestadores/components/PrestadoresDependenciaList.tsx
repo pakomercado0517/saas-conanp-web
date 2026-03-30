@@ -2,18 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { useDependenciaContext } from "@/features/dependencias/context/DependenciaContext";
 import { useMembershipRolesInAreas } from "@/features/memberships/hooks/useMembershipRolesInAreas";
+import { usePrestadoresActivosCountsForAggregated } from "../hooks/usePrestadoresActivosCountsForAggregated";
 import { usePrestadoresAggregatedForDependencia } from "../hooks/usePrestadoresAggregatedForDependencia";
+import { getPrestadorStatusLabel } from "../lib/prestador-status";
 import { CreatePrestadorSheet } from "./CreatePrestadorSheet";
-import type { PrestadorStatus } from "../types";
 
-const STATUS_LABELS: Record<PrestadorStatus, string> = {
-  activo: "Activo",
-  inactivo: "Inactivo",
-  suspendido: "Suspendido",
-};
+function labelActivosCount(n: number): string {
+  if (n === 1) return "1 activo";
+  return `${n} activos`;
+}
 
 interface PrestadoresDependenciaListProps {
   dependenciaId: string;
@@ -29,6 +30,8 @@ export function PrestadoresDependenciaList({
 
   const { aggregated, isLoading, errors, refetch } =
     usePrestadoresAggregatedForDependencia(dependenciaId, areas);
+
+  const { summaryForRow } = usePrestadoresActivosCountsForAggregated(aggregated);
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [createAreaId, setCreateAreaId] = useState<string>("");
@@ -128,7 +131,7 @@ export function PrestadoresDependenciaList({
                   Estado
                 </th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">
-                  Áreas
+                  Activos
                 </th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">
                   Acciones
@@ -141,6 +144,8 @@ export function PrestadoresDependenciaList({
                 const href = `/dependencias/${dependenciaId}/prestadores/${
                   first.prestadorId
                 }?areaId=${encodeURIComponent(first.areaId)}`;
+                const { total: activosTotal, isLoading: activosLoading } =
+                  summaryForRow(row);
                 return (
                   <tr key={row.userId}>
                     <td className="px-4 py-2 text-sm font-medium text-slate-800 dark:text-slate-100">
@@ -151,20 +156,27 @@ export function PrestadoresDependenciaList({
                     <td className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">
                       {row.email}
                     </td>
-                    <td className="px-4 py-2 text-sm">
-                      {STATUS_LABELS[row.status]}
+                    <td className="px-4 py-2 text-sm text-slate-700 dark:text-slate-300">
+                      {getPrestadorStatusLabel(row.status)}
                     </td>
-                    <td className="px-4 py-2 text-sm">
-                      <div className="flex flex-wrap gap-1">
-                        {row.entries.map((e) => (
-                          <span
-                            key={`${e.areaId}-${e.prestadorId}`}
-                            className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                          >
-                            {e.areaName}
-                          </span>
-                        ))}
-                      </div>
+                    <td className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">
+                      {activosLoading ? (
+                        <span className="inline-flex items-center gap-1.5 text-slate-500">
+                          <Loader2
+                            className="size-4 shrink-0 animate-spin"
+                            aria-hidden
+                          />
+                          <span className="sr-only">Cargando activos…</span>
+                        </span>
+                      ) : (
+                        <Link
+                          href={href}
+                          className="tabular-nums hover:underline"
+                          title="Ir al detalle para ver y gestionar activos"
+                        >
+                          {labelActivosCount(activosTotal)}
+                        </Link>
+                      )}
                     </td>
                     <td className="px-4 py-2">
                       <Link

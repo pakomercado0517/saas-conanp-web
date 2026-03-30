@@ -1,5 +1,9 @@
 import type { DependenciaArea } from "@/features/dependencias/types";
 import type { Prestador, PrestadorStatus } from "../types";
+import {
+  normalizePrestadorStatus,
+  worsePrestadorStatus,
+} from "./prestador-status";
 
 export interface PrestadorAreaEntry {
   areaId: string;
@@ -30,16 +34,6 @@ function pickEmail(p: Prestador): string {
   return p.email?.trim() || p.User?.email?.trim() || "—";
 }
 
-const STATUS_RANK: Record<PrestadorStatus, number> = {
-  suspendido: 3,
-  inactivo: 2,
-  activo: 1,
-};
-
-function worseStatus(a: PrestadorStatus, b: PrestadorStatus): PrestadorStatus {
-  return STATUS_RANK[a] >= STATUS_RANK[b] ? a : b;
-}
-
 export function aggregatePrestadoresForDependencia(
   areas: DependenciaArea[],
   prestadoresByAreaId: Map<string, Prestador[]>
@@ -56,12 +50,12 @@ export function aggregatePrestadoresForDependencia(
           userId: uid,
           name: pickDisplayName(p),
           email: pickEmail(p),
-          status: p.status,
+          status: normalizePrestadorStatus(p.status),
           entries: [],
         };
         byUser.set(uid, row);
       } else {
-        row.status = worseStatus(row.status, p.status);
+        row.status = worsePrestadorStatus(row.status, p.status);
         if (pickDisplayName(p) !== "—") row.name = pickDisplayName(p);
         if (pickEmail(p) !== "—") row.email = pickEmail(p);
       }

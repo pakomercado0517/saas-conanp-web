@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -65,12 +65,20 @@ export interface CreateActivoWizardProps {
   onClose: () => void;
   /** Se llama cuando el wizard termina exitosamente (activo creado y requisitos guardados). */
   onCompleted?: (activo: Activo) => void;
+  /** Si se indica, el propietario queda fijo y no se muestra el selector. */
+  fixedOwnerPrestadorId?: string;
+  /** Etiqueta para mostrar cuando el propietario está fijado (p. ej. nombre del prestador). */
+  fixedOwnerDisplayName?: string;
 }
 
 export function CreateActivoWizard(props: CreateActivoWizardProps) {
-  const { open, areaId, onClose } = props;
-  const { data: prestadores, isLoading: prestadoresLoading } =
-    usePrestadores(areaId);
+  const { open, areaId, onClose, fixedOwnerPrestadorId, fixedOwnerDisplayName } =
+    props;
+  const { data: prestadores, isLoading: prestadoresLoading } = usePrestadores(
+    areaId,
+    {},
+    { enabled: !fixedOwnerPrestadorId }
+  );
   const { role, dependenciaId } = useAreaContext();
   const createMutation = useCreateActivo(areaId);
   const isAdmin = role === "admin";
@@ -147,6 +155,28 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
     defaultValues: requisitosDefaultValues,
     mode: "onSubmit",
   });
+
+  useEffect(() => {
+    if (!open) return;
+    if (fixedOwnerPrestadorId) {
+      form.reset({
+        type: "equipo",
+        ownerId: fixedOwnerPrestadorId,
+        status: "pendiente",
+      });
+    } else {
+      form.reset({
+        type: "equipo",
+        ownerId: "",
+        status: "pendiente",
+      });
+    }
+    setStep("basic");
+    setCreatedActivo(null);
+    setError(null);
+    setIsSavingRequisitos(false);
+    requisitosForm.reset();
+  }, [open, fixedOwnerPrestadorId, form, requisitosForm]);
 
   if (!open) return null;
 
@@ -278,27 +308,46 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
                 <label htmlFor="wizard-ownerId" className={labelClass}>
                   Propietario
                 </label>
-                <select
-                  id="wizard-ownerId"
-                  className={inputClass}
-                  disabled={prestadoresLoading}
-                  {...form.register("ownerId")}
-                >
-                  <option value="">
-                    {prestadoresLoading
-                      ? "Cargando prestadores…"
-                      : "Selecciona un prestador"}
-                  </option>
-                  {prestadores?.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name ?? p.User?.name ?? p.email ?? p.id}
-                    </option>
-                  ))}
-                </select>
-                {form.formState.errors.ownerId && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                    {form.formState.errors.ownerId.message}
-                  </p>
+                {fixedOwnerPrestadorId ? (
+                  <>
+                    <input
+                      type="hidden"
+                      id="wizard-ownerId"
+                      {...form.register("ownerId")}
+                    />
+                    <p
+                      id="wizard-owner-fixed"
+                      className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 dark:border-slate-600 dark:bg-slate-800/50 dark:text-slate-200"
+                    >
+                      {fixedOwnerDisplayName?.trim() ||
+                        "Prestador de esta dependencia"}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <select
+                      id="wizard-ownerId"
+                      className={inputClass}
+                      disabled={prestadoresLoading}
+                      {...form.register("ownerId")}
+                    >
+                      <option value="">
+                        {prestadoresLoading
+                          ? "Cargando prestadores…"
+                          : "Selecciona un prestador"}
+                      </option>
+                      {prestadores?.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name ?? p.User?.name ?? p.email ?? p.id}
+                        </option>
+                      ))}
+                    </select>
+                    {form.formState.errors.ownerId && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {form.formState.errors.ownerId.message}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
 

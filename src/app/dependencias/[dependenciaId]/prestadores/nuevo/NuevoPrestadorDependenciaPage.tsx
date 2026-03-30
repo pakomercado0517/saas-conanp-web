@@ -24,9 +24,7 @@ export function NuevoPrestadorDependenciaPage({
   const { rolesByAreaId, isLoading: rolesLoading } =
     useMembershipRolesInAreas(areaIds);
 
-  const adminAreas = areas.filter(
-    (a) => rolesByAreaId.get(a.id) === "admin"
-  );
+  const adminAreas = areas.filter((a) => rolesByAreaId.get(a.id) === "admin");
   const [areaId, setAreaId] = useState<string>("");
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -44,7 +42,9 @@ export function NuevoPrestadorDependenciaPage({
       const pid = res.prestador?.id;
       if (pid && effectiveAreaId) {
         router.replace(
-          `/dependencias/${dependenciaId}/prestadores/${pid}?areaId=${encodeURIComponent(effectiveAreaId)}`
+          `/dependencias/${dependenciaId}/prestadores/${pid}?areaId=${encodeURIComponent(
+            effectiveAreaId
+          )}`
         );
         return;
       }
@@ -107,7 +107,7 @@ export function NuevoPrestadorDependenciaPage({
           id="nuevo-prestador-area"
           value={effectiveAreaId}
           onChange={(e) => setAreaId(e.target.value)}
-          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800"
+          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400"
         >
           {adminAreas.map((a) => (
             <option key={a.id} value={a.id}>

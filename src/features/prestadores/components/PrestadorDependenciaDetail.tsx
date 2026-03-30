@@ -9,6 +9,7 @@ import { useCurrentUserMembership } from "@/features/memberships/hooks/useCurren
 import { usePrestadoresAggregatedForDependencia } from "../hooks/usePrestadoresAggregatedForDependencia";
 import { useResolvePrestadorArea } from "../hooks/useResolvePrestadorArea";
 import { PrestadorEditDialog } from "./PrestadorEditDialog";
+import { PrestadorActivosSection } from "./PrestadorActivosSection";
 import { PrestadorPermisosSection } from "./PrestadorPermisosSection";
 import type { PrestadorStatus } from "../types";
 
@@ -60,6 +61,22 @@ export function PrestadorDependenciaDetail({
       prestadorId: e.prestadorId,
     }));
   }, [row]);
+
+  const activosBindings = useMemo(() => {
+    if (permisoBindings.length > 0) return permisoBindings;
+    if (resolvedAreaId && prestadorId) {
+      const areaName =
+        areas.find((a) => a.id === resolvedAreaId)?.name ?? "Área";
+      return [
+        {
+          areaId: resolvedAreaId,
+          areaName,
+          prestadorId,
+        },
+      ];
+    }
+    return [];
+  }, [permisoBindings, resolvedAreaId, prestadorId, areas]);
 
   const isOwnPrestador = prestador && userId && prestador.userId === userId;
   const canView =
@@ -166,6 +183,14 @@ export function PrestadorDependenciaDetail({
           </div>
         </div>
       </div>
+
+      {activosBindings.length > 0 && (
+        <PrestadorActivosSection
+          dependenciaId={dependenciaId}
+          bindings={activosBindings}
+          prestadorDisplayName={displayName}
+        />
+      )}
 
       {permisoBindings.length > 0 && (
         <PrestadorPermisosSection
