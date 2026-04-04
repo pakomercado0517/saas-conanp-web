@@ -3,16 +3,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { listPermisos } from "../services/permisos.api";
 import type { ListPermisosParams, Permiso } from "../types";
+import { PERMISOS_QUERY_PREFIX } from "./permisosQueryKeys";
 
-const QUERY_KEY_PREFIX = ["permisos"] as const;
-
-export function usePermisos(
+/**
+ * Lista paginada de permisos filtrados por prestador (y opcionalmente actividad/estado).
+ * Requiere `prestadorId` en params para ejecutar la query.
+ */
+export function usePermisosPorPrestador(
   organizationId: string,
   params: ListPermisosParams = {}
 ) {
   const prestadorId = params.prestadorId;
   const query = useQuery({
-    queryKey: [...QUERY_KEY_PREFIX, organizationId, params],
+    queryKey: [...PERMISOS_QUERY_PREFIX, organizationId, params],
     queryFn: async () => {
       const res = await listPermisos(organizationId, params);
       return res;

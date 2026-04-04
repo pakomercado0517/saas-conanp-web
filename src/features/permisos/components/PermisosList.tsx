@@ -1,13 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { formatDate } from "@/shared/lib/date";
 import { EmptyState } from "@/shared/components/EmptyState";
+import { getDashboardHref } from "@/shared/config/dashboardNav";
 import { useAreaContext } from "@/features/organizations/context/AreaContext";
 import { usePrestadores } from "@/features/prestadores/hooks/usePrestadores";
 import { useActividades } from "../hooks/useActividades";
-import { usePermisos } from "../hooks/usePermisos";
+import { usePermisosPorPrestador } from "../hooks/usePermisos";
+import { permisosByOrganizationKey } from "../hooks/permisosQueryKeys";
 import { PermisoForm } from "./PermisoForm";
 import type { Permiso, PermisoStatus } from "../types";
 
@@ -30,14 +34,25 @@ function getActividadName(p: Permiso): string {
 
 interface PermisosListProps {
   areaId: string;
+  /** Prestador preseleccionado (p. ej. desde `?prestadorId=`). */
+  initialPrestadorId?: string;
+  /** Muestra enlace al índice sin query. */
+  showBackToIndex?: boolean;
 }
 
-export function PermisosList({ areaId }: PermisosListProps) {
+export function PermisosList({
+  areaId,
+  initialPrestadorId,
+  showBackToIndex = false,
+}: PermisosListProps) {
   const { role } = useAreaContext();
+  const queryClient = useQueryClient();
   const isAdmin = role === "admin";
   const isPrestadorRole = role === "prestador";
 
-  const [selectedPrestadorId, setSelectedPrestadorId] = useState("");
+  const [selectedPrestadorId, setSelectedPrestadorId] = useState(
+    () => initialPrestadorId ?? ""
+  );
   const [actividadFilter, setActividadFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<PermisoStatus | "">("");
   const [page, setPage] = useState(1);
@@ -78,12 +93,15 @@ export function PermisosList({ areaId }: PermisosListProps) {
     isError,
     error,
     refetch,
-  } = usePermisos(areaId, listParams);
+  } = usePermisosPorPrestador(areaId, listParams);
 
   const handleFormSuccess = () => {
     setShowForm(false);
     setEditingPermiso(null);
     void refetch();
+    void queryClient.invalidateQueries({
+      queryKey: permisosByOrganizationKey(areaId),
+    });
   };
 
   const prestadorOptions = prestadores ?? [];
@@ -161,6 +179,16 @@ export function PermisosList({ areaId }: PermisosListProps) {
 
   return (
     <div className="space-y-4">
+      {showBackToIndex ? (
+        <div>
+          <Link
+            href={getDashboardHref(areaId, "/permisos")}
+            className="text-sm font-medium text-(--cyan-accent) hover:underline"
+          >
+            Volver al listado de prestadores
+          </Link>
+        </div>
+      ) : null}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex flex-wrap gap-2">
           {showPrestadorSelector && (

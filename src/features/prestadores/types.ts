@@ -10,7 +10,8 @@ export interface Prestador {
   phone?: string | null;
   createdAt?: string;
   updatedAt?: string;
-  User?: { id: string; email: string; name: string };
+  /** El backend puede omitir campos según el endpoint (p. ej. solo `name`). */
+  User?: { id?: string; email?: string; name?: string };
 }
 
 export interface ListPrestadoresParams {
@@ -29,6 +30,44 @@ export interface PaginationMeta {
 export interface ListPrestadoresResponse {
   success: true;
   data: Prestador[];
+  pagination: PaginationMeta;
+  message?: string;
+}
+
+/** Fila de permiso en `GET .../prestadores/con-permisos` (métricas + actividad opcional). */
+export interface PermisoEnListadoConPrestador {
+  id: string;
+  prestadorId: string;
+  actividadId: string;
+  validFrom?: string;
+  validTo?: string;
+  status?: string;
+  Actividad?: { id: string; name?: string };
+}
+
+/** Ítem de `GET .../prestadores/con-permisos`: un prestador y todos sus permisos en el área. */
+export interface PrestadorConPermisosItem {
+  prestador: Prestador;
+  permisos: PermisoEnListadoConPrestador[];
+}
+
+export interface ListPrestadoresConPermisosParams {
+  page?: number;
+  limit?: number;
+  sortBy?: "validFrom" | "validTo" | "status" | "createdAt" | "updatedAt";
+  sortOrder?: "asc" | "desc";
+  prestadorId?: string;
+  actividadId?: string;
+  status?: string;
+  validFrom?: string;
+  validTo?: string;
+  documentUrl?: string;
+  soloVigentes?: boolean;
+}
+
+export interface ListPrestadoresConPermisosResponse {
+  success: true;
+  data: PrestadorConPermisosItem[];
   pagination: PaginationMeta;
   message?: string;
 }

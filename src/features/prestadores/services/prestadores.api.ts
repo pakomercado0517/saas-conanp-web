@@ -7,6 +7,10 @@ import type {
   Prestador,
   CreatePrestadorCompletoPayload,
   CreatePrestadorCompletoResponse,
+  ListPrestadoresConPermisosParams,
+  ListPrestadoresConPermisosResponse,
+  PrestadorConPermisosItem,
+  PermisoEnListadoConPrestador,
 } from "../types";
 import { normalizePrestadorStatus } from "../lib/prestador-status";
 
@@ -66,6 +70,109 @@ function buildQuery(params: ListPrestadoresParams): string {
   if (params.status) search.set("status", params.status);
   const q = search.toString();
   return q ? `?${q}` : "";
+}
+
+function buildConPermisosQuery(
+  params: ListPrestadoresConPermisosParams
+): string {
+  const search = new URLSearchParams();
+  if (params.page != null) search.set("page", String(params.page));
+  if (params.limit != null) search.set("limit", String(params.limit));
+  if (params.sortBy) search.set("sortBy", params.sortBy);
+  if (params.sortOrder) search.set("sortOrder", params.sortOrder);
+  if (params.prestadorId) search.set("prestadorId", params.prestadorId);
+  if (params.actividadId) search.set("actividadId", params.actividadId);
+  if (params.status) search.set("status", params.status);
+  if (params.validFrom) search.set("validFrom", params.validFrom);
+  if (params.validTo) search.set("validTo", params.validTo);
+  if (params.documentUrl) search.set("documentUrl", params.documentUrl);
+  if (params.soloVigentes === true) search.set("soloVigentes", "true");
+  const q = search.toString();
+  return q ? `?${q}` : "";
+}
+
+function parsePermisoEnListado(raw: unknown): PermisoEnListadoConPrestador | null {
+  if (raw == null || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const id = o.id;
+  const prestadorId = o.prestadorId;
+  const actividadId = o.actividadId;
+  if (typeof id !== "string" || typeof prestadorId !== "string" || typeof actividadId !== "string") {
+    return null;
+  }
+  let Actividad: { id: string; name?: string } | undefined;
+  const rawAct = o.Actividad;
+  if (rawAct != null && typeof rawAct === "object") {
+    const a = rawAct as Record<string, unknown>;
+    const aid = a.id;
+    if (typeof aid === "string") {
+      Actividad = {
+        id: aid,
+        name: typeof a.name === "string" ? a.name : undefined,
+      };
+    }
+  }
+  return {
+    id,
+    prestadorId,
+    actividadId,
+    validFrom: typeof o.validFrom === "string" ? o.validFrom : undefined,
+    validTo: typeof o.validTo === "string" ? o.validTo : undefined,
+    status: typeof o.status === "string" ? o.status : undefined,
+    Actividad,
+  };
+}
+
+function parsePrestadorConPermisosItem(
+  row: unknown
+): PrestadorConPermisosItem | null {
+  if (row == null || typeof row !== "object") return null;
+  const o = row as Record<string, unknown>;
+  const prestadorRaw = o.prestador;
+  const permisosRaw = o.permisos;
+  if (prestadorRaw == null || typeof prestadorRaw !== "object") return null;
+  if (!Array.isArray(permisosRaw)) return null;
+  const permisos: PermisoEnListadoConPrestador[] = [];
+  for (const p of permisosRaw) {
+    const parsed = parsePermisoEnListado(p);
+    if (parsed) permisos.push(parsed);
+  }
+  return {
+    prestador: normalizePrestador(prestadorRaw as RawPrestador),
+    permisos,
+  };
+}
+
+/**
+ * Prestadores con al menos un permiso en el área, con permisos anidados.
+ * @see docs/api_routes/prestadores.md — GET /con-permisos
+ */
+export async function listPrestadoresConPermisos(
+  organizationId: string,
+  params: ListPrestadoresConPermisosParams = {}
+): Promise<ListPrestadoresConPermisosResponse> {
+  const query = buildConPermisosQuery(params);
+  const res = await apiRequest<{
+    success: true;
+    data: unknown;
+    pagination: ListPrestadoresConPermisosResponse["pagination"];
+    message?: string;
+  }>(
+    `${BASE}/${organizationId}/prestadores/con-permisos${query}`,
+    { method: "GET" }
+  );
+  const rawList = Array.isArray(res.data) ? res.data : [];
+  const data: PrestadorConPermisosItem[] = [];
+  for (const row of rawList) {
+    const parsed = parsePrestadorConPermisosItem(row);
+    if (parsed) data.push(parsed);
+  }
+  return {
+    success: true,
+    data,
+    pagination: res.pagination,
+    message: res.message,
+  };
 }
 
 export async function listPrestadores(
