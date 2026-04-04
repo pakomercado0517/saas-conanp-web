@@ -21,6 +21,37 @@ export interface FormatDateOptions {
   timeZone?: string;
 }
 
+/** Patrón de fecha solo calendario devuelta por la API (sin componente horario de negocio). */
+const CALENDAR_DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * Formatea una fecha civil `YYYY-MM-DD` tal como viene de la API (p. ej. eventos).
+ * No usa `new Date("YYYY-MM-DD")` + formato local: ese string es medianoche UTC y en
+ * zonas como México el día mostrado puede retroceder uno. Aquí el día/mes/año del
+ * string se interpretan como calendario y se formatean en UTC para conservar esas partes.
+ */
+export function formatCalendarDateOnlyFromApi(dateOnly: string): string {
+  if (!dateOnly) return "";
+  const m = CALENDAR_DATE_ONLY.exec(dateOnly.trim());
+  if (!m) return dateOnly;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  if (
+    !Number.isFinite(y) ||
+    !Number.isFinite(mo) ||
+    !Number.isFinite(d) ||
+    mo < 1 ||
+    mo > 12 ||
+    d < 1 ||
+    d > 31
+  ) {
+    return dateOnly;
+  }
+  const utcMidnight = new Date(Date.UTC(y, mo - 1, d));
+  return formatInTimeZone(utcMidnight, "UTC", "d MMM yyyy", { locale: es });
+}
+
 /**
  * Formato de fecha para UI (solo día) según zona horaria.
  */

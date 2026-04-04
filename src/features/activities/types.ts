@@ -73,10 +73,14 @@ export interface UpdateActividadResponse {
   message?: string;
 }
 
-/** Parámetros para verificar capacidad (GET capacidad/verificar). */
+/**
+ * Parámetros para verificar capacidad (GET capacidad/verificar).
+ * - **BLOQUES:** incluir `bloqueId` (obligatorio según API).
+ * - **HORARIO_LIBRE:** omitir `bloqueId`; el cupo es por día completo.
+ */
 export interface CapacidadVerificarParams {
   date: string;
-  bloqueId: string;
+  bloqueId?: string;
   /** Cantidad a reservar; si se envía, el backend valida si hay cupo. */
   cantidad?: number;
 }

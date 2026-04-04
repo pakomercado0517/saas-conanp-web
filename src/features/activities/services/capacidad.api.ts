@@ -6,7 +6,9 @@ const BASE = "/api/v1/organizations";
 function buildQuery(params: CapacidadVerificarParams): string {
   const search = new URLSearchParams();
   search.set("date", params.date);
-  search.set("bloqueId", params.bloqueId);
+  if (params.bloqueId != null && params.bloqueId !== "") {
+    search.set("bloqueId", params.bloqueId);
+  }
   if (params.cantidad != null) search.set("cantidad", String(params.cantidad));
   return `?${search.toString()}`;
 }
@@ -18,8 +20,8 @@ interface VerificarCapacidadApiResponse {
 }
 
 /**
- * Verifica capacidad disponible para un bloque en una fecha.
- * GET .../actividades/:actividadId/capacidad/verificar?date=...&bloqueId=...&cantidad=...
+ * Verifica capacidad para la actividad: por bloque (`bloqueId`) o por día (sin `bloqueId`, horario libre).
+ * GET .../actividades/:actividadId/capacidad/verificar?date=...&[bloqueId=...]&[cantidad=...]
  */
 export async function getCapacidadVerificar(
   organizationId: string,
