@@ -4,9 +4,9 @@ import { useState } from "react";
 import { X, Loader2, CreditCard } from "lucide-react";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { useSubscriptionPlans } from "../hooks/useSubscriptionPlans";
-import { useSubscribeOrChangePlan } from "../hooks/useSubscribeOrChangePlan";
+import { useOrganizationSubscriptionMutations } from "../hooks/useOrganizationSubscriptionMutations";
 import { getPlanLimitLabels } from "../lib/planLimits";
-import type { BillingCycle, SubscriptionPlan } from "../types";
+import type { BillingCycle, Subscription, SubscriptionPlan } from "../types";
 
 function formatPlanPriceForCycle(plan: SubscriptionPlan, cycle: BillingCycle): string | null {
   const amount = cycle === "yearly" ? plan.priceYearly : plan.priceMonthly;
@@ -16,6 +16,10 @@ function formatPlanPriceForCycle(plan: SubscriptionPlan, cycle: BillingCycle): s
   if (typeof amount === "number" && amount === 0) return "Gratis";
   if (amount == null) return "Personalizado";
   return null;
+}
+
+function isFreePlanName(name: string): boolean {
+  return name.trim().toLowerCase() === "free";
 }
 
 const BILLING_OPTIONS: { value: BillingCycle; label: string }[] = [
@@ -30,6 +34,10 @@ interface PlanSelectorDialogProps {
   currentPlanId?: string;
   initialPlanId?: string;
   mode: "subscribe" | "change";
+  /** En modo `change`, necesario para decidir POST (FREE→pago) vs PATCH (plan con Stripe). */
+  subscription?: Subscription | null;
+  /** Incluir en `key` del contenido para alinear ciclo con la comparativa exterior. */
+  billingCycleKey?: BillingCycle;
 }
 
 /** Contenido del diálogo con estado propio; key en el padre fuerza remount al cambiar initialPlanId. */
@@ -39,34 +47,46 @@ function PlanSelectorDialogContent({
   currentPlanId,
   initialPlanId,
   mode,
-}: Omit<PlanSelectorDialogProps, "open">) {
+  subscription,
+  initialBillingCycle = "monthly",
+}: Omit<PlanSelectorDialogProps, "open" | "billingCycleKey"> & {
+  initialBillingCycle?: BillingCycle;
+}) {
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(
     initialPlanId ?? null
   );
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>(initialBillingCycle);
   const [error, setError] = useState<string | null>(null);
 
   const displaySelectedPlanId = selectedPlanId ?? initialPlanId ?? null;
 
   const { plans, isLoading: plansLoading } = useSubscriptionPlans();
-  const { subscribe, isPending: isSubscribing } =
-    useSubscribeOrChangePlan(areaId);
+  const { createOrUpgrade, changePlan, isPending: isSubscribing } =
+    useOrganizationSubscriptionMutations(areaId);
 
   const availablePlans = plans.filter((p) => p.active !== false);
+  const paidPlans = availablePlans.filter((p) => !isFreePlanName(p.name));
   const plansToShow =
     mode === "change"
-      ? availablePlans.filter((p) => p.id !== currentPlanId)
-      : availablePlans;
+      ? paidPlans.filter((p) => p.id !== currentPlanId)
+      : paidPlans;
 
   const handleSubmit = async () => {
     const planIdToUse = displaySelectedPlanId;
     if (!planIdToUse) return;
     setError(null);
     try {
-      const res = await subscribe({ planId: planIdToUse, billingCycle });
-      if ("data" in res && "checkoutUrl" in res.data) {
-        window.location.href = res.data.checkoutUrl;
-        return;
+      if (mode === "change" && subscription?.stripeSubscriptionId) {
+        await changePlan({
+          subscriptionId: subscription.id,
+          payload: {
+            planId: planIdToUse,
+            billingCycle,
+            prorate: true,
+          },
+        });
+      } else {
+        await createOrUpgrade({ planId: planIdToUse, billingCycle });
       }
       onClose();
     } catch (err) {
@@ -139,8 +159,8 @@ function PlanSelectorDialogContent({
           ) : plansToShow.length === 0 ? (
             <p className="py-8 text-center text-sm text-slate-500">
               {mode === "change"
-                ? "No hay otros planes disponibles."
-                : "No hay planes disponibles en este momento."}
+                ? "No hay otros planes de pago disponibles."
+                : "No hay planes de pago disponibles en este momento."}
             </p>
           ) : (
             plansToShow.map((plan) => (
@@ -220,18 +240,29 @@ function PlanSelectorDialogContent({
 }
 
 export function PlanSelectorDialog(props: PlanSelectorDialogProps) {
-  const { open, onClose, areaId, currentPlanId, initialPlanId, mode } = props;
+  const {
+    open,
+    onClose,
+    areaId,
+    currentPlanId,
+    initialPlanId,
+    mode,
+    subscription,
+    billingCycleKey,
+  } = props;
 
   if (!open) return null;
 
   return (
     <PlanSelectorDialogContent
-      key={initialPlanId ?? "none"}
+      key={`${initialPlanId ?? "none"}-${billingCycleKey ?? "default"}`}
       onClose={onClose}
       areaId={areaId}
       currentPlanId={currentPlanId}
       initialPlanId={initialPlanId}
       mode={mode}
+      subscription={subscription}
+      initialBillingCycle={billingCycleKey ?? "monthly"}
     />
   );
 }

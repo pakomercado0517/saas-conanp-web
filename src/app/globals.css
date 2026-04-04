@@ -12,6 +12,9 @@
   --navy-sidebar: #0f172a;
   --background-light: #f6f6f8;
   --background-dark: #101622;
+  /* Resaltado de ítem activo en menú lateral del bloque dependencia (fondo del sidebar = --navy-sidebar como el área) */
+  --dependencia-nav-active-bg: #10b981;
+  --dependencia-nav-active-fg: #ffffff;
 }
 
 @layer base {

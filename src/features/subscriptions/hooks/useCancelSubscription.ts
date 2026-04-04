@@ -1,19 +1,28 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { cancelSubscriptionAtPeriodEnd } from "../services/subscriptions.api";
+import { postSubscriptionCancel } from "../services/subscriptions.api";
+import type { CancelSubscriptionBody } from "../types";
 
 const QUERY_KEY_PREFIX = ["subscriptions", "current"] as const;
 
-export function useCancelSubscription(organizationId: string) {
+export function useCancelSubscription(
+  areaId: string,
+  subscriptionId: string | undefined
+) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationKey: ["subscriptions", "cancel", organizationId],
-    mutationFn: () => cancelSubscriptionAtPeriodEnd(organizationId),
+    mutationKey: ["subscriptions", "cancel", subscriptionId],
+    mutationFn: (body: CancelSubscriptionBody) => {
+      if (!subscriptionId) {
+        return Promise.reject(new Error("Falta subscriptionId"));
+      }
+      return postSubscriptionCancel(subscriptionId, body);
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: [...QUERY_KEY_PREFIX, organizationId],
+        queryKey: [...QUERY_KEY_PREFIX, areaId],
       });
     },
   });

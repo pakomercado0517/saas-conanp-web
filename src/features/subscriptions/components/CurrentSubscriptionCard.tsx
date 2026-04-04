@@ -10,6 +10,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { getApiErrorMessage } from "@/shared/types/api";
+import { formatDate as formatDateUi } from "@/shared/lib/date";
 import type { Subscription, SubscriptionStatus, BillingCycle } from "../types";
 import { useCancelSubscription } from "../hooks/useCancelSubscription";
 import { useReactivateSubscription } from "../hooks/useReactivateSubscription";
@@ -32,22 +33,17 @@ const BILLING_LABELS: Record<BillingCycle, string> = {
   yearly: "Anual",
 };
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-MX", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 interface CurrentSubscriptionCardProps {
   subscription: Subscription;
   areaId: string;
+  /** Si existe, el enlace de pago apunta a la gestión en dependencia. */
+  dependenciaId?: string | null;
 }
 
 export function CurrentSubscriptionCard({
   subscription,
   areaId,
+  dependenciaId = null,
 }: CurrentSubscriptionCardProps) {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showReactivateDialog, setShowReactivateDialog] = useState(false);
@@ -57,12 +53,12 @@ export function CurrentSubscriptionCard({
     cancel,
     isPending: isCanceling,
     error: cancelError,
-  } = useCancelSubscription(areaId);
+  } = useCancelSubscription(areaId, subscription.id);
   const {
     reactivate,
     isPending: isReactivating,
     error: reactivateError,
-  } = useReactivateSubscription(areaId);
+  } = useReactivateSubscription(areaId, subscription.id);
 
   const isActive =
     subscription.status === "active" || subscription.status === "trialing";
@@ -77,7 +73,7 @@ export function CurrentSubscriptionCard({
   const planName = subscription.SubscriptionPlan?.name ?? "—";
 
   const handleCancel = async () => {
-    await cancel();
+    await cancel({ cancelAtPeriodEnd: true });
     setShowCancelDialog(false);
   };
 
@@ -137,12 +133,13 @@ export function CurrentSubscriptionCard({
             </p>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               Ciclo: {BILLING_LABELS[subscription.billingCycle]} · Periodo del{" "}
-              {formatDate(subscription.currentPeriodStart)} al{" "}
-              {formatDate(subscription.currentPeriodEnd)}
+              {formatDateUi(subscription.currentPeriodStart)} al{" "}
+              {formatDateUi(subscription.currentPeriodEnd)}
             </p>
             {isCanceledAtPeriodEnd && (
               <p className="mt-2 text-sm font-medium text-amber-700 dark:text-amber-400">
-                Se cancelará al final del periodo ({formatDate(subscription.currentPeriodEnd)})
+                Se cancelará al final del periodo (
+                {formatDateUi(subscription.currentPeriodEnd)})
               </p>
             )}
           </div>
@@ -185,7 +182,11 @@ export function CurrentSubscriptionCard({
           )}
           {needsPayment && (
             <a
-              href={`/areas/${areaId}/suscripcion`}
+              href={
+                dependenciaId != null && dependenciaId !== ""
+                  ? `/dependencias/${dependenciaId}/suscripcion`
+                  : `/areas/${areaId}/suscripcion`
+              }
               className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700"
             >
               <CreditCard className="h-4 w-4" aria-hidden />
@@ -218,6 +219,7 @@ export function CurrentSubscriptionCard({
         areaId={areaId}
         currentPlanId={subscription.planId}
         mode="change"
+        subscription={subscription}
       />
     </>
   );

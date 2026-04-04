@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CreditCard, Loader2 } from "lucide-react";
 import { useSubscriptionPlans } from "../hooks/useSubscriptionPlans";
-import { useSubscribeOrChangePlan } from "../hooks/useSubscribeOrChangePlan";
+import { useOrganizationSubscriptionMutations } from "../hooks/useOrganizationSubscriptionMutations";
 import { getPlanLimitLabels } from "../lib/planLimits";
 import { PENDING_PLAN_ID_STORAGE_KEY, type SubscriptionPlan } from "../types";
 import { PlanSelectorDialog } from "./PlanSelectorDialog";
@@ -18,6 +18,10 @@ function formatPlanPrice(plan: SubscriptionPlan): string | null {
   return null;
 }
 
+function isFreePlanName(name: string): boolean {
+  return name.trim().toLowerCase() === "free";
+}
+
 interface PlanCatalogProps {
   areaId: string;
 }
@@ -27,19 +31,21 @@ export function PlanCatalog({ areaId }: PlanCatalogProps) {
   const [initialPlanId, setInitialPlanId] = useState<string | undefined>();
 
   const { plans, isLoading, isError } = useSubscriptionPlans();
-  const { isPending } = useSubscribeOrChangePlan(areaId);
+  const { isPending } = useOrganizationSubscriptionMutations(areaId);
 
   const availablePlans = plans.filter((p) => p.active !== false);
+  const paidPlans = availablePlans.filter((p) => !isFreePlanName(p.name));
   const hasAppliedPendingPlan = useRef(false);
 
   useEffect(() => {
-    if (isLoading || isError || availablePlans.length === 0 || hasAppliedPendingPlan.current) return;
+    if (isLoading || isError || availablePlans.length === 0 || hasAppliedPendingPlan.current)
+      return;
     try {
       const pending = sessionStorage.getItem(PENDING_PLAN_ID_STORAGE_KEY);
       sessionStorage.removeItem(PENDING_PLAN_ID_STORAGE_KEY);
       if (!pending?.trim()) return;
-      const exists = availablePlans.some((p) => p.id === pending.trim());
-      if (exists) {
+      const match = availablePlans.find((p) => p.id === pending.trim());
+      if (match && !isFreePlanName(match.name)) {
         hasAppliedPendingPlan.current = true;
         const planId = pending.trim();
         queueMicrotask(() => {
@@ -84,6 +90,16 @@ export function PlanCatalog({ areaId }: PlanCatalogProps) {
     );
   }
 
+  if (paidPlans.length === 0) {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-6 dark:border-amber-800 dark:bg-amber-950/30">
+        <p className="text-sm text-amber-800 dark:text-amber-200">
+          No hay planes de pago configurados para contratar en este momento.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="space-y-4">
@@ -91,7 +107,7 @@ export function PlanCatalog({ areaId }: PlanCatalogProps) {
           Planes disponibles
         </h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          {availablePlans.map((plan) => (
+          {paidPlans.map((plan) => (
             <div
               key={plan.id}
               className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800/50"

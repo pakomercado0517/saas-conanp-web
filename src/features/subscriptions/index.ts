@@ -1,6 +1,7 @@
 export const SUBSCRIPTIONS_FEATURE_KEY = "subscriptions";
 export { SubscriptionRequiredView } from "./components/SubscriptionRequiredView";
 export { useCurrentSubscription } from "./hooks/useCurrentSubscription";
+export { useOrganizationSubscriptionMutations } from "./hooks/useOrganizationSubscriptionMutations";
 export {
   getMaxAreas,
   getMaxActividades,

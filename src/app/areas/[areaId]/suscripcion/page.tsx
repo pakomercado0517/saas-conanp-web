@@ -1,5 +1,5 @@
-import { SubscriptionManagement } from "@/features/subscriptions/components/SubscriptionManagement";
+import { AreaSuscripcionRedirectOrPanel } from "./AreaSuscripcionRedirectOrPanel";
 
 export default function SuscripcionPage() {
-  return <SubscriptionManagement />;
+  return <AreaSuscripcionRedirectOrPanel />;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Building2 } from "lucide-react";
 import {
   DASHBOARD_NAV_ITEMS,
   getDashboardHref,
@@ -31,6 +32,7 @@ export function DashboardNavLinks({
 }: DashboardNavLinksProps) {
   const areaContext = useAreaContextOptional();
   const navItems = areaContext?.navItems ?? DASHBOARD_NAV_ITEMS;
+  const dependenciaId = areaContext?.dependenciaId ?? null;
 
   const activeItem = getActiveNavItem(pathname, areaId);
 
@@ -43,6 +45,16 @@ export function DashboardNavLinks({
 
   return (
     <nav className="flex-1 space-y-1 px-4 py-4" aria-label="Menú principal">
+      {dependenciaId != null && dependenciaId !== "" ? (
+        <Link
+          href={`/dependencias/${dependenciaId}`}
+          className="mb-3 flex items-center gap-3 rounded-lg border border-slate-700 bg-white/5 px-3 py-2.5 text-sm font-semibold text-(--cyan-accent) transition-colors hover:bg-white/10"
+          onClick={onNavigate}
+        >
+          <Building2 className="size-5 shrink-0" aria-hidden />
+          <span>Panel de dependencia</span>
+        </Link>
+      ) : null}
       {navItems.map((item) => {
         const href = getDashboardHref(areaId, item.path);
         const isActive = activeItem === item;

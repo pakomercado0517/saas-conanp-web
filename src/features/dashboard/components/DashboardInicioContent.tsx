@@ -1,15 +1,13 @@
 "use client";
 
 import { useAreaContext } from "@/features/organizations/context/AreaContext";
-import { SubscriptionSummaryCard } from "./SubscriptionSummaryCard";
 import { QuickLinks } from "./QuickLinks";
 import { DashboardKPIs } from "./DashboardKPIs";
 import { EventosRecientesTable } from "./EventosRecientesTable";
 import { AlertasSection } from "./AlertasSection";
 
 export function DashboardInicioContent() {
-  const { areaId, subscription, subscriptionStatus, navItems, dependenciaId } =
-    useAreaContext();
+  const { areaId, navItems, dependenciaId } = useAreaContext();
 
   const prestadoresDependenciaHref = dependenciaId
     ? `/dependencias/${dependenciaId}/prestadores`
@@ -29,11 +27,6 @@ export function DashboardInicioContent() {
         <EventosRecientesTable areaId={areaId} />
 
         <div className="flex flex-col gap-6">
-          <SubscriptionSummaryCard
-            areaId={areaId}
-            subscriptionStatus={subscriptionStatus}
-            subscription={subscription}
-          />
           <AlertasSection />
         </div>
       </div>
