@@ -41,20 +41,30 @@ const ERROR_ACTIONS: Record<string, SuggestedAction> = {
  * Devuelve la acción sugerida para un código de error, o null si no hay mapeo.
  * @param code - Código de error del backend (ej. SUBSCRIPTION_REQUIRED)
  * @param areaId - ID del área para reemplazar en hrefTemplate cuando aplique
+ * @param dependenciaId - Si existe, la gestión de suscripción enlaza al hub de dependencia
  */
 export function getSuggestedActionForCode(
   code: string | undefined,
-  areaId?: string
+  areaId?: string,
+  dependenciaId?: string | null
 ): SuggestedAction | null {
   if (!code) return null;
   const action = ERROR_ACTIONS[code];
   if (!action) return null;
   if (action.href) return action;
-  if (action.hrefTemplate && areaId) {
-    return {
-      ...action,
-      href: action.hrefTemplate.replace("{areaId}", areaId),
-    };
+  if (action.hrefTemplate) {
+    if (dependenciaId != null && dependenciaId !== "") {
+      return {
+        ...action,
+        href: `/dependencias/${dependenciaId}/suscripcion`,
+      };
+    }
+    if (areaId) {
+      return {
+        ...action,
+        href: action.hrefTemplate.replace("{areaId}", areaId),
+      };
+    }
   }
   return action;
 }

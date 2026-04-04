@@ -1,19 +1,27 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { reactivateSubscription } from "../services/subscriptions.api";
+import { postSubscriptionReactivate } from "../services/subscriptions.api";
 
 const QUERY_KEY_PREFIX = ["subscriptions", "current"] as const;
 
-export function useReactivateSubscription(organizationId: string) {
+export function useReactivateSubscription(
+  areaId: string,
+  subscriptionId: string | undefined
+) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationKey: ["subscriptions", "reactivate", organizationId],
-    mutationFn: () => reactivateSubscription(organizationId),
+    mutationKey: ["subscriptions", "reactivate", subscriptionId],
+    mutationFn: () => {
+      if (!subscriptionId) {
+        return Promise.reject(new Error("Falta subscriptionId"));
+      }
+      return postSubscriptionReactivate(subscriptionId);
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: [...QUERY_KEY_PREFIX, organizationId],
+        queryKey: [...QUERY_KEY_PREFIX, areaId],
       });
     },
   });

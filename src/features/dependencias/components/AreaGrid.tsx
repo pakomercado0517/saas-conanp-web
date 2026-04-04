@@ -16,6 +16,13 @@ const ECOSYSTEM_LABELS: Record<string, string> = {
   mixto: "Mixto",
 };
 
+/** Línea de categoría tipo Stitch (sin tipo de ANP en API: usamos ecosistema). */
+const ECOSYSTEM_HEADLINE: Record<string, string> = {
+  terrestre: "Ecosistema terrestre",
+  maritimo: "Ecosistema marítimo",
+  mixto: "Ecosistema mixto",
+};
+
 function AreaCard({
   area,
   onSelect,
@@ -24,6 +31,8 @@ function AreaCard({
   onSelect: (areaId: string) => void;
 }) {
   const label = ECOSYSTEM_LABELS[area.ecosystem_type] ?? area.ecosystem_type;
+  const headline =
+    ECOSYSTEM_HEADLINE[area.ecosystem_type] ?? "Área natural protegida";
   const Icon =
     area.ecosystem_type === "maritimo"
       ? Waves
@@ -35,7 +44,7 @@ function AreaCard({
     <button
       type="button"
       onClick={() => onSelect(area.id)}
-      className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-(--cyan-accent) hover:shadow-lg dark:border-slate-800 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-(--cyan-accent)/50 focus:ring-offset-2"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-(--cyan-accent)/50 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-(--cyan-accent)/50 focus:ring-offset-2"
     >
       <div className="relative aspect-video overflow-hidden bg-slate-100 dark:bg-slate-800">
         <div className="flex h-full w-full items-center justify-center">
@@ -45,12 +54,15 @@ function AreaCard({
           />
         </div>
         <div className="absolute right-3 top-3">
-          <span className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-tight text-(--navy-deep) dark:bg-(--navy-deep)/90 dark:text-white">
-            Activo
+          <span className="rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-(--navy-deep) shadow-sm dark:bg-(--navy-deep)/90 dark:text-white">
+            Activa
           </span>
         </div>
       </div>
       <div className="flex flex-1 flex-col p-5">
+        <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-(--slate-text)">
+          {headline}
+        </p>
         <div className="mb-2 flex items-start justify-between gap-2">
           <h3 className="text-lg font-bold leading-tight transition-colors group-hover:text-(--cyan-accent)">
             {area.name}
@@ -60,8 +72,8 @@ function AreaCard({
             aria-hidden
           />
         </div>
-        <p className="flex items-center gap-1 text-sm font-medium text-(--slate-text)">
-          <MapPin className="size-3.5" aria-hidden />
+        <p className="flex items-center gap-1.5 text-sm font-medium text-(--slate-text)">
+          <MapPin className="size-3.5 shrink-0 text-(--cyan-accent)/80" aria-hidden />
           {label}
         </p>
       </div>
@@ -115,7 +127,7 @@ export function AreaGrid({
         <button
           type="button"
           onClick={onCreateArea}
-          className="group flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-slate-300 p-8 transition-all duration-300 hover:border-(--cyan-accent) hover:bg-(--cyan-accent)/5 dark:border-slate-700 dark:hover:bg-(--cyan-accent)/10"
+          className="group flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-slate-300 p-8 shadow-sm transition-all duration-300 hover:border-(--cyan-accent) hover:bg-(--cyan-accent)/5 dark:border-slate-700 dark:hover:bg-(--cyan-accent)/10"
         >
           <div className="flex size-14 items-center justify-center rounded-full bg-slate-100 transition-colors group-hover:bg-(--cyan-accent) group-hover:text-white dark:bg-slate-800">
             <Plus className="size-7 text-(--slate-text)" aria-hidden />

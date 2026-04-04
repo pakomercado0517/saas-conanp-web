@@ -21,7 +21,8 @@ function DashboardLayoutInner({
   primaryAction,
 }: DashboardLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { showSubscriptionRequired, isLoading, error } = useAreaContext();
+  const { showSubscriptionRequired, isLoading, error, dependenciaId } =
+    useAreaContext();
 
   if (isLoading) {
     return (
@@ -39,6 +40,7 @@ function DashboardLayoutInner({
         <DashboardHeader areaId={areaId} onMenuClick={() => {}} />
         <SubscriptionRequiredView
           areaId={areaId}
+          dependenciaId={dependenciaId}
           message={message}
           errorCode={errorCode}
         />

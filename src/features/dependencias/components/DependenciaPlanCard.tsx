@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { CreditCard, ArrowUpRight } from "lucide-react";
 
 interface DependenciaPlanCardProps {
+  dependenciaId: string;
   areasCount: number;
   maxAreas: number;
   /** Nombre del plan cuando viene del backend; si no se pasa, se muestra "Plan actual" */
@@ -10,6 +12,7 @@ interface DependenciaPlanCardProps {
 }
 
 export function DependenciaPlanCard({
+  dependenciaId,
   areasCount,
   maxAreas,
   planName = null,
@@ -18,7 +21,7 @@ export function DependenciaPlanCard({
   const displayName = planName ?? "Plan actual";
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
+    <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/85">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CreditCard className="size-5 text-(--cyan-accent)" aria-hidden />
@@ -26,13 +29,13 @@ export function DependenciaPlanCard({
             {displayName}
           </h3>
         </div>
-        <button
-          type="button"
+        <Link
+          href={`/dependencias/${dependenciaId}/suscripcion`}
           className="inline-flex items-center gap-1 text-xs font-semibold text-(--cyan-accent) transition-colors hover:text-(--cyan-hover)"
         >
           Mejorar plan
           <ArrowUpRight className="size-3" aria-hidden />
-        </button>
+        </Link>
       </div>
 
       <div className="space-y-3">

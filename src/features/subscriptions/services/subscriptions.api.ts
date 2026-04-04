@@ -1,13 +1,19 @@
 import { apiRequest } from "@/shared/lib/api";
 import type {
+  CancelSubscriptionBody,
+  CancelSubscriptionResponse,
+  ChangeSubscriptionPlanPayload,
+  CreateSubscriptionPayload,
   CurrentSubscriptionResponse,
+  PatchSubscriptionPlanResponse,
+  PostSubscriptionResponse,
+  ReactivateSubscriptionResponse,
   SubscriptionPlan,
   SubscriptionPlansListResponse,
-  SubscribeOrChangePlanPayload,
-  SubscribeResponse,
 } from "../types";
 
 const ORG_BASE = "/api/v1/organizations";
+const SUBS_BASE = "/api/v1/subscriptions";
 const PLANS_BASE = "/api/v1/subscription-plans";
 
 export async function getCurrentSubscription(
@@ -34,12 +40,16 @@ export async function getSubscriptionPlansCatalog(): Promise<SubscriptionPlan[]>
   return Array.isArray(res.data) ? res.data : [];
 }
 
-export async function subscribeOrChangePlan(
-  organizationId: string,
-  payload: SubscribeOrChangePlanPayload
-): Promise<SubscribeResponse> {
-  return apiRequest<SubscribeResponse>(
-    `${ORG_BASE}/${organizationId}/subscriptions`,
+/**
+ * Crear suscripción o upgrade FREE → plan de pago (POST bajo área/organización).
+ * @see docs/api_routes/subscriptions.md
+ */
+export async function postOrganizationSubscription(
+  areaId: string,
+  payload: CreateSubscriptionPayload
+): Promise<PostSubscriptionResponse> {
+  return apiRequest<PostSubscriptionResponse>(
+    `${ORG_BASE}/${areaId}/subscriptions`,
     {
       method: "POST",
       body: payload,
@@ -47,23 +57,40 @@ export async function subscribeOrChangePlan(
   );
 }
 
-export async function cancelSubscriptionAtPeriodEnd(
-  organizationId: string
-): Promise<{ success: true; message?: string }> {
-  return apiRequest<{ success: true; message?: string }>(
-    `${ORG_BASE}/${organizationId}/subscriptions/current/cancel`,
+/**
+ * Cambiar plan / ciclo en suscripción que ya tiene Stripe (upgrade/downgrade entre planes de pago).
+ */
+export async function patchSubscriptionPlan(
+  subscriptionId: string,
+  payload: ChangeSubscriptionPlanPayload
+): Promise<PatchSubscriptionPlanResponse> {
+  return apiRequest<PatchSubscriptionPlanResponse>(
+    `${SUBS_BASE}/${subscriptionId}/plan`,
     {
-      method: "POST",
-      body: {},
+      method: "PATCH",
+      body: payload,
     }
   );
 }
 
-export async function reactivateSubscription(
-  organizationId: string
-): Promise<{ success: true; message?: string }> {
-  return apiRequest<{ success: true; message?: string }>(
-    `${ORG_BASE}/${organizationId}/subscriptions/current/reactivate`,
+export async function postSubscriptionCancel(
+  subscriptionId: string,
+  body: CancelSubscriptionBody = { cancelAtPeriodEnd: true }
+): Promise<CancelSubscriptionResponse> {
+  return apiRequest<CancelSubscriptionResponse>(
+    `${SUBS_BASE}/${subscriptionId}/cancel`,
+    {
+      method: "POST",
+      body,
+    }
+  );
+}
+
+export async function postSubscriptionReactivate(
+  subscriptionId: string
+): Promise<ReactivateSubscriptionResponse> {
+  return apiRequest<ReactivateSubscriptionResponse>(
+    `${SUBS_BASE}/${subscriptionId}/reactivate`,
     {
       method: "POST",
       body: {},

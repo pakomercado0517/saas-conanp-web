@@ -7,6 +7,8 @@ import { getSuggestedActionForCode } from "@/shared/lib/errorActions";
 
 interface SubscriptionRequiredViewProps {
   areaId: string;
+  /** Si existe, el CTA de suscripción enlaza a la gestión por dependencia. */
+  dependenciaId?: string | null;
   message?: string;
   /** Código de error del backend para personalizar el CTA (ej. SUBSCRIPTION_REQUIRED, PLAN_INACTIVE). */
   errorCode?: string;
@@ -16,12 +18,21 @@ interface SubscriptionRequiredViewProps {
 
 export function SubscriptionRequiredView({
   areaId,
+  dependenciaId = null,
   message,
   errorCode,
   suggestedActionLabel,
 }: SubscriptionRequiredViewProps) {
-  const suggestedAction = getSuggestedActionForCode(errorCode, areaId);
-  const suscripcionHref = suggestedAction?.href ?? getDashboardHref(areaId, "/suscripcion");
+  const suggestedAction = getSuggestedActionForCode(
+    errorCode,
+    areaId,
+    dependenciaId
+  );
+  const suscripcionHref =
+    suggestedAction?.href ??
+    (dependenciaId != null && dependenciaId !== ""
+      ? `/dependencias/${dependenciaId}/suscripcion`
+      : getDashboardHref(areaId, "/suscripcion"));
   const ctaLabel =
     suggestedActionLabel ??
     suggestedAction?.label ??

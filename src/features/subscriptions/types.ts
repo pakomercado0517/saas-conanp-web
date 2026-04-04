@@ -50,9 +50,13 @@ export interface SubscriptionPlan {
   updatedAt?: string;
 }
 
+/**
+ * Suscripción según GET/POST/PATCH en docs/api_routes/subscriptions.md.
+ * El API usa `dependenciaId`; `organizationId` no viene en los ejemplos y se omite.
+ */
 export interface Subscription {
   id: string;
-  organizationId: string;
+  dependenciaId?: string | null;
   planId: string;
   status: SubscriptionStatus;
   billingCycle: BillingCycle;
@@ -67,6 +71,7 @@ export interface Subscription {
   createdAt: string;
   updatedAt: string;
   Organization?: { id: string; name: string };
+  Dependencia?: { id: string; name: string };
   SubscriptionPlan?: SubscriptionPlan;
 }
 
@@ -93,24 +98,56 @@ export interface SubscriptionPlansListResponse {
   timestamp?: string;
 }
 
-/** Payload para contratar o cambiar plan */
-export interface SubscribeOrChangePlanPayload {
+/** Body POST crear suscripción o upgrade FREE → plan de pago (docs/api_routes/subscriptions.md) */
+export interface CreateSubscriptionPayload {
   planId: string;
   billingCycle: BillingCycle;
+  paymentMethodId?: string | null;
+  trialEnd?: string | null;
 }
 
-/** Respuesta de contratar/cambiar cuando hay Stripe Checkout */
-export interface SubscribeCheckoutResponse {
+/**
+ * Body PATCH cambiar plan. El API exige al menos uno de planId, billingCycle, prorate.
+ * El caller debe enviar al menos un campo.
+ */
+export interface ChangeSubscriptionPlanPayload {
+  planId?: string;
+  billingCycle?: BillingCycle;
+  prorate?: boolean;
+}
+
+/** Body POST cancelar suscripción */
+export interface CancelSubscriptionBody {
+  cancelAtPeriodEnd?: boolean;
+  reason?: string | null;
+}
+
+/** Respuesta exitosa POST crear suscripción: `data` es la suscripción (no anidada). */
+export interface PostSubscriptionResponse {
   success: true;
-  data: { checkoutUrl: string };
+  data: Subscription;
   message?: string;
+  timestamp?: string;
 }
 
-/** Respuesta de contratar/cambiar cuando no hay redirección */
-export interface SubscribeSuccessResponse {
+/** Respuesta exitosa PATCH plan */
+export interface PatchSubscriptionPlanResponse {
   success: true;
-  data: { subscription: Subscription };
+  data: Subscription;
   message?: string;
+  timestamp?: string;
 }
 
-export type SubscribeResponse = SubscribeCheckoutResponse | SubscribeSuccessResponse;
+export interface CancelSubscriptionResponse {
+  success: true;
+  data: Subscription;
+  message?: string;
+  timestamp?: string;
+}
+
+export interface ReactivateSubscriptionResponse {
+  success: true;
+  data: Subscription;
+  message?: string;
+  timestamp?: string;
+}
