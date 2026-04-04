@@ -21,7 +21,7 @@ export interface Permiso {
 export interface ListPermisosParams {
   page?: number;
   limit?: number;
-  /** Obligatorio para listar (contrato API). */
+  /** Requerido en `GET .../permisos` para listar permisos del prestador (ver docs/api_routes/permisos.md). */
   prestadorId?: string;
   actividadId?: string;
   status?: PermisoStatus;
@@ -64,4 +64,17 @@ export interface UpdatePermisoPayload {
   status?: PermisoStatus;
   documentoUrl?: string | null;
   appliesToAllAreas?: boolean;
+}
+
+/** Resumen para el índice de prestadores con al menos un permiso en el área. */
+export interface PrestadorPermisosResumen {
+  prestadorId: string;
+  displayName: string;
+  email?: string;
+  totalPermisos: number;
+  activosCount: number;
+  /** Fin de vigencia más tardía entre los permisos (ISO 8601), si existe. */
+  vigenciaHastaMax: string | null;
+  /** Actividades distintas (nombres o IDs) asociadas a los permisos en el área. */
+  actividadesResumen?: string;
 }
