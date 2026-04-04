@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
+import { formatCalendarDateOnlyFromApi } from "@/shared/lib/date";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { useCreatePaymentIntent } from "@/features/payments/hooks/useCreatePaymentIntent";
 import { useEvents } from "../hooks/useEvents";
@@ -69,9 +70,7 @@ function EventRow({ areaId, ev }: EventRowProps) {
   return (
     <tr key={ev.id}>
       <td className="px-4 py-2 text-sm">
-        {ev.date
-          ? new Date(ev.date).toLocaleDateString("es", { dateStyle: "short" })
-          : "—"}
+        {ev.date ? formatCalendarDateOnlyFromApi(ev.date) : "—"}
       </td>
       <td className="px-4 py-2 text-sm">
         {ev.Actividad?.name ?? ev.actividadId}

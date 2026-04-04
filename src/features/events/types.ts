@@ -29,6 +29,9 @@ export interface EventoOperativo {
   status: EventoStatus;
   paymentRequired: boolean;
   paidAt: string | null;
+  /** True si un administrador reservó por encima del cupo disponible. */
+  capacityOverride?: boolean;
+  capacityOverrideReason?: string | null;
   createdAt: string;
   updatedAt: string;
   PrestadorProfile?: { id: string; userId: string; organizationId: string; status: string };
@@ -65,6 +68,9 @@ export interface CreateEventoPayloadBloques {
   bloqueId: string;
   peopleCount?: number;
   paymentRequired?: boolean;
+  /** Solo administradores; requiere `capacityOverrideReason` si es true. */
+  capacityOverride?: boolean;
+  capacityOverrideReason?: string;
 }
 
 export interface CreateEventoPayloadHorarioLibre {
@@ -77,6 +83,9 @@ export interface CreateEventoPayloadHorarioLibre {
   endTime: string;
   peopleCount?: number;
   paymentRequired?: boolean;
+  /** Solo administradores; requiere `capacityOverrideReason` si es true. */
+  capacityOverride?: boolean;
+  capacityOverrideReason?: string;
 }
 
 export type CreateEventoPayload =

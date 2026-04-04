@@ -1,6 +1,7 @@
 export * from "./types";
 export * from "./services/activities.api";
 export * from "./hooks/useActividades";
+export * from "./hooks/useCapacidadActividadDia";
 export * from "./hooks/useActividad";
 export * from "./hooks/useCreateActividad";
 export * from "./hooks/useUpdateActividad";

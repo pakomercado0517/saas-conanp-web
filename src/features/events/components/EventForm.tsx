@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo } from "react";
 import Link from "next/link";
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
 import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { getApiErrorMessage } from "@/shared/types/api";
+import { getApiErrorDetailsCode, getApiErrorMessage } from "@/shared/types/api";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
 import { useActividades } from "@/features/activities/hooks/useActividades";
+import { useCapacidadActividadDia } from "@/features/activities/hooks/useCapacidadActividadDia";
 import { useCapacidadPorBloques } from "@/features/activities/hooks/useCapacidadPorBloques";
 import { useActivos } from "@/features/activos/hooks/useActivos";
 import { listRequisitos } from "@/features/activos/services/requisitos.api";
@@ -16,6 +17,8 @@ import type { Activo, ActivoRequisito } from "@/features/activos/types";
 import { usePrestadores } from "@/features/prestadores/hooks/usePrestadores";
 import { getPrestadorDisplayName } from "@/features/prestadores/lib/prestador-display";
 import { useBloques } from "@/features/blocks/hooks/useBloques";
+import { useCurrentUserMembership } from "@/features/memberships/hooks/useCurrentUserMembership";
+import { formatCalendarDateOnlyFromApi } from "@/shared/lib/date";
 import { useCreateEvent } from "../hooks/useCreateEvent";
 import { useCapacidadActivos } from "../hooks/useCapacidadActivos";
 import { useUpdateEvento } from "../hooks/useUpdateEvento";
@@ -111,6 +114,9 @@ export function EventForm({
     status: "aprobado",
   });
 
+  const { isAdmin } = useCurrentUserMembership(areaId);
+  const queryClient = useQueryClient();
+
   const form = useForm<CreateEventoFormData>({
     resolver: zodResolver(
       isEdit ? updateEventoSchema : createEventoSchema
@@ -126,6 +132,8 @@ export function EventForm({
       endTime: evento?.endTime?.slice(0, 5) ?? "12:00",
       peopleCount: evento?.peopleCount ?? 1,
       paymentRequired: evento?.paymentRequired ?? false,
+      capacityOverride: evento?.capacityOverride ?? false,
+      capacityOverrideReason: evento?.capacityOverrideReason ?? "",
     },
   });
 
@@ -176,6 +184,11 @@ export function EventForm({
     control: form.control,
     name: "peopleCount",
     defaultValue: 1,
+  });
+  const capacityOverrideWatch = useWatch({
+    control: form.control,
+    name: "capacityOverride",
+    defaultValue: false,
   });
 
   const selectedActivity = useMemo(
@@ -250,7 +263,8 @@ export function EventForm({
     areaId,
     actividadId,
     date,
-    agendaType === "BLOQUES" && bloqueIds.length > 0 ? bloqueIds : []
+    agendaType === "BLOQUES" && bloqueIds.length > 0 ? bloqueIds : [],
+    agendaType === "BLOQUES" ? (peopleCount ?? 1) : undefined
   );
 
   const {
@@ -272,6 +286,23 @@ export function EventForm({
     cantidad: peopleCount,
   });
 
+  const horarioLibreReady =
+    agendaType === "HORARIO_LIBRE" && Boolean(startTime && endTime);
+
+  const {
+    data: capacidadDiaData,
+    isLoading: loadingCapacidadDia,
+    isError: isErrorCapacidadDia,
+    error: errorCapacidadDia,
+  } = useCapacidadActividadDia(
+    areaId,
+    actividadId,
+    date,
+    peopleCount ?? 1,
+    agendaType,
+    horarioLibreReady
+  );
+
   const capacidadDisponibleActivosTotal = useMemo(() => {
     if (!activoIds?.length) return 0;
     return activoIds.reduce((sum, id) => {
@@ -288,6 +319,13 @@ export function EventForm({
 
   const maxPersonasPermitidas = useMemo(() => {
     let max = capacidadDisponibleActivosTotal;
+    if (
+      agendaType === "HORARIO_LIBRE" &&
+      capacidadDiaData &&
+      typeof capacidadDiaData.capacidadDisponible === "number"
+    ) {
+      max = Math.min(max, capacidadDiaData.capacidadDisponible);
+    }
     if (agendaType === "BLOQUES" && bloqueId) {
       const capBloque = dataByBloqueId[bloqueId];
       if (capBloque && typeof capBloque.capacidadDisponible === "number") {
@@ -295,7 +333,13 @@ export function EventForm({
       }
     }
     return max;
-  }, [agendaType, bloqueId, capacidadDisponibleActivosTotal, dataByBloqueId]);
+  }, [
+    agendaType,
+    bloqueId,
+    capacidadDiaData,
+    capacidadDisponibleActivosTotal,
+    dataByBloqueId,
+  ]);
 
   const puedeVerificarCapacidadActivos = useMemo(() => {
     if (!date || activoIds?.length === 0) return false;
@@ -331,33 +375,48 @@ export function EventForm({
       peopleCount: data.peopleCount ?? 1,
       paymentRequired: data.paymentRequired ?? false,
     };
+    let payload: CreateEventoPayload;
     if (data.agendaType === "BLOQUES") {
-      return { ...base, agendaType: "BLOQUES", bloqueId: data.bloqueId! };
+      payload = { ...base, agendaType: "BLOQUES", bloqueId: data.bloqueId! };
+    } else {
+      payload = {
+        ...base,
+        agendaType: "HORARIO_LIBRE",
+        startTime: toTimeSeconds(data.startTime ?? "09:00"),
+        endTime: toTimeSeconds(data.endTime ?? "12:00"),
+      };
     }
-    return {
-      ...base,
-      agendaType: "HORARIO_LIBRE",
-      startTime: toTimeSeconds(data.startTime ?? "09:00"),
-      endTime: toTimeSeconds(data.endTime ?? "12:00"),
-    };
+    if (!isAdmin) {
+      return payload;
+    }
+    if (data.capacityOverride) {
+      return {
+        ...payload,
+        capacityOverride: true,
+        capacityOverrideReason: data.capacityOverrideReason.trim(),
+      };
+    }
+    if (isEdit) {
+      return {
+        ...payload,
+        capacityOverride: false,
+      };
+    }
+    return payload;
   };
 
   const onSubmit = form.handleSubmit(async (data) => {
     const requestedPeopleCount = data.peopleCount ?? 1;
-    const maxActivos = capacidadDisponibleActivosTotal;
+    const maxPermitido = maxPersonasPermitidas;
 
-    let maxBloque: number | null = null;
-    if (data.agendaType === "BLOQUES" && data.bloqueId) {
-      const capBloque = dataByBloqueId[data.bloqueId];
-      if (capBloque && typeof capBloque.capacidadDisponible === "number") {
-        maxBloque = capBloque.capacidadDisponible;
-      }
-    }
+    const allowExceedCapacity =
+      isAdmin && Boolean(data.capacityOverride);
 
-    const maxPermitido =
-      maxBloque != null ? Math.min(maxBloque, maxActivos) : maxActivos;
-
-    if (typeof maxPermitido === "number" && requestedPeopleCount > maxPermitido) {
+    if (
+      !allowExceedCapacity &&
+      typeof maxPermitido === "number" &&
+      requestedPeopleCount > maxPermitido
+    ) {
       form.setError("peopleCount", {
         type: "manual",
         message: `Máximo ${maxPermitido} personas disponibles para la selección.`,
@@ -377,12 +436,29 @@ export function EventForm({
   return (
     <form onSubmit={onSubmit} className="max-w-xl space-y-4">
       {error && (
-        <p
+        <div
           className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200"
           role="alert"
         >
-          {getApiErrorMessage(error)}
-        </p>
+          <p>{getApiErrorMessage(error)}</p>
+          {getApiErrorDetailsCode(error) === "CAPACITY_EXCEEDED" && (
+            <p className="mt-2 text-xs text-red-800/90 dark:text-red-200/90">
+              La disponibilidad pudo cambiar si otro usuario reservó antes.
+            </p>
+          )}
+          {getApiErrorDetailsCode(error) === "CAPACITY_EXCEEDED" && (
+            <button
+              type="button"
+              className="mt-3 rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-900 hover:bg-red-50 dark:border-red-700 dark:bg-red-950/40 dark:text-red-100 dark:hover:bg-red-900/30"
+              onClick={() => {
+                void queryClient.invalidateQueries({ queryKey: ["events", areaId] });
+                void queryClient.invalidateQueries({ queryKey: ["capacidad", "verificar"] });
+              }}
+            >
+              Actualizar disponibilidad
+            </button>
+          )}
+        </div>
       )}
 
       <div>
@@ -616,18 +692,40 @@ export function EventForm({
           id="evento-peopleCount"
           type="number"
           min={1}
-          max={capacidadDisponibleActivosTotal > 0 ? capacidadDisponibleActivosTotal : undefined}
+          max={maxPersonasPermitidas > 0 ? maxPersonasPermitidas : undefined}
           {...form.register("peopleCount", { valueAsNumber: true })}
           className={inputClass}
         />
         {puedeVerificarCapacidadActivos && (
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            {loadingCapacidadActivos ? (
-              <>Verificando capacidad disponible…</>
-            ) : (
-              <>Capacidad disponible total: {capacidadDisponibleActivosTotal} personas</>
+          <div className="mt-1 space-y-1 text-sm text-slate-600 dark:text-slate-400">
+            <p>
+              {loadingCapacidadActivos ? (
+                <>Verificando capacidad de activos…</>
+              ) : (
+                <>
+                  Capacidad según activos seleccionados:{" "}
+                  {capacidadDisponibleActivosTotal} personas
+                </>
+              )}
+            </p>
+            {agendaType === "HORARIO_LIBRE" && horarioLibreReady && actividadId && (
+              <p>
+                {loadingCapacidadDia ? (
+                  <>Consultando cupo del día (actividad)…</>
+                ) : isErrorCapacidadDia && errorCapacidadDia ? (
+                  <span className="text-amber-800 dark:text-amber-200">
+                    {getApiErrorMessage(errorCapacidadDia)}
+                  </span>
+                ) : capacidadDiaData &&
+                  typeof capacidadDiaData.capacidadDisponible === "number" ? (
+                  <>
+                    Cupo del día (actividad): {capacidadDiaData.capacidadDisponible}{" "}
+                    plazas disponibles
+                  </>
+                ) : null}
+              </p>
             )}
-          </p>
+          </div>
         )}
 
         {/*
@@ -689,7 +787,8 @@ export function EventForm({
                         >
                           <div className="min-w-0">
                             <p className="truncate text-xs font-medium">
-                              {ev.date} {horario !== "—" ? `(${horario})` : ""}
+                              {formatCalendarDateOnlyFromApi(ev.date)}{" "}
+                              {horario !== "—" ? `(${horario})` : ""}
                             </p>
                             <p className="text-xs text-rose-800/80 dark:text-rose-200/80">
                               Personas: {ev.peopleCount} — {ev.status}
@@ -732,6 +831,52 @@ export function EventForm({
         <p className="mt-1 text-sm text-red-600 dark:text-red-400">
           {form.formState.errors.paymentRequired.message}
         </p>
+      )}
+
+      {isAdmin && (
+        <div className="space-y-3 rounded-md border border-amber-200 bg-amber-50/80 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+          <p className="text-sm font-medium text-amber-950 dark:text-amber-100">
+            Override de capacidad (solo administradores)
+          </p>
+          <p className="text-xs text-amber-900/90 dark:text-amber-200/90">
+            Permite crear o guardar el evento aunque no haya cupo suficiente en la
+            actividad o el bloque. El servidor valida permisos; indica un motivo
+            obligatorio si activas esta opción.
+          </p>
+          <div className="flex items-center gap-2">
+            <input
+              id="evento-capacityOverride"
+              type="checkbox"
+              {...form.register("capacityOverride")}
+              className="size-4 rounded border-slate-300 dark:border-slate-600"
+            />
+            <label
+              htmlFor="evento-capacityOverride"
+              className="text-sm text-slate-800 dark:text-slate-200"
+            >
+              Reservar aunque no haya cupo disponible
+            </label>
+          </div>
+          {capacityOverrideWatch && (
+            <div>
+              <label htmlFor="evento-capacityOverrideReason" className={labelClass}>
+                Motivo del override
+              </label>
+              <textarea
+                id="evento-capacityOverrideReason"
+                rows={3}
+                {...form.register("capacityOverrideReason")}
+                className={inputClass}
+                placeholder="Describe el motivo (obligatorio si marcas la opción anterior)"
+              />
+              {form.formState.errors.capacityOverrideReason && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {form.formState.errors.capacityOverrideReason.message}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       <div className="flex gap-2">

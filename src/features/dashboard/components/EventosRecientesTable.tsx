@@ -6,6 +6,7 @@ import { getDashboardHref } from "@/shared/config/dashboardNav";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { useEvents } from "@/features/events/hooks/useEvents";
 import type { EventoStatus } from "@/features/events/types";
+import { formatCalendarDateOnlyFromApi } from "@/shared/lib/date";
 
 const EVENTO_STATUS_LABELS: Record<EventoStatus, string> = {
   programado: "Programado",
@@ -24,10 +25,6 @@ const EVENTO_STATUS_STYLES: Record<EventoStatus, string> = {
   cancelado:
     "rounded-full bg-rose-100 px-2 py-1 text-xs font-bold text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
 };
-
-function formatEventDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("es-MX", { dateStyle: "short" });
-}
 
 interface EventosRecientesTableProps {
   areaId: string;
@@ -92,7 +89,7 @@ export function EventosRecientesTable({ areaId }: EventosRecientesTableProps) {
                   className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/30"
                 >
                   <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
-                    {ev.date ? formatEventDate(ev.date) : "—"}
+                    {ev.date ? formatCalendarDateOnlyFromApi(ev.date) : "—"}
                   </td>
                   <td className="px-6 py-4 font-medium">
                     {ev.Actividad?.name ?? ev.actividadId}

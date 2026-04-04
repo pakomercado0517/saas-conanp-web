@@ -33,6 +33,12 @@ const baseEventoFields = {
   }),
   peopleCount: z.coerce.number().int().min(1, "Mínimo 1 persona").optional().default(1),
   paymentRequired: z.boolean().optional().default(false),
+  capacityOverride: z.boolean().optional().default(false),
+  capacityOverrideReason: z
+    .string()
+    .max(2000, "Máximo 2000 caracteres")
+    .optional()
+    .default(""),
 };
 
 /** Objeto base sin refinamientos para poder usar .partial() en update. */
@@ -69,10 +75,31 @@ export const createEventoSchema = baseEventoObjectSchema
       return toMinutes(data.endTime) > toMinutes(data.startTime);
     },
     { message: "La hora fin debe ser posterior a la hora inicio", path: ["endTime"] }
+  )
+  .refine(
+    (data) => {
+      if (!data.capacityOverride) return true;
+      const r = data.capacityOverrideReason.trim();
+      return r.length >= 1 && r.length <= 2000;
+    },
+    {
+      message: "Indica el motivo del override (obligatorio, máx. 2000 caracteres).",
+      path: ["capacityOverrideReason"],
+    }
   );
 
-/** Schema para edición: todos los campos opcionales, sin refinamientos. */
-export const updateEventoSchema = baseEventoObjectSchema.partial();
+/** Schema para edición: todos los campos opcionales + validación de override. */
+export const updateEventoSchema = baseEventoObjectSchema.partial().refine(
+  (data) => {
+    if (data.capacityOverride !== true) return true;
+    const r = (data.capacityOverrideReason ?? "").trim();
+    return r.length >= 1 && r.length <= 2000;
+  },
+  {
+    message: "Indica el motivo del override (obligatorio, máx. 2000 caracteres).",
+    path: ["capacityOverrideReason"],
+  }
+);
 
 export type CreateEventoFormData = z.infer<typeof createEventoSchema>;
 export type UpdateEventoFormData = z.infer<typeof updateEventoSchema>;

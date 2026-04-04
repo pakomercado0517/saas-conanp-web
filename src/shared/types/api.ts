@@ -26,6 +26,8 @@ export interface ApiErrorPayload {
   code?: string;
   statusCode?: number;
   details: Array<{ campo: string; mensaje: string }>;
+  /** Copia de `details` de la API cuando no es un array (p. ej. objeto con `code: CAPACITY_EXCEEDED`). */
+  detailsRaw?: unknown;
 }
 
 function isApiErrorResponse(value: unknown): value is ApiErrorResponse {
@@ -72,6 +74,27 @@ export function getApiErrorMessage(res: unknown): string {
 }
 
 /**
+ * Si `details` de la API es un objeto con `code` (p. ej. CAPACITY_EXCEEDED), devuelve ese código.
+ */
+export function getApiErrorDetailsCode(error: unknown): string | undefined {
+  if (error instanceof ApiError && error.detailsRaw !== undefined) {
+    const raw = error.detailsRaw;
+    if (typeof raw === "object" && raw !== null && "code" in raw) {
+      const c = (raw as { code: unknown }).code;
+      return typeof c === "string" ? c : undefined;
+    }
+  }
+  if (isApiErrorResponse(error) && error.details !== undefined) {
+    const d = error.details;
+    if (typeof d === "object" && d !== null && !Array.isArray(d) && "code" in d) {
+      const c = (d as { code: unknown }).code;
+      return typeof c === "string" ? c : undefined;
+    }
+  }
+  return undefined;
+}
+
+/**
  * Devuelve los detalles de validación por campo para setError en formularios.
  * Acepta tanto "detalles" como array en "details" con estructura { campo, mensaje }.
  */
@@ -94,6 +117,7 @@ export class ApiError extends Error {
   readonly code?: string;
   readonly statusCode?: number;
   readonly details: Array<{ campo: string; mensaje: string }>;
+  readonly detailsRaw?: unknown;
 
   constructor(payload: ApiErrorPayload) {
     super(payload.message);
@@ -101,6 +125,7 @@ export class ApiError extends Error {
     this.code = payload.code;
     this.statusCode = payload.statusCode;
     this.details = payload.details ?? [];
+    this.detailsRaw = payload.detailsRaw;
   }
 
   static fromResponse(res: ApiErrorResponse): ApiError {
@@ -109,6 +134,7 @@ export class ApiError extends Error {
       code: res.code,
       statusCode: res.statusCode,
       details: getApiValidationDetails(res),
+      detailsRaw: res.details,
     });
   }
 }
