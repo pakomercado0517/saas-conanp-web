@@ -3,9 +3,11 @@ import type {
   CancelSubscriptionBody,
   CancelSubscriptionResponse,
   ChangeSubscriptionPlanPayload,
+  CreateCheckoutSessionPayload,
   CreateSubscriptionPayload,
   CurrentSubscriptionResponse,
   PatchSubscriptionPlanResponse,
+  PostCheckoutSessionResponse,
   PostSubscriptionResponse,
   ReactivateSubscriptionResponse,
   SubscriptionPlan,
@@ -58,6 +60,23 @@ export async function postOrganizationSubscription(
 }
 
 /**
+ * Sesión Stripe Checkout (suscripción); redirigir al usuario a `data.url`.
+ * @see docs/api_routes/subscriptions.md
+ */
+export async function postSubscriptionCheckoutSession(
+  areaId: string,
+  payload: CreateCheckoutSessionPayload
+): Promise<PostCheckoutSessionResponse> {
+  return apiRequest<PostCheckoutSessionResponse>(
+    `${ORG_BASE}/${areaId}/subscriptions/checkout-session`,
+    {
+      method: "POST",
+      body: payload,
+    }
+  );
+}
+
+/**
  * Cambiar plan / ciclo en suscripción que ya tiene Stripe (upgrade/downgrade entre planes de pago).
  */
 export async function patchSubscriptionPlan(
@@ -91,6 +110,22 @@ export async function postSubscriptionReactivate(
 ): Promise<ReactivateSubscriptionResponse> {
   return apiRequest<ReactivateSubscriptionResponse>(
     `${SUBS_BASE}/${subscriptionId}/reactivate`,
+    {
+      method: "POST",
+      body: {},
+    }
+  );
+}
+
+/**
+ * Libera suscripción `incomplete` / `incomplete_expired` → plan FREE (cancel en Stripe si aplica).
+ * @see docs/api_routes/subscriptions.md
+ */
+export async function postSubscriptionReleaseIncomplete(
+  subscriptionId: string
+): Promise<PostSubscriptionResponse> {
+  return apiRequest<PostSubscriptionResponse>(
+    `${SUBS_BASE}/${subscriptionId}/release-incomplete`,
     {
       method: "POST",
       body: {},

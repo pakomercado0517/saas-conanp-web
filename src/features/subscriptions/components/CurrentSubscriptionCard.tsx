@@ -16,7 +16,13 @@ import { useCancelSubscription } from "../hooks/useCancelSubscription";
 import { useReactivateSubscription } from "../hooks/useReactivateSubscription";
 import { CancelConfirmDialog } from "./CancelConfirmDialog";
 import { ReactivateConfirmDialog } from "./ReactivateConfirmDialog";
+import { useReleaseIncompleteSubscription } from "../hooks/useReleaseIncompleteSubscription";
+import { useRetrySubscriptionCheckout } from "../hooks/useRetrySubscriptionCheckout";
+import {
+  subscriptionAllowsReleaseIncomplete,
+} from "../lib/subscriptionPayment";
 import { PlanSelectorDialog } from "./PlanSelectorDialog";
+import { ReleaseIncompleteConfirmDialog } from "./ReleaseIncompleteConfirmDialog";
 
 const STATUS_LABELS: Record<SubscriptionStatus, string> = {
   active: "Activo",
@@ -48,6 +54,8 @@ export function CurrentSubscriptionCard({
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showReactivateDialog, setShowReactivateDialog] = useState(false);
   const [showChangePlanDialog, setShowChangePlanDialog] = useState(false);
+  const [showReleaseIncompleteDialog, setShowReleaseIncompleteDialog] =
+    useState(false);
 
   const {
     cancel,
@@ -59,6 +67,15 @@ export function CurrentSubscriptionCard({
     isPending: isReactivating,
     error: reactivateError,
   } = useReactivateSubscription(areaId, subscription.id);
+  const {
+    retry: retryCheckout,
+    isPending: isRetryCheckout,
+    error: retryCheckoutError,
+  } = useRetrySubscriptionCheckout(areaId);
+  const releaseIncompleteMutation = useReleaseIncompleteSubscription(
+    areaId,
+    subscription.id
+  );
 
   const isActive =
     subscription.status === "active" || subscription.status === "trialing";
@@ -70,6 +87,13 @@ export function CurrentSubscriptionCard({
     subscription.status === "incomplete" ||
     subscription.status === "incomplete_expired";
 
+  const isIncompleteCheckout =
+    subscription.status === "incomplete" ||
+    subscription.status === "incomplete_expired";
+
+  const canReleaseIncomplete =
+    subscriptionAllowsReleaseIncomplete(subscription);
+
   const planName = subscription.SubscriptionPlan?.name ?? "—";
 
   const handleCancel = async () => {
@@ -80,6 +104,11 @@ export function CurrentSubscriptionCard({
   const handleReactivate = async () => {
     await reactivate();
     setShowReactivateDialog(false);
+  };
+
+  const handleReleaseIncomplete = async () => {
+    await releaseIncompleteMutation.mutateAsync();
+    setShowReleaseIncompleteDialog(false);
   };
 
   return (
@@ -142,6 +171,20 @@ export function CurrentSubscriptionCard({
                 {formatDateUi(subscription.currentPeriodEnd)})
               </p>
             )}
+            {needsPayment && isIncompleteCheckout ? (
+              <p className="mt-3 text-sm text-red-800 dark:text-red-200">
+                El pago no se completó en Stripe. Puedes abrir de nuevo el
+                checkout con el mismo plan y ciclo; el servidor puede liberar el
+                intento anterior automáticamente. Si prefieres descartar este
+                intento, vuelve al plan gratuito con el botón inferior.
+              </p>
+            ) : null}
+            {needsPayment && !isIncompleteCheckout ? (
+              <p className="mt-3 text-sm text-red-800 dark:text-red-200">
+                Hay un problema con el cobro (factura o método de pago). Intenta
+                completar el pago de nuevo en Stripe con el mismo plan y ciclo.
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -181,19 +224,49 @@ export function CurrentSubscriptionCard({
             </button>
           )}
           {needsPayment && (
-            <a
-              href={
-                dependenciaId != null && dependenciaId !== ""
-                  ? `/dependencias/${dependenciaId}/suscripcion`
-                  : `/areas/${areaId}/suscripcion`
+            <button
+              type="button"
+              onClick={() =>
+                void retryCheckout({
+                  planId: subscription.planId,
+                  billingCycle: subscription.billingCycle,
+                  dependenciaId,
+                })
               }
-              className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700"
+              disabled={isRetryCheckout || releaseIncompleteMutation.isPending}
+              className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-70 dark:bg-amber-600 dark:hover:bg-amber-700"
             >
-              <CreditCard className="h-4 w-4" aria-hidden />
-              Actualizar plan
-            </a>
+              {isRetryCheckout ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <CreditCard className="h-4 w-4" aria-hidden />
+              )}
+              {isIncompleteCheckout
+                ? "Generar nuevo checkout"
+                : "Completar pago en Stripe"}
+            </button>
           )}
+          {needsPayment && canReleaseIncomplete ? (
+            <button
+              type="button"
+              onClick={() => setShowReleaseIncompleteDialog(true)}
+              disabled={
+                releaseIncompleteMutation.isPending || isRetryCheckout
+              }
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-70 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              Volver a plan gratuito
+            </button>
+          ) : null}
         </div>
+        {needsPayment && retryCheckoutError ? (
+          <p
+            className="mt-3 text-sm text-red-700 dark:text-red-300"
+            role="alert"
+          >
+            {retryCheckoutError}
+          </p>
+        ) : null}
       </div>
 
       <CancelConfirmDialog
@@ -217,9 +290,22 @@ export function CurrentSubscriptionCard({
         open={showChangePlanDialog}
         onClose={() => setShowChangePlanDialog(false)}
         areaId={areaId}
+        dependenciaId={dependenciaId}
         currentPlanId={subscription.planId}
         mode="change"
         subscription={subscription}
+      />
+
+      <ReleaseIncompleteConfirmDialog
+        open={showReleaseIncompleteDialog}
+        onClose={() => setShowReleaseIncompleteDialog(false)}
+        onConfirm={handleReleaseIncomplete}
+        isPending={releaseIncompleteMutation.isPending}
+        error={
+          releaseIncompleteMutation.error
+            ? getApiErrorMessage(releaseIncompleteMutation.error)
+            : null
+        }
       />
     </>
   );

@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   Building2,
-  LayoutGrid,
   ListChecks,
   UserPlus,
   UsersRound,
@@ -255,12 +254,6 @@ export function DependenciaHub({ dependenciaId }: DependenciaHubProps) {
               <p className="mt-1 text-sm text-(--slate-text)">
                 Monitorea y entra al panel de cada ANP.
               </p>
-            </div>
-            <div
-              className="hidden items-center gap-2 rounded-xl border border-slate-200/80 bg-white/80 px-2 py-1.5 text-(--slate-text) dark:border-slate-600 dark:bg-slate-800/80 sm:flex"
-              aria-hidden
-            >
-              <LayoutGrid className="size-5 text-(--cyan-accent)" />
             </div>
           </div>
           <AreaGrid

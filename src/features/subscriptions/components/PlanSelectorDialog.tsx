@@ -6,6 +6,8 @@ import { getApiErrorMessage } from "@/shared/types/api";
 import { useSubscriptionPlans } from "../hooks/useSubscriptionPlans";
 import { useOrganizationSubscriptionMutations } from "../hooks/useOrganizationSubscriptionMutations";
 import { getPlanLimitLabels } from "../lib/planLimits";
+import { persistCheckoutReturnContext } from "../lib/checkoutReturnStorage";
+import { subscriptionAllowsPatchPlanChange } from "../lib/subscriptionPayment";
 import type { BillingCycle, Subscription, SubscriptionPlan } from "../types";
 
 function formatPlanPriceForCycle(plan: SubscriptionPlan, cycle: BillingCycle): string | null {
@@ -31,10 +33,12 @@ interface PlanSelectorDialogProps {
   open: boolean;
   onClose: () => void;
   areaId: string;
+  /** Para volver a `/dependencias/.../suscripcion` tras Stripe Checkout. */
+  dependenciaId?: string | null;
   currentPlanId?: string;
   initialPlanId?: string;
   mode: "subscribe" | "change";
-  /** En modo `change`, necesario para decidir POST (FREE→pago) vs PATCH (plan con Stripe). */
+  /** En modo `change`, necesario para decidir checkout (FREE→pago) vs PATCH (plan con Stripe). */
   subscription?: Subscription | null;
   /** Incluir en `key` del contenido para alinear ciclo con la comparativa exterior. */
   billingCycleKey?: BillingCycle;
@@ -44,6 +48,7 @@ interface PlanSelectorDialogProps {
 function PlanSelectorDialogContent({
   onClose,
   areaId,
+  dependenciaId = null,
   currentPlanId,
   initialPlanId,
   mode,
@@ -61,7 +66,7 @@ function PlanSelectorDialogContent({
   const displaySelectedPlanId = selectedPlanId ?? initialPlanId ?? null;
 
   const { plans, isLoading: plansLoading } = useSubscriptionPlans();
-  const { createOrUpgrade, changePlan, isPending: isSubscribing } =
+  const { startCheckout, changePlan, isPending: isSubscribing } =
     useOrganizationSubscriptionMutations(areaId);
 
   const availablePlans = plans.filter((p) => p.active !== false);
@@ -76,7 +81,11 @@ function PlanSelectorDialogContent({
     if (!planIdToUse) return;
     setError(null);
     try {
-      if (mode === "change" && subscription?.stripeSubscriptionId) {
+      if (
+        mode === "change" &&
+        subscription &&
+        subscriptionAllowsPatchPlanChange(subscription)
+      ) {
         await changePlan({
           subscriptionId: subscription.id,
           payload: {
@@ -85,10 +94,19 @@ function PlanSelectorDialogContent({
             prorate: true,
           },
         });
-      } else {
-        await createOrUpgrade({ planId: planIdToUse, billingCycle });
+        onClose();
+        return;
       }
-      onClose();
+      persistCheckoutReturnContext(areaId, dependenciaId);
+      const res = await startCheckout({
+        planId: planIdToUse,
+        billingCycle,
+      });
+      if (res.data?.url) {
+        window.location.assign(res.data.url);
+        return;
+      }
+      setError("No se recibió la URL de pago. Intenta de nuevo.");
     } catch (err) {
       setError(getApiErrorMessage(err));
     }
@@ -116,8 +134,10 @@ function PlanSelectorDialogContent({
         </h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           {mode === "subscribe"
-            ? "Elige un plan para activar la suscripción del área."
-            : "Elige el plan al que deseas cambiar."}
+            ? "Elige un plan; continuarás al pago seguro en Stripe."
+            : subscription && subscriptionAllowsPatchPlanChange(subscription)
+              ? "Elige el plan al que deseas cambiar."
+              : "Elige un plan; continuarás al pago seguro en Stripe."}
         </p>
 
         {error && (
@@ -231,7 +251,9 @@ function PlanSelectorDialogContent({
             {isSubscribing && (
               <Loader2 className="size-4 animate-spin" aria-hidden />
             )}
-            {mode === "subscribe" ? "Contratar" : "Cambiar"}
+            {mode === "change" && subscription && subscriptionAllowsPatchPlanChange(subscription)
+              ? "Cambiar"
+              : "Continuar al pago"}
           </button>
         </div>
       </div>
@@ -244,6 +266,7 @@ export function PlanSelectorDialog(props: PlanSelectorDialogProps) {
     open,
     onClose,
     areaId,
+    dependenciaId,
     currentPlanId,
     initialPlanId,
     mode,
@@ -258,6 +281,7 @@ export function PlanSelectorDialog(props: PlanSelectorDialogProps) {
       key={`${initialPlanId ?? "none"}-${billingCycleKey ?? "default"}`}
       onClose={onClose}
       areaId={areaId}
+      dependenciaId={dependenciaId}
       currentPlanId={currentPlanId}
       initialPlanId={initialPlanId}
       mode={mode}
