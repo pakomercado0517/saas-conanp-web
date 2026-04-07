@@ -14,9 +14,12 @@ export interface PrestadorActivosCountSummary {
 /**
  * Cuenta activos por prestador (sumando todas las ANP donde tiene registro),
  * reutilizando la misma query que el detalle del prestador (cache compartida).
+ *
+ * @param activosCountScopeAreaId Si no está vacío, el total de activos por fila solo incluye entradas de esa ANP.
  */
 export function usePrestadoresActivosCountsForAggregated(
-  aggregated: AggregatedPrestadorRow[]
+  aggregated: AggregatedPrestadorRow[],
+  activosCountScopeAreaId = ""
 ) {
   const uniquePairs = useMemo(() => {
     const seen = new Set<string>();
@@ -59,16 +62,20 @@ export function usePrestadoresActivosCountsForAggregated(
 
   const summaryForRow = useCallback(
     (row: AggregatedPrestadorRow): PrestadorActivosCountSummary => {
+      const entries =
+        activosCountScopeAreaId === ""
+          ? row.entries
+          : row.entries.filter((e) => e.areaId === activosCountScopeAreaId);
       let total = 0;
       let isLoading = false;
-      for (const e of row.entries) {
+      for (const e of entries) {
         const k = `${e.areaId}:${e.prestadorId}`;
         if (loadingByPairKey.get(k)) isLoading = true;
         total += countByPairKey.get(k) ?? 0;
       }
       return { total, isLoading };
     },
-    [countByPairKey, loadingByPairKey]
+    [countByPairKey, loadingByPairKey, activosCountScopeAreaId]
   );
 
   return { summaryForRow };

@@ -6,14 +6,16 @@ import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { X, Loader2, ArrowLeft } from "lucide-react";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { usePrestadores } from "@/features/prestadores/hooks/usePrestadores";
 import { useAreaContext } from "@/features/organizations/context/AreaContext";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
 import { useActivoRequisitoCatalogo } from "../hooks/useActivoRequisitoCatalogo";
-import { useCreateActivo } from "../hooks/useCreateActivo";
+import { createActivo } from "../services/activos.api";
 import { createRequisito } from "../services/requisitos.api";
+import { prestadorActivosOwnedQueryKey } from "../constants/prestadorActivosQueryKeys";
 import type {
   Activo,
   ActivoRequisitoCatalogoItem,
@@ -59,12 +61,20 @@ const STATUS_OPTIONS: { value: ActivoStatus; label: string }[] = [
   { value: "suspendido", label: "Suspendido" },
 ];
 
+const ACTIVOS_LIST_QUERY_PREFIX = ["activos"] as const;
+
+export type ActivoParallelRegistroTarget = {
+  areaId: string;
+  prestadorId: string;
+  areaName: string;
+};
+
 export interface CreateActivoWizardProps {
   open: boolean;
   areaId: string;
   onClose: () => void;
-  /** Se llama cuando el wizard termina exitosamente (activo creado y requisitos guardados). */
-  onCompleted?: (activo: Activo) => void;
+  /** Se llama cuando el wizard termina exitosamente (uno o más activos creados y requisitos guardados). */
+  onCompleted?: (activos: Activo[]) => void;
   /** Si se indica, el propietario queda fijo y no se muestra el selector. */
   fixedOwnerPrestadorId?: string;
   /** Etiqueta para mostrar cuando el propietario está fijado (p. ej. nombre del prestador). */
@@ -74,6 +84,11 @@ export interface CreateActivoWizardProps {
    * Por defecto: dashboard del área `/areas/:areaId/configuracion/requisitos-catalogo`.
    */
   requisitosCatalogoHref?: string;
+  /**
+   * Destinos adicionales (misma dependencia) para ofrecer «todas las áreas».
+   * Debe incluir el par (areaId, prestadorId) del `areaId` actual del wizard.
+   */
+  parallelRegistroTargets?: ReadonlyArray<ActivoParallelRegistroTarget>;
 }
 
 export function CreateActivoWizard(props: CreateActivoWizardProps) {
@@ -84,7 +99,9 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
     fixedOwnerPrestadorId,
     fixedOwnerDisplayName,
     requisitosCatalogoHref,
+    parallelRegistroTargets,
   } = props;
+  const queryClient = useQueryClient();
   const configurarCatalogoHref =
     requisitosCatalogoHref ??
     getDashboardHref(areaId, "/configuracion/requisitos-catalogo");
@@ -94,13 +111,37 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
     { enabled: !fixedOwnerPrestadorId }
   );
   const { role, dependenciaId } = useAreaContext();
-  const createMutation = useCreateActivo(areaId);
   const isAdmin = role === "admin";
 
   const [step, setStep] = useState<WizardStep>("basic");
-  const [createdActivo, setCreatedActivo] = useState<Activo | null>(null);
+  const [createdActivos, setCreatedActivos] = useState<Activo[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSavingRequisitos, setIsSavingRequisitos] = useState(false);
+  const [isCreatingActivos, setIsCreatingActivos] = useState(false);
+  /** primary = solo área de contexto; all = todas las de `parallelRegistroTargets`. */
+  const [registroScope, setRegistroScope] = useState<"primary" | "all">(
+    "primary"
+  );
+
+  const showParallelScopeUi = Boolean(
+    parallelRegistroTargets && parallelRegistroTargets.length > 1
+  );
+
+  const effectiveRegistroTargets = useMemo((): ActivoParallelRegistroTarget[] => {
+    if (!parallelRegistroTargets?.length) {
+      return [];
+    }
+    if (parallelRegistroTargets.length === 1) {
+      return [...parallelRegistroTargets];
+    }
+    return registroScope === "all"
+      ? [...parallelRegistroTargets]
+      : parallelRegistroTargets.filter((t) => t.areaId === areaId);
+  }, [parallelRegistroTargets, registroScope, areaId]);
+
+  const primaryTargetLabel =
+    parallelRegistroTargets?.find((t) => t.areaId === areaId)?.areaName ??
+    "esta área";
 
   const form = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
@@ -122,7 +163,7 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
     []
   );
 
-  const tipoActivo = createdActivo?.type ?? form.getValues("type");
+  const tipoActivo = createdActivos[0]?.type ?? form.getValues("type");
   const catalogOptions = { dependenciaId: dependenciaId ?? undefined };
   const { data: catalogRaw, isLoading: catalogLoading } =
     useActivoRequisitoCatalogo(areaId, catalogOptions);
@@ -186,9 +227,11 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
       });
     }
     setStep("basic");
-    setCreatedActivo(null);
+    setCreatedActivos([]);
     setError(null);
     setIsSavingRequisitos(false);
+    setIsCreatingActivos(false);
+    setRegistroScope("primary");
     requisitosForm.reset();
   }, [open, fixedOwnerPrestadorId, form, requisitosForm]);
 
@@ -197,11 +240,36 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
   const handleClose = () => {
     setError(null);
     setStep("basic");
-    setCreatedActivo(null);
+    setCreatedActivos([]);
     setIsSavingRequisitos(false);
+    setIsCreatingActivos(false);
+    setRegistroScope("primary");
     form.reset();
     requisitosForm.reset();
     onClose();
+  };
+
+  async function invalidateAfterCreate(targets: ActivoParallelRegistroTarget[]) {
+    for (const t of targets) {
+      void queryClient.invalidateQueries({
+        queryKey: [...ACTIVOS_LIST_QUERY_PREFIX, t.areaId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: prestadorActivosOwnedQueryKey(t.areaId, t.prestadorId),
+      });
+    }
+  }
+
+  const handleFinalizarSinRequisitos = async () => {
+    await invalidateAfterCreate(
+      createdActivos.map((a) => ({
+        areaId: a.organizationId,
+        prestadorId: a.ownerId,
+        areaName: "",
+      }))
+    );
+    props.onCompleted?.(createdActivos);
+    handleClose();
   };
 
   return (
@@ -282,19 +350,79 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
               try {
                 setError(null);
                 const values = step1Schema.parse(form.getValues());
-                const activo = await createMutation.mutateAsync({
-                  ownerId: values.ownerId.trim(),
-                  type: values.type,
-                  status: values.status ?? "pendiente",
-                });
-                setCreatedActivo(activo);
+                const ownerId = values.ownerId.trim();
+                const status = values.status ?? "pendiente";
+                const targets: ActivoParallelRegistroTarget[] =
+                  parallelRegistroTargets?.length
+                    ? effectiveRegistroTargets
+                    : [{ areaId, prestadorId: ownerId, areaName: primaryTargetLabel }];
+
+                if (targets.length === 0) {
+                  setError("No hay áreas destino para registrar el activo.");
+                  return;
+                }
+
+                setIsCreatingActivos(true);
+                const created: Activo[] = [];
+                for (const t of targets) {
+                  const activo = await createActivo(t.areaId, {
+                    ownerId: t.prestadorId,
+                    type: values.type,
+                    status,
+                  });
+                  created.push(activo);
+                }
+                await invalidateAfterCreate(targets);
+                setCreatedActivos(created);
                 setStep("requirements");
               } catch (err) {
                 setError(getApiErrorMessage(err));
+              } finally {
+                setIsCreatingActivos(false);
               }
             })}
             className="mt-5 space-y-4"
           >
+            {showParallelScopeUi && parallelRegistroTargets ? (
+              <fieldset className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-600 dark:bg-slate-800/40">
+                <legend className="px-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  Alcance del registro
+                </legend>
+                <p className="mb-3 text-xs text-slate-600 dark:text-slate-400">
+                  El mismo tipo de activo y los mismos requisitos se aplicarán en
+                  cada ANP seleccionada (catálogo compartido por dependencia).
+                </p>
+                <div className="space-y-2">
+                  <label className="flex cursor-pointer items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                    <input
+                      type="radio"
+                      name="registro-scope"
+                      className="mt-1"
+                      checked={registroScope === "primary"}
+                      onChange={() => setRegistroScope("primary")}
+                    />
+                    <span>
+                      Solo en{" "}
+                      <span className="font-medium">{primaryTargetLabel}</span>
+                    </span>
+                  </label>
+                  <label className="flex cursor-pointer items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                    <input
+                      type="radio"
+                      name="registro-scope"
+                      className="mt-1"
+                      checked={registroScope === "all"}
+                      onChange={() => setRegistroScope("all")}
+                    />
+                    <span>
+                      En todas las áreas donde puedes administrar (
+                      {parallelRegistroTargets.length})
+                    </span>
+                  </label>
+                </div>
+              </fieldset>
+            ) : null}
+
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <label htmlFor="wizard-type" className={labelClass}>
@@ -396,13 +524,13 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
               </button>
               <button
                 type="submit"
-                disabled={createMutation.isPending}
+                disabled={isCreatingActivos}
                 className="inline-flex items-center gap-2 rounded-lg bg-(--cyan-accent) px-5 py-2.5 text-sm font-bold text-(--navy-deep) transition-colors hover:bg-(--cyan-hover) disabled:opacity-70"
               >
-                {createMutation.isPending && (
+                {isCreatingActivos && (
                   <Loader2 className="size-4 animate-spin" aria-hidden />
                 )}
-                {createMutation.isPending ? "Creando…" : "Continuar"}
+                {isCreatingActivos ? "Creando…" : "Continuar"}
               </button>
             </div>
           </form>
@@ -437,11 +565,28 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
                       Configurar catálogo
                     </Link>
                   )}
+                  <div className="flex flex-wrap justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => void setStep("basic")}
+                      className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                    >
+                      <ArrowLeft className="size-4" aria-hidden />
+                      Atrás
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleFinalizarSinRequisitos()}
+                      className="rounded-lg bg-(--cyan-accent) px-5 py-2.5 text-sm font-bold text-(--navy-deep) transition-colors hover:bg-(--cyan-hover)"
+                    >
+                      Finalizar sin requisitos
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <form
                   onSubmit={requisitosForm.handleSubmit(async (data) => {
-                    if (!createdActivo) return;
+                    if (createdActivos.length === 0) return;
                     try {
                       setError(null);
                       setIsSavingRequisitos(true);
@@ -468,17 +613,28 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
                         });
                       }
 
-                      await Promise.all(
-                        itemsToSend.map(({ item, value, documentUrl }) =>
-                          createRequisito(areaId, createdActivo.id, {
-                            key: item.key,
-                            value,
-                            documentUrl,
-                          })
-                        )
+                      for (const activo of createdActivos) {
+                        const orgId = activo.organizationId;
+                        await Promise.all(
+                          itemsToSend.map(({ item, value, documentUrl }) =>
+                            createRequisito(orgId, activo.id, {
+                              key: item.key,
+                              value,
+                              documentUrl,
+                            })
+                          )
+                        );
+                      }
+
+                      await invalidateAfterCreate(
+                        createdActivos.map((a) => ({
+                          areaId: a.organizationId,
+                          prestadorId: a.ownerId,
+                          areaName: "",
+                        }))
                       );
 
-                      props.onCompleted?.(createdActivo);
+                      props.onCompleted?.(createdActivos);
                       handleClose();
                     } catch (err) {
                       setError(getApiErrorMessage(err));

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, UserPlus } from "lucide-react";
 import { getApiErrorMessage } from "@/shared/types/api";
+import { AreaContextProvider } from "@/features/organizations/context/AreaContext";
 import { useCreatePrestadorCompleto } from "../hooks/useCreatePrestadorCompleto";
 import { CreatePrestadorForm } from "./CreatePrestadorForm";
 
@@ -70,12 +71,14 @@ export function CreatePrestadorSheet({
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
-          <CreatePrestadorForm
-            onSubmit={handleSubmit}
-            onCancel={onClose}
-            isPending={isPending}
-            serverError={serverError}
-          />
+          <AreaContextProvider areaId={areaId}>
+            <CreatePrestadorForm
+              onSubmit={handleSubmit}
+              onCancel={onClose}
+              isPending={isPending}
+              serverError={serverError}
+            />
+          </AreaContextProvider>
         </div>
       </div>
     </>
