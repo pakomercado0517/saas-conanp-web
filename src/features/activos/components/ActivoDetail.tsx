@@ -41,8 +41,8 @@ export function ActivoDetail({ areaId, activoId }: ActivoDetailProps) {
     areaId,
     activoId
   );
-  const { nombre: nombreDesdeRequisito, isLoading: nombreRequisitoLoading } =
-    useActivoNombre(areaId, activoId);
+  const { nombre: tituloMerged, isLoading: nombreRequisitoLoading } =
+    useActivoNombre(areaId, activoId, { fallbackNombre: activo?.nombre });
 
   const handleFormSuccess = () => {
     setEditing(false);
@@ -69,11 +69,6 @@ export function ActivoDetail({ areaId, activoId }: ActivoDetailProps) {
     );
   }
 
-  const tituloActivo =
-    activo.nombre?.trim() ||
-    (!nombreRequisitoLoading ? nombreDesdeRequisito?.trim() : null) ||
-    null;
-
   return (
     <div className="space-y-6">
       <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900/30">
@@ -93,9 +88,9 @@ export function ActivoDetail({ areaId, activoId }: ActivoDetailProps) {
           <>
             <div className="flex flex-wrap items-center justify-between gap-4">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                {nombreRequisitoLoading && !activo.nombre?.trim()
+                {nombreRequisitoLoading && !tituloMerged
                   ? "…"
-                  : tituloActivo ?? "Sin nombre"}
+                  : tituloMerged ?? "Sin nombre"}
               </h2>
               {isAdmin && (
                 <button

@@ -6,14 +6,17 @@ import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { X, Loader2, ArrowLeft } from "lucide-react";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { usePrestadores } from "@/features/prestadores/hooks/usePrestadores";
 import { useAreaContext } from "@/features/organizations/context/AreaContext";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
 import { useActivoRequisitoCatalogo } from "../hooks/useActivoRequisitoCatalogo";
-import { useCreateActivo } from "../hooks/useCreateActivo";
+import { getActivoNombreQueryKey } from "../hooks/useActivoNombre";
+import { createActivo } from "../services/activos.api";
 import { createRequisito } from "../services/requisitos.api";
+import { prestadorActivosOwnedQueryKey } from "../constants/prestadorActivosQueryKeys";
 import type {
   Activo,
   ActivoRequisitoCatalogoItem,
@@ -59,11 +62,17 @@ const STATUS_OPTIONS: { value: ActivoStatus; label: string }[] = [
   { value: "suspendido", label: "Suspendido" },
 ];
 
+const ACTIVOS_LIST_QUERY_PREFIX = ["activos"] as const;
+
 export interface CreateActivoWizardProps {
   open: boolean;
+  /**
+   * Identificador de organización (ANP) de la ruta: contexto de permisos y resolución en servidor.
+   * El activo se persiste por dependencia; no implica que el registro quede exclusivo de esta ANP.
+   */
   areaId: string;
   onClose: () => void;
-  /** Se llama cuando el wizard termina exitosamente (activo creado y requisitos guardados). */
+  /** Se llama cuando el wizard termina exitosamente (activo creado y requisitos guardados si aplica). */
   onCompleted?: (activo: Activo) => void;
   /** Si se indica, el propietario queda fijo y no se muestra el selector. */
   fixedOwnerPrestadorId?: string;
@@ -85,6 +94,7 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
     fixedOwnerDisplayName,
     requisitosCatalogoHref,
   } = props;
+  const queryClient = useQueryClient();
   const configurarCatalogoHref =
     requisitosCatalogoHref ??
     getDashboardHref(areaId, "/configuracion/requisitos-catalogo");
@@ -94,13 +104,13 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
     { enabled: !fixedOwnerPrestadorId }
   );
   const { role, dependenciaId } = useAreaContext();
-  const createMutation = useCreateActivo(areaId);
   const isAdmin = role === "admin";
 
   const [step, setStep] = useState<WizardStep>("basic");
   const [createdActivo, setCreatedActivo] = useState<Activo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSavingRequisitos, setIsSavingRequisitos] = useState(false);
+  const [isCreatingActivos, setIsCreatingActivos] = useState(false);
 
   const form = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
@@ -189,8 +199,9 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
     setCreatedActivo(null);
     setError(null);
     setIsSavingRequisitos(false);
+    setIsCreatingActivos(false);
     requisitosForm.reset();
-  }, [open, fixedOwnerPrestadorId, form, requisitosForm]);
+  }, [open, fixedOwnerPrestadorId, form, requisitosForm, areaId]);
 
   if (!open) return null;
 
@@ -199,9 +210,26 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
     setStep("basic");
     setCreatedActivo(null);
     setIsSavingRequisitos(false);
+    setIsCreatingActivos(false);
     form.reset();
     requisitosForm.reset();
     onClose();
+  };
+
+  async function invalidateAfterCreate(orgId: string, prestadorId: string) {
+    void queryClient.invalidateQueries({
+      queryKey: [...ACTIVOS_LIST_QUERY_PREFIX, orgId],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: prestadorActivosOwnedQueryKey(orgId, prestadorId),
+    });
+  }
+
+  const handleFinalizarSinRequisitos = async () => {
+    if (!createdActivo) return;
+    await invalidateAfterCreate(areaId, createdActivo.ownerId);
+    props.onCompleted?.(createdActivo);
+    handleClose();
   };
 
   return (
@@ -226,7 +254,9 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
           Crear activo
         </h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          Registra un nuevo activo y completa sus requisitos.
+          El activo queda asociado a la dependencia y comparte ese ámbito con
+          todas las ANP de la misma. El identificador de organización en la ruta
+          solo define el contexto de permisos y resolución en el servidor.
         </p>
 
         <div className="mt-5">
@@ -282,15 +312,22 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
               try {
                 setError(null);
                 const values = step1Schema.parse(form.getValues());
-                const activo = await createMutation.mutateAsync({
-                  ownerId: values.ownerId.trim(),
+                const ownerId = values.ownerId.trim();
+                const status = values.status ?? "pendiente";
+
+                setIsCreatingActivos(true);
+                const activo = await createActivo(areaId, {
+                  ownerId,
                   type: values.type,
-                  status: values.status ?? "pendiente",
+                  status,
                 });
+                await invalidateAfterCreate(areaId, ownerId);
                 setCreatedActivo(activo);
                 setStep("requirements");
               } catch (err) {
                 setError(getApiErrorMessage(err));
+              } finally {
+                setIsCreatingActivos(false);
               }
             })}
             className="mt-5 space-y-4"
@@ -396,13 +433,13 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
               </button>
               <button
                 type="submit"
-                disabled={createMutation.isPending}
+                disabled={isCreatingActivos}
                 className="inline-flex items-center gap-2 rounded-lg bg-(--cyan-accent) px-5 py-2.5 text-sm font-bold text-(--navy-deep) transition-colors hover:bg-(--cyan-hover) disabled:opacity-70"
               >
-                {createMutation.isPending && (
+                {isCreatingActivos && (
                   <Loader2 className="size-4 animate-spin" aria-hidden />
                 )}
-                {createMutation.isPending ? "Creando…" : "Continuar"}
+                {isCreatingActivos ? "Creando…" : "Continuar"}
               </button>
             </div>
           </form>
@@ -424,8 +461,8 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
                 <div className="space-y-3">
                   <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900/30 dark:text-slate-300">
                     No hay requisitos configurados para este tipo de activo en
-                    esta área. Un administrador debe definir el catálogo antes
-                    de agregar requisitos.
+                    el catálogo de la dependencia. Un administrador debe
+                    definir el catálogo antes de agregar requisitos.
                   </div>
                   {isAdmin && (
                     <Link
@@ -437,6 +474,23 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
                       Configurar catálogo
                     </Link>
                   )}
+                  <div className="flex flex-wrap justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => void setStep("basic")}
+                      className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                    >
+                      <ArrowLeft className="size-4" aria-hidden />
+                      Atrás
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleFinalizarSinRequisitos()}
+                      className="rounded-lg bg-(--cyan-accent) px-5 py-2.5 text-sm font-bold text-(--navy-deep) transition-colors hover:bg-(--cyan-hover)"
+                    >
+                      Finalizar sin requisitos
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <form
@@ -477,6 +531,17 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
                           })
                         )
                       );
+
+                      await invalidateAfterCreate(
+                        areaId,
+                        createdActivo.ownerId
+                      );
+                      void queryClient.invalidateQueries({
+                        queryKey: getActivoNombreQueryKey(
+                          areaId,
+                          createdActivo.id
+                        ),
+                      });
 
                       props.onCompleted?.(createdActivo);
                       handleClose();

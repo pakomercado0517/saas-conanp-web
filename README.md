@@ -9,6 +9,19 @@ Plataforma web para la **gestión de operación turística regulada en Áreas Na
 - **Multi-tenant:** el usuario puede pertenecer a varias organizaciones; la UI permite cambiar de organización y mostrar solo los datos del contexto actual.
 - **Flujos completos:** registro, verificación de email, suscripción, actividades, eventos, activos, pagos y reportes.
 
+## Dependencia, organización y activos
+
+En el producto conviven dos niveles que a veces se nombran distinto en la API y en la UI:
+
+- **Dependencia:** unidad operativa que agrupa varias **áreas** (ANP) donde aplica la misma gestión (prestadores, catálogos, etc.).
+- **Organización (en la API):** el identificador que en rutas REST aparece como `:organizationId`. En la interfaz se presenta como **área / ANP**; es el contexto en el que el usuario trabaja y el que usa el backend para permisos y resolución.
+
+**Activos:** el modelo de negocio y la API tratan el activo como **ámbito de dependencia**, no como un registro distinto “por cada área”. Un mismo activo no queda restringido en base de datos a una sola ANP: aplica a la dependencia y es visible según permisos en cada contexto.
+
+**URLs y query params (p. ej. `areaId`):** cuando la ruta incluye un identificador de organización o un `areaId` en la query, no significa que el recurso “pertenezca” solo a esa área en el modelo de datos. Es el **contexto de llamada** que el frontend necesita para invocar endpoints del estilo `/api/v1/organizations/:organizationId/...`, alineado con el contrato del backend. Evitar en textos de producto la idea de que el activo es exclusivo de una ANP; en su lugar, hablar de **dependencia** o de **ámbito compartido** entre las áreas de esa dependencia.
+
+Para detalle de endpoints, validar siempre `docs/api_routes/`.
+
 ## Stack técnico
 
 - **Framework:** Next.js 16 (App Router)

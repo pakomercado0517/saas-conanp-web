@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDependenciaContext } from "@/features/dependencias/context/DependenciaContext";
@@ -24,12 +24,21 @@ export function NuevoPrestadorDependenciaPage({
   const { rolesByAreaId, isLoading: rolesLoading } =
     useMembershipRolesInAreas(areaIds);
 
-  const adminAreas = areas.filter((a) => rolesByAreaId.get(a.id) === "admin");
+  const adminAreas = useMemo(
+    () => areas.filter((a) => rolesByAreaId.get(a.id) === "admin"),
+    [areas, rolesByAreaId]
+  );
   const [areaId, setAreaId] = useState<string>("");
   const [serverError, setServerError] = useState<string | null>(null);
 
   const defaultAreaId = adminAreas[0]?.id ?? "";
-  const effectiveAreaId = areaId || defaultAreaId;
+  const effectiveAreaId = areaId !== "" ? areaId : defaultAreaId;
+
+  useEffect(() => {
+    if (areaId !== "" && !adminAreas.some((a) => a.id === areaId)) {
+      setAreaId("");
+    }
+  }, [areaId, adminAreas]);
 
   const { create, isPending } = useCreatePrestadorCompleto(effectiveAreaId);
 
@@ -92,8 +101,8 @@ export function NuevoPrestadorDependenciaPage({
       title="Nuevo prestador"
       description={
         dependencia?.name
-          ? `Registro en un área de ${dependencia.name}.`
-          : "Registro en el área seleccionada."
+          ? `Alta en ${dependencia.name}: elige contexto de ANP para la petición o todas las áreas.`
+          : "Elige el contexto de ANP para la petición o todas las áreas."
       }
     >
       <div className="mb-6 max-w-lg">
@@ -101,20 +110,31 @@ export function NuevoPrestadorDependenciaPage({
           htmlFor="nuevo-prestador-area"
           className="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-200"
         >
-          Área (ANP) donde se crea el prestador
+          Área para el alta
         </label>
         <select
           id="nuevo-prestador-area"
-          value={effectiveAreaId}
+          value={
+            areaId === "" || adminAreas.some((a) => a.id === areaId)
+              ? areaId
+              : ""
+          }
           onChange={(e) => setAreaId(e.target.value)}
-          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400"
+          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
         >
+          <option value="">Todas las áreas de la dependencia</option>
           {adminAreas.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name}
             </option>
           ))}
         </select>
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          «Todas las áreas» usa la primera ANP donde eres administrador en la
+          ruta de la API. Una ANP concreta define ecosistema y activos del
+          formulario. Si el prestador aparece en varias ANP, es decisión del
+          servidor para esta dependencia.
+        </p>
       </div>
 
       {effectiveAreaId ? (

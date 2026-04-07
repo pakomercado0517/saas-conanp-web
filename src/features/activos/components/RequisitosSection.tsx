@@ -89,6 +89,9 @@ export function RequisitosSection({
   const rechazarMutation = useRechazarRequisito(areaId, activoId);
   const suspenderMutation = useSuspenderRequisito(areaId, activoId);
 
+  const requisitosMutationError =
+    createMutation.error ?? updateMutation.error;
+
   const sortedCatalog = useMemo(
     () =>
       catalog
@@ -262,18 +265,32 @@ export function RequisitosSection({
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
           Requisitos
         </h3>
-        {catalogItemsWithoutRequisito.length > 0 && (
-          <button
-            type="button"
-            onClick={() => {
-              form.reset(defaultValues);
-              setShowForm(true);
-            }}
-            className="rounded-md bg-slate-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-900"
-          >
-            Añadir requisito
-          </button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {(requisitos?.length ?? 0) > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                form.reset(defaultValues);
+                setShowForm(true);
+              }}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700/80"
+            >
+              Editar requisitos
+            </button>
+          )}
+          {catalogItemsWithoutRequisito.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                form.reset(defaultValues);
+                setShowForm(true);
+              }}
+              className="rounded-md bg-slate-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-900"
+            >
+              Añadir requisito
+            </button>
+          )}
+        </div>
       </div>
 
       {showForm && schema && (
@@ -281,15 +298,20 @@ export function RequisitosSection({
           onSubmit={handleSubmitFromCatalog}
           className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/30"
         >
-          <h4 className="mb-3 text-sm font-medium">Completar requisitos</h4>
-          {createMutation.isError && createMutation.error && (
-            <p
-              className="mb-2 rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200"
-              role="alert"
-            >
-              {getApiErrorMessage(createMutation.error)}
-            </p>
-          )}
+          <h4 className="mb-3 text-sm font-medium">
+            {(requisitos?.length ?? 0) > 0
+              ? "Editar requisitos"
+              : "Completar requisitos"}
+          </h4>
+          {(createMutation.isError || updateMutation.isError) &&
+            requisitosMutationError && (
+              <p
+                className="mb-2 rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200"
+                role="alert"
+              >
+                {getApiErrorMessage(requisitosMutationError)}
+              </p>
+            )}
           <div className="space-y-4">
             {sortedCatalog.map((item) => (
               <div key={item.id} className="grid gap-2 sm:grid-cols-2">
@@ -354,10 +376,14 @@ export function RequisitosSection({
           <div className="mt-3 flex gap-2">
             <button
               type="submit"
-              disabled={createMutation.isPending}
+              disabled={
+                createMutation.isPending || updateMutation.isPending
+              }
               className="rounded-md bg-slate-800 px-3 py-1.5 text-sm text-white hover:bg-slate-700 disabled:opacity-50"
             >
-              {createMutation.isPending ? "Guardando…" : "Guardar"}
+              {createMutation.isPending || updateMutation.isPending
+                ? "Guardando…"
+                : "Guardar"}
             </button>
             <button
               type="button"
@@ -485,14 +511,26 @@ export function RequisitosSection({
                   )}
                   <td className="px-4 py-2">
                     {req ? (
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(req)}
-                        disabled={deleteMutation.isPending}
-                        className="text-sm font-medium text-red-600 hover:underline disabled:opacity-50 dark:text-red-400"
-                      >
-                        Eliminar
-                      </button>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            form.reset(defaultValues);
+                            setShowForm(true);
+                          }}
+                          className="text-sm font-medium text-(--cyan-accent) hover:underline"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(req)}
+                          disabled={deleteMutation.isPending}
+                          className="text-sm font-medium text-red-600 hover:underline disabled:opacity-50 dark:text-red-400"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
                     ) : (
                       <button
                         type="button"
