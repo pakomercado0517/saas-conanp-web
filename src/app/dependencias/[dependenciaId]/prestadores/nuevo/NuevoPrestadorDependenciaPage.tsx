@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDependenciaContext } from "@/features/dependencias/context/DependenciaContext";
@@ -32,13 +32,11 @@ export function NuevoPrestadorDependenciaPage({
   const [serverError, setServerError] = useState<string | null>(null);
 
   const defaultAreaId = adminAreas[0]?.id ?? "";
-  const effectiveAreaId = areaId !== "" ? areaId : defaultAreaId;
-
-  useEffect(() => {
-    if (areaId !== "" && !adminAreas.some((a) => a.id === areaId)) {
-      setAreaId("");
-    }
-  }, [areaId, adminAreas]);
+  /** Coherente con las opciones del select si cambian roles o áreas. */
+  const resolvedAreaId =
+    areaId !== "" && adminAreas.some((a) => a.id === areaId) ? areaId : "";
+  const effectiveAreaId =
+    resolvedAreaId !== "" ? resolvedAreaId : defaultAreaId;
 
   const { create, isPending } = useCreatePrestadorCompleto(effectiveAreaId);
 
@@ -114,11 +112,7 @@ export function NuevoPrestadorDependenciaPage({
         </label>
         <select
           id="nuevo-prestador-area"
-          value={
-            areaId === "" || adminAreas.some((a) => a.id === areaId)
-              ? areaId
-              : ""
-          }
+          value={resolvedAreaId}
           onChange={(e) => setAreaId(e.target.value)}
           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
         >
