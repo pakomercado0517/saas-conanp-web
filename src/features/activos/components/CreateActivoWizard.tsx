@@ -13,6 +13,7 @@ import { usePrestadores } from "@/features/prestadores/hooks/usePrestadores";
 import { useAreaContext } from "@/features/organizations/context/AreaContext";
 import { getDashboardHref } from "@/shared/config/dashboardNav";
 import { useActivoRequisitoCatalogo } from "../hooks/useActivoRequisitoCatalogo";
+import { getActivoNombreQueryKey } from "../hooks/useActivoNombre";
 import { createActivo } from "../services/activos.api";
 import { createRequisito } from "../services/requisitos.api";
 import { prestadorActivosOwnedQueryKey } from "../constants/prestadorActivosQueryKeys";
@@ -63,18 +64,16 @@ const STATUS_OPTIONS: { value: ActivoStatus; label: string }[] = [
 
 const ACTIVOS_LIST_QUERY_PREFIX = ["activos"] as const;
 
-export type ActivoParallelRegistroTarget = {
-  areaId: string;
-  prestadorId: string;
-  areaName: string;
-};
-
 export interface CreateActivoWizardProps {
   open: boolean;
+  /**
+   * Identificador de organización (ANP) de la ruta: contexto de permisos y resolución en servidor.
+   * El activo se persiste por dependencia; no implica que el registro quede exclusivo de esta ANP.
+   */
   areaId: string;
   onClose: () => void;
-  /** Se llama cuando el wizard termina exitosamente (uno o más activos creados y requisitos guardados). */
-  onCompleted?: (activos: Activo[]) => void;
+  /** Se llama cuando el wizard termina exitosamente (activo creado y requisitos guardados si aplica). */
+  onCompleted?: (activo: Activo) => void;
   /** Si se indica, el propietario queda fijo y no se muestra el selector. */
   fixedOwnerPrestadorId?: string;
   /** Etiqueta para mostrar cuando el propietario está fijado (p. ej. nombre del prestador). */
@@ -84,11 +83,6 @@ export interface CreateActivoWizardProps {
    * Por defecto: dashboard del área `/areas/:areaId/configuracion/requisitos-catalogo`.
    */
   requisitosCatalogoHref?: string;
-  /**
-   * Destinos adicionales (misma dependencia) para ofrecer «todas las áreas».
-   * Debe incluir el par (areaId, prestadorId) del `areaId` actual del wizard.
-   */
-  parallelRegistroTargets?: ReadonlyArray<ActivoParallelRegistroTarget>;
 }
 
 export function CreateActivoWizard(props: CreateActivoWizardProps) {
@@ -99,7 +93,6 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
     fixedOwnerPrestadorId,
     fixedOwnerDisplayName,
     requisitosCatalogoHref,
-    parallelRegistroTargets,
   } = props;
   const queryClient = useQueryClient();
   const configurarCatalogoHref =
@@ -114,34 +107,10 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
   const isAdmin = role === "admin";
 
   const [step, setStep] = useState<WizardStep>("basic");
-  const [createdActivos, setCreatedActivos] = useState<Activo[]>([]);
+  const [createdActivo, setCreatedActivo] = useState<Activo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSavingRequisitos, setIsSavingRequisitos] = useState(false);
   const [isCreatingActivos, setIsCreatingActivos] = useState(false);
-  /** primary = solo área de contexto; all = todas las de `parallelRegistroTargets`. */
-  const [registroScope, setRegistroScope] = useState<"primary" | "all">(
-    "primary"
-  );
-
-  const showParallelScopeUi = Boolean(
-    parallelRegistroTargets && parallelRegistroTargets.length > 1
-  );
-
-  const effectiveRegistroTargets = useMemo((): ActivoParallelRegistroTarget[] => {
-    if (!parallelRegistroTargets?.length) {
-      return [];
-    }
-    if (parallelRegistroTargets.length === 1) {
-      return [...parallelRegistroTargets];
-    }
-    return registroScope === "all"
-      ? [...parallelRegistroTargets]
-      : parallelRegistroTargets.filter((t) => t.areaId === areaId);
-  }, [parallelRegistroTargets, registroScope, areaId]);
-
-  const primaryTargetLabel =
-    parallelRegistroTargets?.find((t) => t.areaId === areaId)?.areaName ??
-    "esta área";
 
   const form = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
@@ -163,7 +132,7 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
     []
   );
 
-  const tipoActivo = createdActivos[0]?.type ?? form.getValues("type");
+  const tipoActivo = createdActivo?.type ?? form.getValues("type");
   const catalogOptions = { dependenciaId: dependenciaId ?? undefined };
   const { data: catalogRaw, isLoading: catalogLoading } =
     useActivoRequisitoCatalogo(areaId, catalogOptions);
@@ -227,48 +196,39 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
       });
     }
     setStep("basic");
-    setCreatedActivos([]);
+    setCreatedActivo(null);
     setError(null);
     setIsSavingRequisitos(false);
     setIsCreatingActivos(false);
-    setRegistroScope("primary");
     requisitosForm.reset();
-  }, [open, fixedOwnerPrestadorId, form, requisitosForm]);
+  }, [open, fixedOwnerPrestadorId, form, requisitosForm, areaId]);
 
   if (!open) return null;
 
   const handleClose = () => {
     setError(null);
     setStep("basic");
-    setCreatedActivos([]);
+    setCreatedActivo(null);
     setIsSavingRequisitos(false);
     setIsCreatingActivos(false);
-    setRegistroScope("primary");
     form.reset();
     requisitosForm.reset();
     onClose();
   };
 
-  async function invalidateAfterCreate(targets: ActivoParallelRegistroTarget[]) {
-    for (const t of targets) {
-      void queryClient.invalidateQueries({
-        queryKey: [...ACTIVOS_LIST_QUERY_PREFIX, t.areaId],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: prestadorActivosOwnedQueryKey(t.areaId, t.prestadorId),
-      });
-    }
+  async function invalidateAfterCreate(orgId: string, prestadorId: string) {
+    void queryClient.invalidateQueries({
+      queryKey: [...ACTIVOS_LIST_QUERY_PREFIX, orgId],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: prestadorActivosOwnedQueryKey(orgId, prestadorId),
+    });
   }
 
   const handleFinalizarSinRequisitos = async () => {
-    await invalidateAfterCreate(
-      createdActivos.map((a) => ({
-        areaId: a.organizationId,
-        prestadorId: a.ownerId,
-        areaName: "",
-      }))
-    );
-    props.onCompleted?.(createdActivos);
+    if (!createdActivo) return;
+    await invalidateAfterCreate(areaId, createdActivo.ownerId);
+    props.onCompleted?.(createdActivo);
     handleClose();
   };
 
@@ -294,7 +254,9 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
           Crear activo
         </h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          Registra un nuevo activo y completa sus requisitos.
+          El activo queda asociado a la dependencia y comparte ese ámbito con
+          todas las ANP de la misma. El identificador de organización en la ruta
+          solo define el contexto de permisos y resolución en el servidor.
         </p>
 
         <div className="mt-5">
@@ -352,28 +314,15 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
                 const values = step1Schema.parse(form.getValues());
                 const ownerId = values.ownerId.trim();
                 const status = values.status ?? "pendiente";
-                const targets: ActivoParallelRegistroTarget[] =
-                  parallelRegistroTargets?.length
-                    ? effectiveRegistroTargets
-                    : [{ areaId, prestadorId: ownerId, areaName: primaryTargetLabel }];
-
-                if (targets.length === 0) {
-                  setError("No hay áreas destino para registrar el activo.");
-                  return;
-                }
 
                 setIsCreatingActivos(true);
-                const created: Activo[] = [];
-                for (const t of targets) {
-                  const activo = await createActivo(t.areaId, {
-                    ownerId: t.prestadorId,
-                    type: values.type,
-                    status,
-                  });
-                  created.push(activo);
-                }
-                await invalidateAfterCreate(targets);
-                setCreatedActivos(created);
+                const activo = await createActivo(areaId, {
+                  ownerId,
+                  type: values.type,
+                  status,
+                });
+                await invalidateAfterCreate(areaId, ownerId);
+                setCreatedActivo(activo);
                 setStep("requirements");
               } catch (err) {
                 setError(getApiErrorMessage(err));
@@ -383,46 +332,6 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
             })}
             className="mt-5 space-y-4"
           >
-            {showParallelScopeUi && parallelRegistroTargets ? (
-              <fieldset className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-600 dark:bg-slate-800/40">
-                <legend className="px-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  Alcance del registro
-                </legend>
-                <p className="mb-3 text-xs text-slate-600 dark:text-slate-400">
-                  El mismo tipo de activo y los mismos requisitos se aplicarán en
-                  cada ANP seleccionada (catálogo compartido por dependencia).
-                </p>
-                <div className="space-y-2">
-                  <label className="flex cursor-pointer items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
-                    <input
-                      type="radio"
-                      name="registro-scope"
-                      className="mt-1"
-                      checked={registroScope === "primary"}
-                      onChange={() => setRegistroScope("primary")}
-                    />
-                    <span>
-                      Solo en{" "}
-                      <span className="font-medium">{primaryTargetLabel}</span>
-                    </span>
-                  </label>
-                  <label className="flex cursor-pointer items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
-                    <input
-                      type="radio"
-                      name="registro-scope"
-                      className="mt-1"
-                      checked={registroScope === "all"}
-                      onChange={() => setRegistroScope("all")}
-                    />
-                    <span>
-                      En todas las áreas donde puedes administrar (
-                      {parallelRegistroTargets.length})
-                    </span>
-                  </label>
-                </div>
-              </fieldset>
-            ) : null}
-
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <label htmlFor="wizard-type" className={labelClass}>
@@ -552,8 +461,8 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
                 <div className="space-y-3">
                   <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900/30 dark:text-slate-300">
                     No hay requisitos configurados para este tipo de activo en
-                    esta área. Un administrador debe definir el catálogo antes
-                    de agregar requisitos.
+                    el catálogo de la dependencia. Un administrador debe
+                    definir el catálogo antes de agregar requisitos.
                   </div>
                   {isAdmin && (
                     <Link
@@ -586,7 +495,7 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
               ) : (
                 <form
                   onSubmit={requisitosForm.handleSubmit(async (data) => {
-                    if (createdActivos.length === 0) return;
+                    if (!createdActivo) return;
                     try {
                       setError(null);
                       setIsSavingRequisitos(true);
@@ -613,28 +522,28 @@ export function CreateActivoWizard(props: CreateActivoWizardProps) {
                         });
                       }
 
-                      for (const activo of createdActivos) {
-                        const orgId = activo.organizationId;
-                        await Promise.all(
-                          itemsToSend.map(({ item, value, documentUrl }) =>
-                            createRequisito(orgId, activo.id, {
-                              key: item.key,
-                              value,
-                              documentUrl,
-                            })
-                          )
-                        );
-                      }
-
-                      await invalidateAfterCreate(
-                        createdActivos.map((a) => ({
-                          areaId: a.organizationId,
-                          prestadorId: a.ownerId,
-                          areaName: "",
-                        }))
+                      await Promise.all(
+                        itemsToSend.map(({ item, value, documentUrl }) =>
+                          createRequisito(areaId, createdActivo.id, {
+                            key: item.key,
+                            value,
+                            documentUrl,
+                          })
+                        )
                       );
 
-                      props.onCompleted?.(createdActivos);
+                      await invalidateAfterCreate(
+                        areaId,
+                        createdActivo.ownerId
+                      );
+                      void queryClient.invalidateQueries({
+                        queryKey: getActivoNombreQueryKey(
+                          areaId,
+                          createdActivo.id
+                        ),
+                      });
+
+                      props.onCompleted?.(createdActivo);
                       handleClose();
                     } catch (err) {
                       setError(getApiErrorMessage(err));

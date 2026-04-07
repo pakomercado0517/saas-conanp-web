@@ -2,24 +2,19 @@
 
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
-import { useQueries, useQueryClient } from "@tanstack/react-query";
-import { Loader2, X } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import { buildActivoDependenciaDetailHref } from "@/features/activos/lib/activo-dependencia-routes";
 import { useAlertDialog } from "@/shared/components/AlertDialogProvider";
 import { getApiErrorMessage } from "@/shared/types/api";
 import { AreaContextProvider } from "@/features/organizations/context/AreaContext";
 import { useMembershipRolesInAreas } from "@/features/memberships/hooks/useMembershipRolesInAreas";
-import { findNombreFromRequisitos } from "@/features/activos/lib/activo-nombre-from-requisitos";
 import {
   deleteActivo,
   listActivosOwnedByPrestador,
 } from "@/features/activos/services/activos.api";
-import { listRequisitos } from "@/features/activos/services/requisitos.api";
 import { useActivoNombre } from "@/features/activos/hooks/useActivoNombre";
-import {
-  CreateActivoWizard,
-  type ActivoParallelRegistroTarget,
-} from "@/features/activos/components/CreateActivoWizard";
+import { CreateActivoWizard } from "@/features/activos/components/CreateActivoWizard";
 import { prestadorActivosOwnedQueryKey } from "@/features/activos/constants/prestadorActivosQueryKeys";
 import type { Activo, ActivoStatus, ActivoTipo } from "@/features/activos/types";
 import type { PrestadorPermisosAreaBinding } from "./PrestadorPermisosSection";
@@ -38,74 +33,23 @@ const STATUS_LABELS: Record<ActivoStatus, string> = {
   suspendido: "Suspendido",
 };
 
-const ACTIVO_STATUS_ORDER: Record<ActivoStatus, number> = {
-  rechazado: 0,
-  suspendido: 1,
-  pendiente: 2,
-  aprobado: 3,
-};
-
-function worstActivoStatus(statuses: ActivoStatus[]): ActivoStatus {
-  const [head, ...tail] = statuses;
-  if (head == null) return "pendiente";
-  return tail.reduce(
-    (worst, s) =>
-      ACTIVO_STATUS_ORDER[s] < ACTIVO_STATUS_ORDER[worst] ? s : worst,
-    head
-  );
-}
-
-const NOMBRE_REQUISITO_QUERY_KEY = ["activo-nombre-requisito"] as const;
-
-function activoRowKey(row: ActivoRow): string {
-  return `${row.areaId}:${row.activo.id}`;
-}
-
-/**
- * Identifica el mismo activo lógico en varias ANP: nombre (requisito o campo),
- * o misma marca de tiempo de creación (alta multi-área), o fila única.
- */
-function buildActivoLogicalGroupKey(
-  row: ActivoRow,
-  nombreFromRequisito: string | null | undefined,
-  nombreRequisitoPendiente: boolean
-): string {
-  const n = (
-    nombreFromRequisito?.trim() ||
-    row.activo.nombre?.trim() ||
-    ""
-  ).toLowerCase();
-  if (n) {
-    return `${row.activo.type}::name::${n}`;
-  }
-  if (nombreRequisitoPendiente) {
-    return `singleton::${row.areaId}::${row.activo.id}`;
-  }
-  /** Misma fecha (día) + tipo: suele coincidir con altas multi-área el mismo día sin requisito nombre. */
-  const day = row.activo.createdAt?.slice(0, 10);
-  if (day) {
-    return `${row.activo.type}::day::${day}`;
-  }
-  return `singleton::${row.areaId}::${row.activo.id}`;
-}
-
 function ActivoNombreCell({
   areaId,
   activoId,
+  fallbackNombre,
 }: {
   areaId: string;
   activoId: string;
+  /** Desde el listado del activo; el backend puede enviarlo sin depender del requisito `nombre`. */
+  fallbackNombre?: string | null;
 }) {
-  const { nombre, isLoading } = useActivoNombre(areaId, activoId);
-  if (isLoading) return <span className="text-slate-400">—</span>;
+  const { nombre, isLoading } = useActivoNombre(areaId, activoId, {
+    fallbackNombre,
+  });
+  if (isLoading && !nombre) {
+    return <span className="text-slate-400">—</span>;
+  }
   return <span>{nombre ?? "Sin nombre"}</span>;
-}
-
-interface ActivoRow {
-  areaId: string;
-  areaName: string;
-  prestadorId: string;
-  activo: Activo;
 }
 
 interface PrestadorActivosSectionProps {
@@ -133,23 +77,6 @@ export function PrestadorActivosSection({
     [rolesByAreaId]
   );
 
-  const activosQueries = useQueries({
-    queries: bindings.map((b) => ({
-      queryKey: prestadorActivosOwnedQueryKey(b.areaId, b.prestadorId),
-      queryFn: async () =>
-        listActivosOwnedByPrestador(b.areaId, b.prestadorId),
-      enabled: Boolean(b.areaId && b.prestadorId && !rolesLoading),
-    })),
-  });
-
-  const [showWizard, setShowWizard] = useState(false);
-  const [wizardAreaBinding, setWizardAreaBinding] =
-    useState<PrestadorPermisosAreaBinding | null>(null);
-  const [areasDetailMembers, setAreasDetailMembers] = useState<
-    ActivoRow[] | null
-  >(null);
-  const alertDialog = useAlertDialog();
-
   const manageableBindings = useMemo(
     () => bindings.filter((b) => canManageInArea(b.areaId)),
     [bindings, canManageInArea]
@@ -161,99 +88,44 @@ export function PrestadorActivosSection({
     [manageableBindings]
   );
 
-  const parallelRegistroTargets: ActivoParallelRegistroTarget[] | undefined =
-    useMemo(() => {
-      if (manageableBindings.length <= 1) return undefined;
-      return manageableBindings.map((b) => ({
-        areaId: b.areaId,
-        prestadorId: b.prestadorId,
-        areaName: b.areaName,
-      }));
-    }, [manageableBindings]);
+  /** Un solo contexto de API: el listado es el mismo a nivel de dependencia; la ruta usa una ANP para permisos. */
+  const listContextBinding = useMemo(
+    (): PrestadorPermisosAreaBinding | null =>
+      manageableBindings[0] ?? bindings[0] ?? null,
+    [manageableBindings, bindings]
+  );
 
-  const rows: ActivoRow[] = useMemo(() => {
-    const out: ActivoRow[] = [];
-    bindings.forEach((b, index) => {
-      const list = activosQueries[index]?.data ?? [];
-      for (const activo of list) {
-        out.push({
-          areaId: b.areaId,
-          areaName: b.areaName,
-          prestadorId: b.prestadorId,
-          activo,
-        });
-      }
-    });
-    return out.sort((a, b) => {
-      const byArea = a.areaName.localeCompare(b.areaName, "es");
-      if (byArea !== 0) return byArea;
-      return a.activo.id.localeCompare(b.activo.id, "es");
-    });
-  }, [bindings, activosQueries]);
-
-  const nombreQueries = useQueries({
-    queries: rows.map((row) => ({
-      queryKey: [
-        ...NOMBRE_REQUISITO_QUERY_KEY,
-        row.areaId,
-        row.activo.id,
-      ] as const,
-      queryFn: async () => {
-        const reqs = await listRequisitos(row.areaId, row.activo.id);
-        return findNombreFromRequisitos(reqs);
-      },
-      enabled: Boolean(row.areaId && row.activo.id && !rolesLoading),
-    })),
+  const {
+    data: activosList = [],
+    isLoading: loadingActivos,
+    isError,
+    error: activosError,
+  } = useQuery({
+    queryKey: listContextBinding
+      ? prestadorActivosOwnedQueryKey(
+          listContextBinding.areaId,
+          listContextBinding.prestadorId
+        )
+      : (["prestador-activos-owned", "disabled"] as const),
+    queryFn: () =>
+      listActivosOwnedByPrestador(
+        listContextBinding!.areaId,
+        listContextBinding!.prestadorId
+      ),
+    enabled: Boolean(listContextBinding && !rolesLoading),
   });
 
-  const rowIndexByKey = useMemo(() => {
-    const m = new Map<string, number>();
-    rows.forEach((r, i) => {
-      m.set(activoRowKey(r), i);
-    });
-    return m;
-  }, [rows]);
+  const sortedActivos = useMemo(
+    () => [...activosList].sort((a, b) => a.id.localeCompare(b.id, "es")),
+    [activosList]
+  );
 
-  const groupedRowData = useMemo(() => {
-    const map = new Map<string, ActivoRow[]>();
-    rows.forEach((row, i) => {
-      const q = nombreQueries[i];
-      const fromReq = q?.data ?? null;
-      const pending = Boolean(q?.isLoading);
-      const key = buildActivoLogicalGroupKey(row, fromReq, pending);
-      const arr = map.get(key) ?? [];
-      arr.push(row);
-      map.set(key, arr);
-    });
-
-    const groups = Array.from(map.values()).map((members) =>
-      [...members].sort((a, b) =>
-        a.areaName.localeCompare(b.areaName, "es")
-      )
-    );
-
-    return groups.map((members) => {
-      let displayNombre: string | null = null;
-      for (const m of members) {
-        const idx = rowIndexByKey.get(activoRowKey(m));
-        if (idx == null) continue;
-        const q = nombreQueries[idx];
-        const t = q?.data ?? m.activo.nombre?.trim() ?? null;
-        if (t) {
-          displayNombre = t;
-          break;
-        }
-      }
-      return { members, displayNombre };
-    });
-  }, [rows, nombreQueries, rowIndexByKey]);
+  const [showWizard, setShowWizard] = useState(false);
+  const [wizardAreaBinding, setWizardAreaBinding] =
+    useState<PrestadorPermisosAreaBinding | null>(null);
+  const alertDialog = useAlertDialog();
 
   const canManageAny = manageableBindings.length > 0;
-
-  const loadingActivos = activosQueries.some((q) => q.isLoading);
-  const errorQuery = activosQueries.find((q) => q.isError);
-  const loadingNombres =
-    rows.length > 0 && nombreQueries.some((q) => q.isLoading);
 
   const invalidateActivos = useCallback(() => {
     for (const b of bindings) {
@@ -278,15 +150,21 @@ export function PrestadorActivosSection({
     return null;
   }
 
+  if (!listContextBinding) {
+    return null;
+  }
+
   return (
     <section className="mt-8 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800/40">
       <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
         Activos del prestador
       </h2>
       <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
-        Patrimonio operativo asociado a este prestador en la dependencia. El
-        alcance de permisos por ANP se gestiona en la sección de permisos; aquí
-        solo se administran los activos y sus requisitos.
+        Los activos se registran a nivel de dependencia: el mismo registro aplica
+        a todas las ANP de esta dependencia. El identificador de organización en
+        la API solo define el contexto de permisos y resolución en el servidor;
+        no significa que el activo quede guardado solo para una ANP. Aquí
+        administras los activos y requisitos asociados a este prestador.
       </p>
 
       {!canManageAny ? (
@@ -301,14 +179,9 @@ export function PrestadorActivosSection({
           <Loader2 className="size-4 animate-spin" aria-hidden />
           Cargando activos…
         </p>
-      ) : loadingNombres ? (
-        <p className="flex items-center gap-2 text-sm text-slate-500">
-          <Loader2 className="size-4 animate-spin" aria-hidden />
-          Preparando listado…
-        </p>
-      ) : errorQuery?.error ? (
+      ) : isError && activosError ? (
         <p className="text-sm text-red-600 dark:text-red-400">
-          {getApiErrorMessage(errorQuery.error)}
+          {getApiErrorMessage(activosError)}
         </p>
       ) : (
         <>
@@ -330,7 +203,7 @@ export function PrestadorActivosSection({
             </div>
           ) : null}
 
-          {!rows.length ? (
+          {!sortedActivos.length ? (
             <p className="text-sm text-slate-600 dark:text-slate-400">
               Aún no hay activos registrados para este prestador.
             </p>
@@ -350,9 +223,9 @@ export function PrestadorActivosSection({
                     </th>
                     <th
                       className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300"
-                      title="Número de ANP donde está registrado el activo"
+                      title="El activo pertenece a la dependencia; no queda restringido a una sola ANP en base de datos."
                     >
-                      Áreas
+                      Ámbito
                     </th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">
                       Acciones
@@ -360,18 +233,16 @@ export function PrestadorActivosSection({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900/30">
-                  {groupedRowData.map(({ members, displayNombre }) => (
-                    <ActivoGroupedRow
-                      key={members
-                        .map((m) => `${m.areaId}:${m.activo.id}`)
-                        .join("|")}
-                      members={members}
-                      displayNombre={displayNombre}
+                  {sortedActivos.map((activo) => (
+                    <ActivoTableRow
+                      key={activo.id}
+                      activo={activo}
                       dependenciaId={dependenciaId}
-                      canManageInArea={canManageInArea}
-                      onOpenAreasDetail={setAreasDetailMembers}
-                      onDeleted={invalidateActivos}
+                      areaId={listContextBinding.areaId}
+                      prestadorId={listContextBinding.prestadorId}
+                      canDelete={canManageInArea(listContextBinding.areaId)}
                       alertDialog={alertDialog}
+                      onDeleted={invalidateActivos}
                     />
                   ))}
                 </tbody>
@@ -380,14 +251,6 @@ export function PrestadorActivosSection({
           )}
         </>
       )}
-
-      {areasDetailMembers && areasDetailMembers.length > 0 ? (
-        <ActivosAreasDetailModal
-          rows={areasDetailMembers}
-          dependenciaId={dependenciaId}
-          onClose={() => setAreasDetailMembers(null)}
-        />
-      ) : null}
 
       {showWizard && wizardAreaBinding ? (
         <AreaContextProvider areaId={wizardAreaBinding.areaId}>
@@ -398,7 +261,6 @@ export function PrestadorActivosSection({
             fixedOwnerPrestadorId={wizardAreaBinding.prestadorId}
             fixedOwnerDisplayName={prestadorDisplayName}
             requisitosCatalogoHref={`/dependencias/${dependenciaId}/requisitos-catalogo`}
-            parallelRegistroTargets={parallelRegistroTargets}
             onCompleted={() => {
               invalidateActivos();
               handleCloseWizard();
@@ -410,55 +272,40 @@ export function PrestadorActivosSection({
   );
 }
 
-interface ActivoGroupedRowProps {
-  members: ActivoRow[];
-  displayNombre: string | null;
+interface ActivoTableRowProps {
+  activo: Activo;
   dependenciaId: string;
-  canManageInArea: (areaId: string) => boolean;
-  onOpenAreasDetail: (rows: ActivoRow[]) => void;
+  areaId: string;
+  prestadorId: string;
+  canDelete: boolean;
   onDeleted: () => void;
   alertDialog: ReturnType<typeof useAlertDialog>;
 }
 
-function ActivoGroupedRow({
-  members,
-  displayNombre,
+function ActivoTableRow({
+  activo,
   dependenciaId,
-  canManageInArea,
-  onOpenAreasDetail,
+  areaId,
+  prestadorId,
+  canDelete,
   onDeleted,
   alertDialog,
-}: ActivoGroupedRowProps) {
-  const first = members[0];
-  if (!first) return null;
-
+}: ActivoTableRowProps) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const areaCount = members.length;
-  const statusLabel = worstActivoStatus(
-    members.map((m) => m.activo.status)
-  );
-  const manageableMembers = members.filter((m) =>
-    canManageInArea(m.areaId)
-  );
 
-  const singleHref = buildActivoDependenciaDetailHref(
+  const detailHref = buildActivoDependenciaDetailHref(
     dependenciaId,
-    first.prestadorId,
-    first.areaId,
-    first.activo.id
+    prestadorId,
+    areaId,
+    activo.id
   );
 
-  const handleDeleteGroup = async () => {
-    if (manageableMembers.length === 0) return;
+  const handleDelete = async () => {
+    if (!canDelete) return;
     const confirmed = await alertDialog.confirm({
-      title:
-        manageableMembers.length === 1
-          ? "Eliminar activo"
-          : "Eliminar activo en varias áreas",
+      title: "Eliminar activo",
       description:
-        manageableMembers.length === 1
-          ? "¿Eliminar este activo? Esta acción no se puede deshacer."
-          : `Se eliminarán ${manageableMembers.length} registro(s) del activo en distintas áreas. Esta acción no se puede deshacer.`,
+        "¿Eliminar este activo? Esta acción no se puede deshacer.",
       cancelLabel: "Cancelar",
       confirmLabel: "Eliminar",
       variant: "destructive",
@@ -466,21 +313,11 @@ function ActivoGroupedRow({
     if (!confirmed) return;
     setIsDeleting(true);
     try {
-      for (const m of manageableMembers) {
-        const message = await deleteActivo(m.areaId, m.activo.id);
-        if (manageableMembers.length === 1) {
-          alertDialog.open({
-            title: "Activo eliminado",
-            description: message ?? "El activo se eliminó correctamente.",
-          });
-        }
-      }
-      if (manageableMembers.length > 1) {
-        alertDialog.open({
-          title: "Activos eliminados",
-          description: "Se completaron las eliminaciones solicitadas.",
-        });
-      }
+      const message = await deleteActivo(areaId, activo.id);
+      alertDialog.open({
+        title: "Activo eliminado",
+        description: message ?? "El activo se eliminó correctamente.",
+      });
       onDeleted();
     } catch {
       // Error manejado por capas inferiores
@@ -489,32 +326,24 @@ function ActivoGroupedRow({
     }
   };
 
-  const nombreCell = displayNombre ? (
-    <span className="font-medium text-slate-800 dark:text-slate-100">
-      {displayNombre}
-    </span>
-  ) : (
-    <span className="font-medium text-slate-800 dark:text-slate-100">
-      <ActivoNombreCell areaId={first.areaId} activoId={first.activo.id} />
-    </span>
-  );
+  const statusLabel = activo.status;
 
   return (
     <tr>
       <td className="px-4 py-2 text-sm">
-        {areaCount === 1 ? (
-          <Link
-            href={singleHref}
-            className="text-slate-800 hover:underline dark:text-slate-100"
-          >
-            {nombreCell}
-          </Link>
-        ) : (
-          nombreCell
-        )}
+        <Link
+          href={detailHref}
+          className="font-medium text-slate-800 hover:underline dark:text-slate-100"
+        >
+          <ActivoNombreCell
+            areaId={areaId}
+            activoId={activo.id}
+            fallbackNombre={activo.nombre}
+          />
+        </Link>
       </td>
       <td className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">
-        {TIPO_LABELS[first.activo.type]}
+        {TIPO_LABELS[activo.type]}
       </td>
       <td className="px-4 py-2 text-sm">
         <span
@@ -533,34 +362,24 @@ function ActivoGroupedRow({
       </td>
       <td className="px-4 py-2 text-sm text-slate-700 dark:text-slate-300">
         <span
-          className="tabular-nums text-base font-semibold"
-          title={`Registrado en ${areaCount} ${areaCount === 1 ? "área" : "áreas"}`}
+          className="text-sm"
+          title="Ámbito de dependencia; visible desde cualquier ANP de esta dependencia según permisos."
         >
-          {areaCount}
+          Dependencia
         </span>
       </td>
       <td className="px-4 py-2">
         <div className="flex flex-wrap gap-2">
-          {areaCount === 1 ? (
-            <Link
-              href={singleHref}
-              className="text-sm font-medium text-(--cyan-accent) hover:underline"
-            >
-              Ver
-            </Link>
-          ) : (
+          <Link
+            href={detailHref}
+            className="text-sm font-medium text-(--cyan-accent) hover:underline"
+          >
+            Ver
+          </Link>
+          {canDelete ? (
             <button
               type="button"
-              onClick={() => onOpenAreasDetail(members)}
-              className="text-sm font-medium text-(--cyan-accent) hover:underline"
-            >
-              Ver
-            </button>
-          )}
-          {manageableMembers.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => void handleDeleteGroup()}
+              onClick={() => void handleDelete()}
               disabled={isDeleting}
               className="text-sm font-medium text-red-600 hover:underline disabled:opacity-50 dark:text-red-400"
             >
@@ -570,82 +389,5 @@ function ActivoGroupedRow({
         </div>
       </td>
     </tr>
-  );
-}
-
-interface ActivosAreasDetailModalProps {
-  rows: ActivoRow[];
-  dependenciaId: string;
-  onClose: () => void;
-}
-
-function ActivosAreasDetailModal({
-  rows,
-  dependenciaId,
-  onClose,
-}: ActivosAreasDetailModalProps) {
-  return (
-    <div
-      className="fixed inset-0 z-60 flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="activos-areas-detail-title"
-    >
-      <button
-        type="button"
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-        aria-label="Cerrar"
-      />
-      <div className="relative max-h-[min(80vh,520px)] w-full max-w-md overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-3 top-3 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
-          aria-label="Cerrar"
-        >
-          <X className="size-5" />
-        </button>
-        <h3
-          id="activos-areas-detail-title"
-          className="pr-10 text-lg font-bold text-slate-900 dark:text-slate-100"
-        >
-          Activo en {rows.length}{" "}
-          {rows.length === 1 ? "área" : "áreas"}
-        </h3>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          Abre el detalle en cada ANP para ver requisitos y estado del registro.
-        </p>
-        <ul className="mt-4 space-y-2">
-          {rows.map((r) => {
-            const href = buildActivoDependenciaDetailHref(
-              dependenciaId,
-              r.prestadorId,
-              r.areaId,
-              r.activo.id
-            );
-            return (
-              <li key={`${r.areaId}:${r.activo.id}`}>
-                <Link
-                  href={href}
-                  className="block rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-(--cyan-accent) hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800/50"
-                >
-                  {r.areaName}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-        <div className="mt-5 flex justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
-            Cerrar
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }

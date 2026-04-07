@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { getApiErrorMessage } from "@/shared/types/api";
@@ -66,18 +66,14 @@ export function PrestadoresDependenciaList({
   );
 
   const defaultCreateAreaId = adminAreas[0]?.id ?? "";
+  /** Coherente con opciones actuales del select (evita id obsoleto si cambian roles/áreas). */
+  const resolvedCreateAreaId =
+    createAreaId !== "" && adminAreas.some((a) => a.id === createAreaId)
+      ? createAreaId
+      : "";
   /** ANP que va en la URL de `crear-completo`; vacío en estado = opción «todas» → primera ANP admin. */
   const effectiveCreateAreaId =
-    createAreaId !== "" ? createAreaId : defaultCreateAreaId;
-
-  useEffect(() => {
-    if (
-      createAreaId !== "" &&
-      !adminAreas.some((a) => a.id === createAreaId)
-    ) {
-      setCreateAreaId("");
-    }
-  }, [createAreaId, adminAreas]);
+    resolvedCreateAreaId !== "" ? resolvedCreateAreaId : defaultCreateAreaId;
 
   const canCreateInSomeArea = areaIds.some(
     (id) => rolesByAreaId.get(id) === "admin"
@@ -107,7 +103,7 @@ export function PrestadoresDependenciaList({
   return (
     <>
       {canCreateInSomeArea && (
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-end">
+        <div className="my-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-end">
           <Link
             href={`/dependencias/${dependenciaId}/prestadores/nuevo`}
             className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -123,30 +119,17 @@ export function PrestadoresDependenciaList({
             </label>
             <select
               id="prestador-area-alta"
-              value={
-                createAreaId === "" ||
-                adminAreas.some((a) => a.id === createAreaId)
-                  ? createAreaId
-                  : ""
-              }
+              value={resolvedCreateAreaId}
               onChange={(e) => setCreateAreaId(e.target.value)}
               className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
             >
-              <option value="">
-                Todas las áreas de la dependencia
-              </option>
+              <option value="">Todas las áreas de la dependencia</option>
               {adminAreas.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.name}
                 </option>
               ))}
             </select>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              «Todas las áreas» usa la primera ANP donde eres administrador en la
-              ruta de la API. Si eliges una ANP, esa organización define
-              ecosistema y activos del formulario. Que el prestador aparezca en
-              varias ANP depende del servidor, no solo de esta lista.
-            </p>
           </div>
           <button
             type="button"
@@ -196,81 +179,81 @@ export function PrestadoresDependenciaList({
               No hay prestadores registrados en el área seleccionada.
             </p>
           ) : (
-          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-          <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-            <thead className="bg-slate-50 dark:bg-slate-800/50">
-              <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">
-                  Nombre
-                </th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">
-                  Correo
-                </th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">
-                  Estado
-                </th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">
-                  Activos
-                </th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900/30">
-              {filteredAggregated.map((row) => {
-                const primary = pickEntryForRow(row, tableFilterAreaId);
-                const href = `/dependencias/${dependenciaId}/prestadores/${
-                  primary.prestadorId
-                }?areaId=${encodeURIComponent(primary.areaId)}`;
-                const { total: activosTotal, isLoading: activosLoading } =
-                  summaryForRow(row);
-                return (
-                  <tr key={row.userId}>
-                    <td className="px-4 py-2 text-sm font-medium text-slate-800 dark:text-slate-100">
-                      <Link href={href} className="hover:underline">
-                        {row.name}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">
-                      {row.email}
-                    </td>
-                    <td className="px-4 py-2 text-sm text-slate-700 dark:text-slate-300">
-                      {getPrestadorStatusLabel(row.status)}
-                    </td>
-                    <td className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">
-                      {activosLoading ? (
-                        <span className="inline-flex items-center gap-1.5 text-slate-500">
-                          <Loader2
-                            className="size-4 shrink-0 animate-spin"
-                            aria-hidden
-                          />
-                          <span className="sr-only">Cargando activos…</span>
-                        </span>
-                      ) : (
-                        <Link
-                          href={href}
-                          className="tabular-nums hover:underline"
-                          title="Ir al detalle para ver y gestionar activos"
-                        >
-                          {labelActivosCount(activosTotal)}
-                        </Link>
-                      )}
-                    </td>
-                    <td className="px-4 py-2">
-                      <Link
-                        href={href}
-                        className="text-sm font-medium text-(--cyan-accent) hover:underline"
-                      >
-                        Ver
-                      </Link>
-                    </td>
+            <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+              <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                <thead className="bg-slate-50 dark:bg-slate-800/50">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">
+                      Nombre
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">
+                      Correo
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">
+                      Estado
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">
+                      Activos
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300">
+                      Acciones
+                    </th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-900/30">
+                  {filteredAggregated.map((row) => {
+                    const primary = pickEntryForRow(row, tableFilterAreaId);
+                    const href = `/dependencias/${dependenciaId}/prestadores/${
+                      primary.prestadorId
+                    }?areaId=${encodeURIComponent(primary.areaId)}`;
+                    const { total: activosTotal, isLoading: activosLoading } =
+                      summaryForRow(row);
+                    return (
+                      <tr key={row.userId}>
+                        <td className="px-4 py-2 text-sm font-medium text-slate-800 dark:text-slate-100">
+                          <Link href={href} className="hover:underline">
+                            {row.name}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">
+                          {row.email}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-slate-700 dark:text-slate-300">
+                          {getPrestadorStatusLabel(row.status)}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">
+                          {activosLoading ? (
+                            <span className="inline-flex items-center gap-1.5 text-slate-500">
+                              <Loader2
+                                className="size-4 shrink-0 animate-spin"
+                                aria-hidden
+                              />
+                              <span className="sr-only">Cargando activos…</span>
+                            </span>
+                          ) : (
+                            <Link
+                              href={href}
+                              className="tabular-nums hover:underline"
+                              title="Ir al detalle para ver y gestionar activos"
+                            >
+                              {labelActivosCount(activosTotal)}
+                            </Link>
+                          )}
+                        </td>
+                        <td className="px-4 py-2">
+                          <Link
+                            href={href}
+                            className="text-sm font-medium text-(--cyan-accent) hover:underline"
+                          >
+                            Ver
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </>
       )}

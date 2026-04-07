@@ -12,10 +12,11 @@ export interface PrestadorActivosCountSummary {
 }
 
 /**
- * Cuenta activos por prestador (sumando todas las ANP donde tiene registro),
- * reutilizando la misma query que el detalle del prestador (cache compartida).
+ * Cuenta activos por prestador a nivel de dependencia: el listado por ANP devuelve
+ * el mismo conjunto lógico de activos (alcance dependencia), así que no se suman
+ * filas por cada ANP — se usa una entrada representativa (misma query que el detalle).
  *
- * @param activosCountScopeAreaId Si no está vacío, el total de activos por fila solo incluye entradas de esa ANP.
+ * @param activosCountScopeAreaId Si no está vacío, solo se considera el par de esa ANP (vista filtrada).
  */
 export function usePrestadoresActivosCountsForAggregated(
   aggregated: AggregatedPrestadorRow[],
@@ -66,14 +67,15 @@ export function usePrestadoresActivosCountsForAggregated(
         activosCountScopeAreaId === ""
           ? row.entries
           : row.entries.filter((e) => e.areaId === activosCountScopeAreaId);
-      let total = 0;
-      let isLoading = false;
-      for (const e of entries) {
-        const k = `${e.areaId}:${e.prestadorId}`;
-        if (loadingByPairKey.get(k)) isLoading = true;
-        total += countByPairKey.get(k) ?? 0;
+      if (entries.length === 0) {
+        return { total: 0, isLoading: false };
       }
-      return { total, isLoading };
+      const representative = entries[0]!;
+      const k = `${representative.areaId}:${representative.prestadorId}`;
+      return {
+        total: countByPairKey.get(k) ?? 0,
+        isLoading: Boolean(loadingByPairKey.get(k)),
+      };
     },
     [countByPairKey, loadingByPairKey, activosCountScopeAreaId]
   );

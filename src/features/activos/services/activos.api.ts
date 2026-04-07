@@ -231,7 +231,11 @@ export async function createActivo(
     `${BASE}/${organizationId}/activos`,
     { method: "POST", body }
   );
-  return normalizeActivo((res as CreateActivoResponse).data);
+  const normalized = normalizeActivo((res as CreateActivoResponse).data);
+  if (!normalized.organizationId.trim()) {
+    return { ...normalized, organizationId };
+  }
+  return normalized;
 }
 
 interface UpdateActivoResponse {

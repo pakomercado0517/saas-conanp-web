@@ -33,9 +33,21 @@ function getPropietarioName(a: Activo): string {
   return a.Propietario?.name ?? a.ownerId;
 }
 
-function ActivoNombreCell({ areaId, activoId }: { areaId: string; activoId: string }) {
-  const { nombre, isLoading } = useActivoNombre(areaId, activoId);
-  if (isLoading) return <span className="text-slate-400">—</span>;
+function ActivoNombreCell({
+  areaId,
+  activoId,
+  fallbackNombre,
+}: {
+  areaId: string;
+  activoId: string;
+  fallbackNombre?: string | null;
+}) {
+  const { nombre, isLoading } = useActivoNombre(areaId, activoId, {
+    fallbackNombre,
+  });
+  if (isLoading && !nombre) {
+    return <span className="text-slate-400">—</span>;
+  }
   return <span>{nombre ?? "Sin nombre"}</span>;
 }
 
@@ -227,7 +239,11 @@ export function ActivosList({ areaId }: ActivosListProps) {
                       href={getDashboardHref(areaId, `/activos/${a.id}`)}
                       className="font-medium text-slate-800 hover:underline dark:text-slate-100"
                     >
-                      <ActivoNombreCell areaId={areaId} activoId={a.id} />
+                      <ActivoNombreCell
+                        areaId={areaId}
+                        activoId={a.id}
+                        fallbackNombre={a.nombre}
+                      />
                     </Link>
                   </td>
                   <td className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">
