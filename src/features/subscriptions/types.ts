@@ -3,6 +3,11 @@ export type SubscriptionsFeatureReady = true;
 /** Clave de sessionStorage para el plan elegido desde la landing (flujo registro → login → suscripción) */
 export const PENDING_PLAN_ID_STORAGE_KEY = "conanp_pending_plan_id";
 
+/** Tras iniciar Stripe Checkout (suscripción), para polling y regreso desde /billing/* */
+export const CHECKOUT_RETURN_AREA_ID_KEY = "conanp_checkout_return_area_id";
+export const CHECKOUT_RETURN_DEPENDENCIA_ID_KEY =
+  "conanp_checkout_return_dependencia_id";
+
 export type SubscriptionStatus =
   | "active"
   | "trialing"
@@ -106,6 +111,13 @@ export interface CreateSubscriptionPayload {
   trialEnd?: string | null;
 }
 
+/** Body POST checkout-session (Stripe Checkout hospedado, docs/api_routes/subscriptions.md) */
+export interface CreateCheckoutSessionPayload {
+  planId: string;
+  billingCycle: BillingCycle;
+  trialEnd?: string | null;
+}
+
 /**
  * Body PATCH cambiar plan. El API exige al menos uno de planId, billingCycle, prorate.
  * El caller debe enviar al menos un campo.
@@ -126,6 +138,14 @@ export interface CancelSubscriptionBody {
 export interface PostSubscriptionResponse {
   success: true;
   data: Subscription;
+  message?: string;
+  timestamp?: string;
+}
+
+/** Respuesta POST .../subscriptions/checkout-session */
+export interface PostCheckoutSessionResponse {
+  success: true;
+  data: { url: string; sessionId: string };
   message?: string;
   timestamp?: string;
 }

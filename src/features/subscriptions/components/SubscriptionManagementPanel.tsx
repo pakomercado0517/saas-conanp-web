@@ -200,6 +200,8 @@ export function SubscriptionManagementPanel({
       )}
 
       <PlanComparisonSection
+        areaId={areaId}
+        dependenciaId={dependenciaId}
         subscription={subscription}
         billingCycle={billingCycle}
         onBillingCycleChange={setBillingCycle}
@@ -214,6 +216,7 @@ export function SubscriptionManagementPanel({
           setInitialPlanId(undefined);
         }}
         areaId={areaId}
+        dependenciaId={dependenciaId}
         currentPlanId={subscription?.planId}
         initialPlanId={initialPlanId}
         mode={dialogMode}

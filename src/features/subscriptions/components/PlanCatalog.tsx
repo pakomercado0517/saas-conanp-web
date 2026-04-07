@@ -24,9 +24,14 @@ function isFreePlanName(name: string): boolean {
 
 interface PlanCatalogProps {
   areaId: string;
+  /** Si el catálogo se muestra en contexto de dependencia (retorno tras Checkout). */
+  dependenciaId?: string | null;
 }
 
-export function PlanCatalog({ areaId }: PlanCatalogProps) {
+export function PlanCatalog({
+  areaId,
+  dependenciaId = null,
+}: PlanCatalogProps) {
   const [showSubscribeDialog, setShowSubscribeDialog] = useState(false);
   const [initialPlanId, setInitialPlanId] = useState<string | undefined>();
 
@@ -168,6 +173,7 @@ export function PlanCatalog({ areaId }: PlanCatalogProps) {
           setInitialPlanId(undefined);
         }}
         areaId={areaId}
+        dependenciaId={dependenciaId}
         initialPlanId={initialPlanId}
         mode="subscribe"
       />

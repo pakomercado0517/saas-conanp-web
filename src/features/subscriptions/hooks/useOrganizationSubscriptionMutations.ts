@@ -4,9 +4,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   patchSubscriptionPlan,
   postOrganizationSubscription,
+  postSubscriptionCheckoutSession,
 } from "../services/subscriptions.api";
 import type {
   ChangeSubscriptionPlanPayload,
+  CreateCheckoutSessionPayload,
   CreateSubscriptionPayload,
 } from "../types";
 import { SUBSCRIPTION_PLANS_QUERY_KEY } from "./useSubscriptionPlans";
@@ -32,6 +34,12 @@ export function useOrganizationSubscriptionMutations(areaId: string) {
     onSuccess: invalidate,
   });
 
+  const startCheckout = useMutation({
+    mutationKey: ["subscriptions", "checkoutSession", areaId],
+    mutationFn: (payload: CreateCheckoutSessionPayload) =>
+      postSubscriptionCheckoutSession(areaId, payload),
+  });
+
   const changePlan = useMutation({
     mutationKey: ["subscriptions", "patchPlan", areaId],
     mutationFn: (args: {
@@ -43,9 +51,15 @@ export function useOrganizationSubscriptionMutations(areaId: string) {
 
   return {
     createOrUpgrade: createOrUpgrade.mutateAsync,
+    startCheckout: startCheckout.mutateAsync,
     changePlan: changePlan.mutateAsync,
-    isPending: createOrUpgrade.isPending || changePlan.isPending,
-    isError: createOrUpgrade.isError || changePlan.isError,
-    error: createOrUpgrade.error ?? changePlan.error,
+    isPending:
+      createOrUpgrade.isPending ||
+      startCheckout.isPending ||
+      changePlan.isPending,
+    isError:
+      createOrUpgrade.isError || startCheckout.isError || changePlan.isError,
+    error:
+      createOrUpgrade.error ?? startCheckout.error ?? changePlan.error,
   };
 }

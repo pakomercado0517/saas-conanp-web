@@ -7,7 +7,10 @@ type PageProps = {
   searchParams: Promise<{ prestadorId?: string }>;
 };
 
-export default async function PermisosPage({ params, searchParams }: PageProps) {
+export default async function PermisosPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { areaId } = await params;
   const sp = await searchParams;
   const prestadorIdFromQuery =
@@ -19,7 +22,7 @@ export default async function PermisosPage({ params, searchParams }: PageProps) 
   return (
     <div className="space-y-6 p-4 md:p-6">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-        Permisos por actividad
+        Prestadores con permisos para esta área
       </h1>
 
       <PermisosAreaView

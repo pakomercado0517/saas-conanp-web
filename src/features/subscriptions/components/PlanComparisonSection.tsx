@@ -3,6 +3,8 @@
 import { Check, CreditCard, Loader2 } from "lucide-react";
 import { useSubscriptionPlans } from "../hooks/useSubscriptionPlans";
 import { getPlanLimitLabels } from "../lib/planLimits";
+import { useRetrySubscriptionCheckout } from "../hooks/useRetrySubscriptionCheckout";
+import { subscriptionNeedsPaymentCompletion } from "../lib/subscriptionPayment";
 import type { BillingCycle, Subscription, SubscriptionPlan } from "../types";
 
 function isFreePlanName(name: string): boolean {
@@ -23,6 +25,8 @@ function formatPriceForCycle(
 }
 
 interface PlanComparisonSectionProps {
+  areaId: string;
+  dependenciaId?: string | null;
   subscription: Subscription | null;
   billingCycle: BillingCycle;
   onBillingCycleChange: (cycle: BillingCycle) => void;
@@ -31,6 +35,8 @@ interface PlanComparisonSectionProps {
 }
 
 export function PlanComparisonSection({
+  areaId,
+  dependenciaId = null,
   subscription,
   billingCycle,
   onBillingCycleChange,
@@ -38,6 +44,8 @@ export function PlanComparisonSection({
   isActionPending,
 }: PlanComparisonSectionProps) {
   const { plans, isLoading, isError } = useSubscriptionPlans();
+  const { retry: retryCheckout, isPending: isRetryCheckout } =
+    useRetrySubscriptionCheckout(areaId);
   const available = plans.filter((p) => p.active !== false);
 
   const cycleLabel =
@@ -106,9 +114,23 @@ export function PlanComparisonSection({
           const price = formatPriceForCycle(plan, billingCycle);
           const labels = getPlanLimitLabels(plan);
           const freeName = isFreePlanName(plan.name);
+          const needsCompletePayment =
+            isCurrent &&
+            subscription != null &&
+            subscriptionNeedsPaymentCompletion(subscription) &&
+            !freeName;
+
           let ctaLabel = "Contratar";
           let ctaDisabled = isActionPending;
-          if (isCurrent) {
+          if (needsCompletePayment && subscription) {
+            const incompleteCheckout =
+              subscription.status === "incomplete" ||
+              subscription.status === "incomplete_expired";
+            ctaLabel = incompleteCheckout
+              ? "Generar nuevo checkout"
+              : "Completar pago";
+            ctaDisabled = isActionPending || isRetryCheckout;
+          } else if (isCurrent) {
             ctaLabel = "Plan actual";
             ctaDisabled = true;
           } else if (freeName) {
@@ -117,6 +139,10 @@ export function PlanComparisonSection({
           } else if (subscription) {
             ctaLabel = "Cambiar a este plan";
           }
+
+          const showButtonSpinner =
+            (needsCompletePayment && isRetryCheckout) ||
+            (isActionPending && !needsCompletePayment);
 
           return (
             <div
@@ -167,10 +193,20 @@ export function PlanComparisonSection({
               <button
                 type="button"
                 disabled={ctaDisabled}
-                onClick={() => onSelectPlan(plan.id)}
+                onClick={() => {
+                  if (needsCompletePayment && subscription) {
+                    void retryCheckout({
+                      planId: subscription.planId,
+                      billingCycle: subscription.billingCycle,
+                      dependenciaId,
+                    });
+                    return;
+                  }
+                  onSelectPlan(plan.id);
+                }}
                 className="mt-auto inline-flex w-full items-center justify-center rounded-xl bg-(--navy-deep) py-3 text-sm font-bold text-white transition-colors hover:bg-(--navy-deep)/90 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-(--cyan-accent) dark:text-(--navy-deep) dark:hover:bg-(--cyan-hover)"
               >
-                {isActionPending ? (
+                {showButtonSpinner ? (
                   <Loader2 className="size-4 animate-spin" aria-hidden />
                 ) : (
                   ctaLabel

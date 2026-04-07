@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { getMaxAreas, isWithinAreaLimit } from "@/features/subscriptions/lib/planLimits";
+import { useCurrentSubscription } from "@/features/subscriptions/hooks/useCurrentSubscription";
 import type { SubscriptionPlan } from "@/features/subscriptions/types";
 import { useDependencia } from "../hooks/useDependencia";
 import { useDependenciaAreas } from "../hooks/useDependenciaAreas";
@@ -70,16 +71,28 @@ export function DependenciaContextProvider({
   const areas = useMemo(() => areasQuery.data ?? [], [areasQuery.data]);
   const invitations = useMemo(() => invQuery.data ?? [], [invQuery.data]);
 
+  /** La suscripción en BD es por dependencia; cualquier ANP de la lista sirve como ancla para GET /current. */
+  const subscriptionAnchorAreaId = areas.length > 0 ? areas[0].id : "";
+  const { subscription, refetch: refetchCurrentSubscription } =
+    useCurrentSubscription(subscriptionAnchorAreaId);
+
+  const resolvedSubscriptionPlan =
+    subscriptionPlan ?? subscription?.SubscriptionPlan ?? null;
+
   const maxAreas =
-    getMaxAreas(subscriptionPlan) ?? DEFAULT_MAX_AREAS_WHEN_UNKNOWN;
-  const canCreateArea = isWithinAreaLimit(subscriptionPlan, areas.length);
-  const planName = subscriptionPlan?.name ?? null;
+    getMaxAreas(resolvedSubscriptionPlan) ?? DEFAULT_MAX_AREAS_WHEN_UNKNOWN;
+  const canCreateArea = isWithinAreaLimit(
+    resolvedSubscriptionPlan,
+    areas.length
+  );
+  const planName = resolvedSubscriptionPlan?.name ?? null;
 
   const refetch = useCallback(() => {
     dep.refetch();
     areasQuery.refetch();
     invQuery.refetch();
-  }, [dep, areasQuery, invQuery]);
+    void refetchCurrentSubscription();
+  }, [dep, areasQuery, invQuery, refetchCurrentSubscription]);
 
   const value: DependenciaContextValue = useMemo(
     () => ({
